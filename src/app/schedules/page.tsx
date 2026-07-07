@@ -86,11 +86,11 @@ export default function SchedulesPage() {
         {activeTab === 'MONTHLY_MATRIX' && (
           <div className="overflow-x-auto pb-4 custom-scrollbar">
             <table className="w-full border-collapse min-w-[800px]">
-              <thead>
+              <thead className="sticky top-0 z-20">
                 <tr>
-                  <th className="sticky left-0 bg-gray-50 border p-2 text-sm text-gray-600 min-w-[120px] z-10">직원명</th>
+                  <th className="sticky left-0 bg-gray-50 border p-2 text-sm text-gray-600 min-w-[120px] z-30">직원명</th>
                   {daysArray.map(d => (
-                    <th key={d} className="border p-2 text-xs font-medium text-gray-500 text-center min-w-[40px]">
+                    <th key={d} className="bg-gray-50 border p-2 text-xs font-medium text-gray-500 text-center min-w-[40px]">
                       {d}
                     </th>
                   ))}
@@ -129,11 +129,11 @@ export default function SchedulesPage() {
         {activeTab === 'PROJECT_SCHEDULE' && (
           <div className="overflow-x-auto pb-4 custom-scrollbar">
             <table className="w-full border-collapse min-w-[800px]">
-              <thead>
+              <thead className="sticky top-0 z-20">
                 <tr>
-                  <th className="sticky left-0 bg-gray-50 border p-2 text-sm text-gray-600 min-w-[200px] z-10">프로젝트명</th>
+                  <th className="sticky left-0 bg-gray-50 border p-2 text-sm text-gray-600 min-w-[200px] z-30">프로젝트명</th>
                   {daysArray.map(d => (
-                    <th key={d} className="border p-2 text-xs font-medium text-gray-500 text-center min-w-[40px]">
+                    <th key={d} className="bg-gray-50 border p-2 text-xs font-medium text-gray-500 text-center min-w-[40px]">
                       {d}
                     </th>
                   ))}
