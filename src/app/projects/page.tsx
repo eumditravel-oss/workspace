@@ -5,6 +5,7 @@ import { useProjectStore } from '@/store/projectStore';
 import { useTaskStore } from '@/store/taskStore';
 import { useAuthStore } from '@/store/authStore';
 import { Board, GroupByOption, BoardViewType } from '@/components/board/Board';
+import { ProjectBoard } from '@/components/board/ProjectBoard';
 import { ProjectEvaluationModal } from '@/components/evaluation/ProjectEvaluationModal';
 import { TaskStatus } from '@/types/models';
 import { FileText } from 'lucide-react';
@@ -39,17 +40,7 @@ export default function ProjectBoardPage() {
     return false;
   });
 
-  // Auto-select first accessible project
-  useEffect(() => {
-    let mounted = true;
-    if (!selectedProjectId && accessibleProjects.length > 0) {
-      // Small timeout to avoid sync update warning
-      setTimeout(() => {
-        if (mounted) setSelectedProjectId(accessibleProjects[0].id);
-      }, 0);
-    }
-    return () => { mounted = false; };
-  }, [accessibleProjects, selectedProjectId]);
+  // Auto-select removed to show Project Summary Board by default
 
   const projectTasks = tasks.filter(t => t.projectId === selectedProjectId);
 
@@ -111,7 +102,7 @@ export default function ProjectBoardPage() {
             value={selectedProjectId} 
             onChange={(e) => setSelectedProjectId(e.target.value)}
           >
-            <option value="" disabled>프로젝트 선택</option>
+            <option value="">전체 프로젝트 뷰</option>
             {accessibleProjects.map(p => (
               <option key={p.id} value={p.id}>{p.title}</option>
             ))}
@@ -139,9 +130,12 @@ export default function ProjectBoardPage() {
           users={users}
         />
       ) : (
-        <div className="p-12 text-center text-gray-500 bg-white rounded-xl shadow-sm border">
-          조회할 프로젝트를 선택해주세요.
-        </div>
+        <ProjectBoard
+          projects={accessibleProjects}
+          tasks={tasks}
+          groupBy={groupBy}
+          onProjectClick={setSelectedProjectId}
+        />
       )}
 
       {showEvaluationModal && selectedProjectId && (
