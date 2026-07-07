@@ -62,6 +62,24 @@
 - **PersonalSchedule.status (개인일정 상태)**:
   `SCHEDULED`, `CHANGED`, `CANCELLED`, `COMPLETED`
 
+## Module: Settings
+Manage generic project templates, roles, and UI preferences.
+- **Preference**: User-specific dashboard layout preferences and Off/Day toggle settings.
+
+---
+## Module: Performance Evaluation (Plan 8)
+Manage quality control, workload adjustments, and performance scores.
+
+- **EvaluationPeriod**: Defines the timeframe for performance evaluation (e.g., Q1 2026).
+- **EvaluationPolicy**: Configuration defining error rate bands, base area py (e.g., 50,000), and weightings for QC and workload.
+- **EvaluationTarget**: Tracks which users are included in an evaluation period.
+- **QcIssue**: Quality control error records associated with completed tasks, including stage, severity, and assigned weight (10%~100%).
+- **ProjectEvaluationContext**: PM's summary notes on project difficulty, used purely as context for QC reviewers.
+- **ProjectScaleFactor**: Weight calculated by dividing the project's gross area by the base area (50,000 py).
+- **WorkloadUnit**: Calculated total volume of work performed by a user within a period, potentially scaled by `ProjectScaleFactor`.
+- **PerformanceEvaluationResult**: The finalized scores, including `weightedErrorRate` and `qualityScore`.
+- **EvaluationAppeal**: Records any formal appeals made by workers against their evaluation results.
+
 ## 6. Schedule Data Types
 성격이 다른 일정 데이터를 분리하여 관리합니다.
 - **Project schedule**: 프로젝트 전체 수행 기간 (start ~ end)
