@@ -100,6 +100,21 @@ export interface TaskCard {
   completedAt?: string;
 }
 
+export interface TaskWorkSegment {
+  id: string;
+  taskId: string;
+  workerId: UserId;
+  startDate: string;
+  endDate: string;
+  progress: number;
+  description: string;
+  status: 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'RECORDED';
+  isOvertime: boolean;
+  approvalRequestId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ProgressUpdate {
   id: string;
   taskId: string;

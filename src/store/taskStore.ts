@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { TaskCard, TaskStatus, CompletionStatus, ProgressUpdate, TaskChecklistItem, TaskArtifact, TaskBlocker, UserId } from '@/types/models';
+import { TaskCard, TaskStatus, CompletionStatus, ProgressUpdate, TaskChecklistItem, TaskArtifact, TaskBlocker, UserId, TaskWorkSegment } from '@/types/models';
 import { DetailedLineStage } from '@/lib/selectors';
 import { fullTasks } from '@/data/fullScheduleSeed';
 
@@ -9,6 +9,7 @@ interface TaskState {
   checklists: TaskChecklistItem[];
   artifacts: TaskArtifact[];
   blockers: TaskBlocker[];
+  workSegments: TaskWorkSegment[];
   updateTaskStatus: (taskId: string, newStatus: TaskStatus) => void;
   updateDetailedLineStage: (taskId: string, stage: DetailedLineStage) => void;
   updateTaskAssignee: (taskId: string, newAssigneeId: UserId | undefined) => void;
@@ -21,6 +22,9 @@ interface TaskState {
   addArtifact: (artifact: Omit<TaskArtifact, 'id' | 'createdAt'>) => void;
   addBlocker: (blocker: Omit<TaskBlocker, 'id' | 'status' | 'createdAt'>) => void;
   resolveBlocker: (blockerId: string, resolvedBy: UserId) => void;
+  addWorkSegment: (segment: Omit<TaskWorkSegment, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateWorkSegment: (id: string, updates: Partial<TaskWorkSegment>) => void;
+  deleteWorkSegment: (id: string) => void;
 }
 
 export const useTaskStore = create<TaskState>((set) => ({
@@ -32,6 +36,7 @@ export const useTaskStore = create<TaskState>((set) => ({
   ],
   artifacts: [],
   blockers: [],
+  workSegments: [],
   updateTaskStatus: (taskId, newStatus) => set((state) => ({
     tasks: state.tasks.map(t => 
       t.id === taskId 
@@ -170,5 +175,21 @@ export const useTaskStore = create<TaskState>((set) => ({
         ? { ...b, status: 'RESOLVED', resolvedAt: new Date().toISOString(), resolvedBy } 
         : b
     )
+  })),
+  addWorkSegment: (segment) => set((state) => ({
+    workSegments: [...state.workSegments, {
+      ...segment,
+      id: `ws_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }]
+  })),
+  updateWorkSegment: (id, updates) => set((state) => ({
+    workSegments: state.workSegments.map(ws => 
+      ws.id === id ? { ...ws, ...updates, updatedAt: new Date().toISOString() } : ws
+    )
+  })),
+  deleteWorkSegment: (id) => set((state) => ({
+    workSegments: state.workSegments.filter(ws => ws.id !== id)
   }))
 }));

@@ -3,7 +3,8 @@ import { TaskCard, ProgressUpdate } from '@/types/models';
 import { useTaskStore } from '@/store/taskStore';
 import { useEvaluationStore } from '@/store/evaluationStore';
 import { useAuthStore } from '@/store/authStore';
-import { X, CheckSquare, Clock, FileText, History, ListTodo, AlertCircle, CheckCircle2, ShieldAlert, Plus } from 'lucide-react';
+import { useApprovalStore } from '@/store/approvalStore';
+import { X, CheckSquare, Clock, FileText, History, ListTodo, AlertCircle, CheckCircle2, ShieldAlert, Plus, CalendarClock, Zap, CalendarDays } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { QcIssueModal } from '@/components/evaluation/QcIssueModal';
 import { calculateTaskHealthScore } from '@/lib/selectors';
@@ -22,14 +23,20 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
   const [showQcModal, setShowQcModal] = useState(false);
   
   const currentUser = useAuthStore(state => state.currentUser);
-  const { updateTaskProgress, progressUpdates, checklists, artifacts, blockers, addBlocker, resolveBlocker } = useTaskStore();
+  const { updateTaskProgress, progressUpdates, checklists, artifacts, blockers, addBlocker, resolveBlocker, workSegments, addWorkSegment, deleteWorkSegment } = useTaskStore();
   const { qcIssues } = useEvaluationStore();
+  const { addRequest } = useApprovalStore();
 
   const taskUpdates = progressUpdates.filter(u => u.taskId === task.id);
   const taskChecklists = checklists.filter(c => c.taskId === task.id);
   const taskArtifacts = artifacts.filter(a => a.taskId === task.id);
   const taskBlockers = blockers.filter(b => b.taskId === task.id);
   const taskQcIssues = qcIssues.filter(q => q.taskId === task.id);
+  const taskSegments = workSegments.filter(w => w.taskId === task.id);
+
+  const [newSegmentDesc, setNewSegmentDesc] = useState('');
+  const [newSegmentStart, setNewSegmentStart] = useState('');
+  const [newSegmentEnd, setNewSegmentEnd] = useState('');
   
   const healthScore = calculateTaskHealthScore(task, blockers, progressUpdates);
   const healthColor = healthScore >= 80 ? 'text-green-600 bg-green-50' 
@@ -64,11 +71,63 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
     setNewBlocker('');
   };
 
+  const handleAddSegment = () => {
+    if (!newSegmentDesc || !newSegmentStart || !newSegmentEnd || !currentUser) return;
+    
+    // validate date range
+    const tStart = task.startDate ? new Date(task.startDate).setHours(0,0,0,0) : 0;
+    const tEnd = task.dueDate ? new Date(task.dueDate).setHours(23,59,59,999) : Infinity;
+    const sStart = new Date(newSegmentStart).setHours(0,0,0,0);
+    const sEnd = new Date(newSegmentEnd).setHours(23,59,59,999);
+    
+    if (tStart > 0 && sStart < tStart) {
+      alert('세부 작업 시작일은 카드의 시작일보다 빠를 수 없습니다.');
+      return;
+    }
+    if (tEnd !== Infinity && sEnd > tEnd) {
+      alert('세부 작업 종료일은 카드의 마감일보다 늦을 수 없습니다.');
+      return;
+    }
+    
+    addWorkSegment({
+      taskId: task.id,
+      workerId: currentUser.id,
+      description: newSegmentDesc,
+      startDate: newSegmentStart,
+      endDate: newSegmentEnd,
+      progress: 0,
+      status: 'RECORDED',
+      isOvertime: false
+    });
+    setNewSegmentDesc('');
+    setNewSegmentStart('');
+    setNewSegmentEnd('');
+  };
+
+  const handleRequest = (type: 'OVERTIME_REQUEST' | 'DEADLINE_EXTENSION' | 'MANPOWER_SUPPORT') => {
+    if (!currentUser) return;
+    const reason = window.prompt(`신청 사유를 입력하세요.`);
+    if (!reason) return;
+
+    addRequest({
+      type,
+      taskId: task.id,
+      projectId: task.projectId,
+      requestedBy: currentUser.id,
+      pmId: task.pmId,
+      managerId: task.managerId,
+      title: `[${type}] ${task.title} 관련 신청`,
+      reason,
+    });
+    alert('신청이 완료되었습니다.');
+  };
+
   const tabs = [
     { id: 'OVERVIEW', label: '개요', icon: <FileText className="w-4 h-4" /> },
+    { id: 'WORK_SEGMENTS', label: '세부 작업내역', icon: <ListTodo className="w-4 h-4" /> },
     { id: 'PROGRESS', label: '진행 내용', icon: <Clock className="w-4 h-4" /> },
     { id: 'CHECKLIST', label: '체크리스트', icon: <CheckSquare className="w-4 h-4" /> },
-    { id: 'APPROVALS', label: '승인/신청', icon: <ListTodo className="w-4 h-4" /> },
+    { id: 'APPROVALS', label: '승인/신청', icon: <CalendarClock className="w-4 h-4" /> },
     { id: 'ARTIFACTS', label: '산출물', icon: <FileText className="w-4 h-4" /> },
     { id: 'EVALUATION', label: 'QC/평가', icon: <ShieldAlert className="w-4 h-4" /> },
     { id: 'HISTORY', label: '이력', icon: <History className="w-4 h-4" /> },
@@ -264,6 +323,56 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
             </div>
           )}
 
+          {activeTab === 'WORK_SEGMENTS' && (
+            <div className="space-y-4">
+              <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-700 mb-4">세부 작업 등록</h3>
+                <div className="flex gap-2 mb-2">
+                  <input 
+                    type="date" 
+                    value={newSegmentStart} 
+                    onChange={e => setNewSegmentStart(e.target.value)} 
+                    className="border rounded p-2 text-sm w-32" 
+                  />
+                  <span className="self-center">~</span>
+                  <input 
+                    type="date" 
+                    value={newSegmentEnd} 
+                    onChange={e => setNewSegmentEnd(e.target.value)} 
+                    className="border rounded p-2 text-sm w-32" 
+                  />
+                  <input 
+                    type="text" 
+                    value={newSegmentDesc} 
+                    onChange={e => setNewSegmentDesc(e.target.value)} 
+                    placeholder="세부 작업 내용" 
+                    className="flex-1 border rounded p-2 text-sm" 
+                  />
+                  <button onClick={handleAddSegment} className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold">
+                    추가
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {taskSegments.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">등록된 세부 작업이 없습니다.</p>
+                ) : (
+                  taskSegments.map(seg => (
+                    <div key={seg.id} className="bg-white p-3 rounded-lg border border-gray-100 flex justify-between items-center shadow-sm">
+                      <div>
+                        <div className="text-sm font-semibold">{seg.description}</div>
+                        <div className="text-xs text-gray-500">{seg.startDate} ~ {seg.endDate}</div>
+                      </div>
+                      <button onClick={() => deleteWorkSegment(seg.id)} className="text-red-500 text-xs hover:underline">
+                        삭제
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
           {activeTab === 'CHECKLIST' && (
             <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
               <h3 className="text-sm font-semibold text-gray-700 mb-4">체크리스트</h3>
@@ -285,8 +394,37 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
           )}
 
           {activeTab === 'APPROVALS' && (
-            <div className="text-center py-10 text-sm text-gray-500">
-              승인/신청 이력 연동 준비 중
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <button 
+                  onClick={() => handleRequest('OVERTIME_REQUEST')}
+                  className="p-4 bg-orange-50 border border-orange-200 rounded-xl hover:bg-orange-100 transition flex flex-col items-center text-orange-700"
+                >
+                  <Clock className="w-8 h-8 mb-2" />
+                  <span className="font-bold">야근 / 연장근무 신청</span>
+                </button>
+                
+                <button 
+                  onClick={() => handleRequest('DEADLINE_EXTENSION')}
+                  className="p-4 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition flex flex-col items-center text-red-700"
+                >
+                  <CalendarDays className="w-8 h-8 mb-2" />
+                  <span className="font-bold">일정 연장 신청</span>
+                </button>
+                
+                <button 
+                  onClick={() => handleRequest('MANPOWER_SUPPORT')}
+                  className="p-4 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 transition flex flex-col items-center text-purple-700"
+                >
+                  <Zap className="w-8 h-8 mb-2" />
+                  <span className="font-bold">인력 지원 요청</span>
+                </button>
+              </div>
+              
+              <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm mt-4">
+                <h3 className="text-sm font-bold text-gray-700 mb-2">신청 내역</h3>
+                <p className="text-sm text-gray-500">결재 관리 페이지에서 확인하실 수 있습니다.</p>
+              </div>
             </div>
           )}
 
