@@ -360,3 +360,15 @@ export interface PermissionSimulationResult {
   createdAt: string;
 }
 
+
+export interface WorkspaceSetting {
+  id: string;
+  category: string;
+  key: string;
+  value: string | number | boolean | Record<string, string>;
+  description?: string;
+  editableByRoles: string[];
+  updatedBy: string;
+  updatedAt: string;
+}
+
