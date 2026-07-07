@@ -328,3 +328,17 @@ export interface ImportValidationIssue {
   resolvedAt?: string;
 }
 
+
+export interface DataQualityCheck {
+  id: string;
+  category: 'IMPORT' | 'PROJECT' | 'SCHEDULE' | 'PERSONNEL' | 'PERMISSION' | 'BOARD' | 'EVALUATION' | 'SYSTEM';
+  severity: 'INFO' | 'WARNING' | 'ERROR' | 'BLOCKER';
+  title: string;
+  description: string;
+  relatedEntityType?: string;
+  relatedEntityId?: string;
+  detectedAt: string;
+  status: 'OPEN' | 'RESOLVED' | 'IGNORED';
+  suggestedFix?: string;
+}
+

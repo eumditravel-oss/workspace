@@ -1,0 +1,174 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useAuthStore } from '@/store/authStore';
+import { useDataQualityStore } from '@/store/dataQualityStore';
+import { ShieldAlert, AlertTriangle, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
+
+export default function DataQualityPage() {
+  const { currentUser } = useAuthStore();
+  const { checks, lastCheckTime, runChecks, resolveCheck, ignoreCheck } = useDataQualityStore();
+  
+  const [filterCategory, setFilterCategory] = useState<string>('ALL');
+  const [filterSeverity, setFilterSeverity] = useState<string>('ALL');
+  const [filterStatus, setFilterStatus] = useState<string>('OPEN');
+
+  if (!currentUser) return <div className="p-6">로그인이 필요합니다.</div>;
+  if (!['SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(currentUser.role)) {
+    return <div className="p-6 text-red-600 font-bold">접근 권한이 없습니다. (관리자 전용)</div>;
+  }
+
+  const filteredChecks = checks.filter(c => {
+    if (filterCategory !== 'ALL' && c.category !== filterCategory) return false;
+    if (filterSeverity !== 'ALL' && c.severity !== filterSeverity) return false;
+    if (filterStatus !== 'ALL' && c.status !== filterStatus) return false;
+    return true;
+  });
+
+  const blockerCount = checks.filter(c => c.severity === 'BLOCKER' && c.status === 'OPEN').length;
+  const errorCount = checks.filter(c => c.severity === 'ERROR' && c.status === 'OPEN').length;
+  const warningCount = checks.filter(c => c.severity === 'WARNING' && c.status === 'OPEN').length;
+  const resolvedCount = checks.filter(c => c.status === 'RESOLVED').length;
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center">
+            <ShieldAlert className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-800">데이터 품질 검사</h1>
+            <p className="text-xs text-gray-500">
+              마지막 검사: {lastCheckTime ? new Date(lastCheckTime).toLocaleString() : '기록 없음'}
+            </p>
+          </div>
+        </div>
+        
+        <button 
+          onClick={runChecks}
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-bold text-white shadow-sm transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+          전체 데이터 재검사
+        </button>
+      </div>
+
+      <div className="grid grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col justify-between">
+          <div className="text-gray-500 text-xs font-bold mb-1 flex items-center gap-1">
+            <ShieldAlert className="w-3 h-3" /> 전체 검사 항목
+          </div>
+          <div className="text-2xl font-extrabold text-gray-800">{checks.length}</div>
+        </div>
+        <div className="bg-red-50 p-4 rounded-xl border border-red-100 shadow-sm flex flex-col justify-between">
+          <div className="text-red-500 text-xs font-bold mb-1">BLOCKER</div>
+          <div className="text-2xl font-extrabold text-red-600">{blockerCount}</div>
+        </div>
+        <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 shadow-sm flex flex-col justify-between">
+          <div className="text-orange-500 text-xs font-bold mb-1">ERROR / WARNING</div>
+          <div className="text-2xl font-extrabold text-orange-600">{errorCount + warningCount}</div>
+        </div>
+        <div className="bg-green-50 p-4 rounded-xl border border-green-100 shadow-sm flex flex-col justify-between">
+          <div className="text-green-600 text-xs font-bold mb-1">해결 완료</div>
+          <div className="text-2xl font-extrabold text-green-700">{resolvedCount}</div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+        <div className="p-4 border-b bg-gray-50 flex gap-4">
+          <select 
+            value={filterCategory} onChange={e => setFilterCategory(e.target.value)}
+            className="border rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 bg-white"
+          >
+            <option value="ALL">모든 카테고리</option>
+            <option value="PERSONNEL">인사/직원 (PERSONNEL)</option>
+            <option value="PROJECT">프로젝트 (PROJECT)</option>
+            <option value="SCHEDULE">일정 (SCHEDULE)</option>
+          </select>
+
+          <select 
+            value={filterSeverity} onChange={e => setFilterSeverity(e.target.value)}
+            className="border rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 bg-white"
+          >
+            <option value="ALL">모든 심각도</option>
+            <option value="BLOCKER">BLOCKER</option>
+            <option value="ERROR">ERROR</option>
+            <option value="WARNING">WARNING</option>
+          </select>
+
+          <select 
+            value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+            className="border rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 bg-white"
+          >
+            <option value="ALL">모든 상태</option>
+            <option value="OPEN">미해결 (OPEN)</option>
+            <option value="RESOLVED">해결됨 (RESOLVED)</option>
+            <option value="IGNORED">무시됨 (IGNORED)</option>
+          </select>
+        </div>
+
+        <div className="divide-y">
+          {filteredChecks.map(check => (
+            <div key={check.id} className={`p-5 transition-colors ${check.status !== 'OPEN' ? 'opacity-50 bg-gray-50' : 'hover:bg-gray-50'}`}>
+              <div className="flex gap-4">
+                <div className="pt-1">
+                  {check.severity === 'BLOCKER' ? <ShieldAlert className="w-5 h-5 text-red-500" /> :
+                   check.severity === 'ERROR' ? <AlertCircle className="w-5 h-5 text-orange-500" /> :
+                   <AlertTriangle className="w-5 h-5 text-yellow-500" />}
+                </div>
+                <div className="flex-1">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="inline-block px-2 py-0.5 bg-gray-200 text-gray-700 text-[10px] font-bold rounded mb-1 mr-2">
+                        {check.category}
+                      </span>
+                      <h4 className={`font-bold inline-block ${check.severity === 'BLOCKER' ? 'text-red-700' : 'text-gray-800'}`}>
+                        {check.title}
+                      </h4>
+                    </div>
+                    <div className="flex gap-2">
+                      {check.status === 'OPEN' && (
+                        <>
+                          <button onClick={() => ignoreCheck(check.id)} className="text-xs px-3 py-1.5 rounded border text-gray-500 hover:bg-gray-100 font-medium">무시 처리</button>
+                          <button onClick={() => resolveCheck(check.id)} className="text-xs px-3 py-1.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-bold flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> 해결 완료
+                          </button>
+                        </>
+                      )}
+                      {check.status !== 'OPEN' && (
+                        <span className="text-xs font-bold text-gray-400 border px-2 py-1 rounded bg-white">{check.status}</span>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-2">{check.description}</p>
+                  
+                  {check.suggestedFix && (
+                    <div className="mt-3 text-xs bg-blue-50 text-blue-800 p-2.5 rounded-lg border border-blue-100 flex items-start gap-2">
+                      <span className="font-bold shrink-0">권장 조치:</span>
+                      <span>{check.suggestedFix}</span>
+                    </div>
+                  )}
+
+                  {check.relatedEntityType && (
+                    <div className="mt-3 text-xs flex gap-2">
+                      <button className="text-indigo-600 hover:underline">
+                        관련 {check.relatedEntityType} 상세 보기 ({check.relatedEntityId})
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {filteredChecks.length === 0 && (
+            <div className="p-12 text-center text-gray-500 font-medium">
+              조건에 맞는 품질 검사 항목이 없습니다.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
