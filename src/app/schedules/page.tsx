@@ -7,6 +7,7 @@ import { useTaskStore } from '@/store/taskStore';
 import { PersonalSchedule, Project, TaskCard } from '@/types/models';
 import { getUserDisplayName } from '@/lib/localization';
 import { canViewSchedule, canViewEmployeeSchedule } from '@/lib/permissions';
+import { getProjectOverallProgress } from '@/lib/selectors';
 import { LeaveRegistrationModal } from '@/components/schedule/LeaveRegistrationModal';
 
 export default function SchedulesPage() {
@@ -240,12 +241,12 @@ export default function SchedulesPage() {
 
         {activeTab === 'PROJECT_SCHEDULE' && (
           <div className="overflow-x-auto pb-4 custom-scrollbar">
-            <table className="w-full border-collapse min-w-[800px]">
+            <table className="w-full border-collapse min-w-[1000px]">
               <thead className="sticky top-0 z-20">
                 <tr>
-                  <th className="sticky left-0 bg-gray-50 border-b-2 border-r p-2 text-sm font-bold text-gray-700 min-w-[200px] z-30 shadow-[1px_0_0_0_#e5e7eb]">프로젝트명</th>
+                  <th className="sticky left-0 bg-white border-b-2 border-r-2 p-3 text-sm font-bold text-gray-700 min-w-[240px] z-30 shadow-[1px_0_0_0_#e5e7eb]">프로젝트명 / 담당PM</th>
                   {daysArray.map(d => (
-                    <th key={d} className={`border-b-2 border-r p-2 text-xs font-medium text-center min-w-[40px] ${getDayHeaderClass(d)}`}>
+                    <th key={d} className={`border-b-2 border-r p-2 text-xs font-medium text-center min-w-[48px] ${getDayHeaderClass(d)}`}>
                       {d}
                     </th>
                   ))}
@@ -253,10 +254,17 @@ export default function SchedulesPage() {
               </thead>
               <tbody>
                 {projects.filter(p => !p.isDeleted && p.archiveStatus !== 'ARCHIVED').map(project => {
+                  const pm = users.find(u => u.id === project.pmId);
+                  const progress = getProjectOverallProgress(project, tasks);
+                  
                   return (
-                    <tr key={project.id} className="hover:bg-gray-50">
-                      <td className="sticky left-0 bg-white border-b border-r p-2 text-sm font-bold text-gray-800 z-10 shadow-[1px_0_0_0_#e5e7eb]">
-                        {project.title}
+                    <tr key={project.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="sticky left-0 bg-white border-b border-r-2 p-3 text-sm font-bold text-gray-800 z-10 shadow-[1px_0_0_0_#e5e7eb]">
+                        <div className="truncate mb-1">{project.title}</div>
+                        <div className="flex items-center gap-2 text-[10px] font-normal text-gray-500">
+                          <span className={`px-1.5 py-0.5 rounded ${project.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{project.status}</span>
+                          {pm && <span>PM: {getUserDisplayName(pm)}</span>}
+                        </div>
                       </td>
                       {daysArray.map(d => {
                         const targetDate = new Date(year, month, d).setHours(0,0,0,0);
@@ -266,10 +274,32 @@ export default function SchedulesPage() {
                         let isActive = false;
                         if (start && end && targetDate >= start && targetDate <= end) isActive = true;
                         
+                        let barClass = "h-4 flex items-center shadow-sm relative z-10 transition-all ";
+                        if (project.status === 'COMPLETED') barClass += "bg-green-400 ";
+                        else if (project.status === 'ON_HOLD') barClass += "bg-gray-400 ";
+                        else barClass += "bg-indigo-400 ";
+
+                        if (targetDate === start && targetDate === end) {
+                          barClass += "rounded mx-1 ";
+                        } else if (targetDate === start) {
+                          barClass += "rounded-l ml-1 ";
+                        } else if (targetDate === end) {
+                          barClass += "rounded-r mr-1 ";
+                        } else if (isActive) {
+                          barClass += "mx-0 ";
+                        }
+                        
                         return (
-                          <td key={d} className={`border-b border-r p-1 ${isActive ? 'bg-indigo-100/50' : getDayCellClass(d)}`}>
-                            {targetDate === start && <div className="text-[10px] font-bold text-indigo-700 bg-white px-1 rounded border border-indigo-200">시작</div>}
-                            {targetDate === end && <div className="text-[10px] font-bold text-red-600 bg-white px-1 rounded border border-red-200">납품</div>}
+                          <td key={d} className={`border-b border-r p-1 align-middle h-[50px] ${getDayCellClass(d)} transition-colors hover:bg-gray-100/50`}>
+                            {isActive && (
+                              <div className={barClass} title={`${project.title}\n상태: ${project.status}\n진행률: ${progress}%`}>
+                                {targetDate === start && (
+                                  <div className="absolute left-2 text-[10px] font-bold text-white whitespace-nowrap drop-shadow-md">
+                                    {progress}% 
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </td>
                         );
                       })}
@@ -282,8 +312,78 @@ export default function SchedulesPage() {
         )}
 
         {activeTab === 'USER_DETAIL' && (
-          <div className="text-center p-12 text-gray-500">
-            직원별 상세 목록 뷰 (준비 중)
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {visibleUsers.map(user => {
+              const userTasks = tasks.filter(t => t.assigneeId === user.id && !t.isDeleted && t.status !== 'DONE');
+              const userSchedules = visibleSchedules.filter(s => s.userId === user.id);
+              
+              if (userTasks.length === 0 && userSchedules.length === 0) return null;
+              
+              return (
+                <div key={user.id} className="bg-gray-50 rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col h-full">
+                  <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                      {user.displayName?.[0] || user.name[0]}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-800">{getUserDisplayName(user)}</h3>
+                      <p className="text-xs text-gray-500">{user.teamName || user.departmentName} · {user.jobTitle}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4 flex-1">
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-600 mb-2 flex justify-between">
+                        <span>진행 중인 업무</span>
+                        <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full">{userTasks.length}건</span>
+                      </h4>
+                      {userTasks.length > 0 ? (
+                        <ul className="space-y-2">
+                          {userTasks.slice(0, 3).map(t => (
+                            <li key={t.id} className="text-sm bg-white p-2 rounded border border-gray-100 shadow-sm">
+                              <div className="font-medium text-gray-800 truncate" title={t.title}>{t.title}</div>
+                              <div className="flex justify-between mt-1 text-xs text-gray-500">
+                                <span>{t.startDate?.substring(5)} ~ {t.dueDate?.substring(5)}</span>
+                                <span className="font-medium text-indigo-600">{t.progress || 0}%</span>
+                              </div>
+                            </li>
+                          ))}
+                          {userTasks.length > 3 && (
+                            <li className="text-xs text-center text-gray-400 font-medium pt-1">
+                              +{userTasks.length - 3}개의 다른 업무
+                            </li>
+                          )}
+                        </ul>
+                      ) : (
+                        <div className="text-xs text-gray-400 bg-white p-2 rounded text-center border border-dashed border-gray-200">배정된 업무 없음</div>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-600 mb-2">예정된 개인 스케줄</h4>
+                      {userSchedules.length > 0 ? (
+                        <ul className="space-y-2">
+                          {userSchedules.slice(0, 3).map(s => (
+                            <li key={s.id} className="text-xs flex items-center gap-2 bg-white p-2 rounded border border-gray-100">
+                              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${s.scheduleType === 'OFF' ? 'bg-red-400' : 'bg-blue-400'}`}></span>
+                              <span className="truncate flex-1 font-medium">{s.title}</span>
+                              <span className="text-gray-400 flex-shrink-0">{s.startDateTime.substring(5,10)}</span>
+                            </li>
+                          ))}
+                          {userSchedules.length > 3 && (
+                            <li className="text-xs text-center text-gray-400 font-medium pt-1">
+                              +{userSchedules.length - 3}개의 스케줄
+                            </li>
+                          )}
+                        </ul>
+                      ) : (
+                        <div className="text-xs text-gray-400 bg-white p-2 rounded text-center border border-dashed border-gray-200">스케줄 없음</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
