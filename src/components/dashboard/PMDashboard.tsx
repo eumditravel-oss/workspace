@@ -1,20 +1,85 @@
 import React from 'react';
 import { SummaryCard } from './SummaryCard';
-import { Calendar, AlertTriangle, CheckSquare, Clock } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Clock, Briefcase } from 'lucide-react';
+import { useProjectStore } from '@/store/projectStore';
+import { useTaskStore } from '@/store/taskStore';
+import { useAuthStore } from '@/store/authStore';
+import { getDeliveryUrgencyBucket, getProjectOverallProgress } from '@/lib/selectors';
 
 export const PMDashboard = () => {
+  const { currentUser } = useAuthStore();
+  const { projects } = useProjectStore();
+  const { tasks } = useTaskStore();
+
+  const pmProjects = projects.filter(p => !p.isDeleted && p.archiveStatus !== 'ARCHIVED' && p.pmId === currentUser?.id);
+  const pmTasks = tasks.filter(t => pmProjects.some(p => p.id === t.projectId));
+
+  const urgentProjectsCount = pmProjects.filter(p => getDeliveryUrgencyBucket(p) === 'URGENT').length;
+  const pendingApprovalsCount = pmTasks.filter(t => t.approvalStatus === 'PENDING').length;
+  
+  const delayedTasksCount = pmTasks.filter(t => {
+    if (t.status === 'DONE') return false;
+    if (!t.dueDate) return false;
+    return t.dueDate < new Date().toISOString().split('T')[0];
+  }).length;
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-800">PM 대시보드</h1>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <SummaryCard title="담당 프로젝트" value="3" icon={Calendar} colorClass="bg-purple-500" />
-        <SummaryCard title="긴급 업무" value="2" icon={AlertTriangle} colorClass="bg-red-500" />
-        <SummaryCard title="지연 업무" value="1" icon={Clock} colorClass="bg-orange-500" />
-        <SummaryCard title="오늘 마감" value="4" icon={CheckSquare} colorClass="bg-green-500" />
+        <SummaryCard title="담당 프로젝트" value={pmProjects.length.toString()} icon={Briefcase} colorClass="bg-blue-500" />
+        <SummaryCard title="긴급 납품 프로젝트" value={urgentProjectsCount.toString()} icon={AlertTriangle} colorClass="bg-red-500" />
+        <SummaryCard title="검토 대기 업무" value={pendingApprovalsCount.toString()} icon={CheckCircle} colorClass="bg-green-500" />
+        <SummaryCard title="지연 업무" value={delayedTasksCount.toString()} icon={Clock} colorClass="bg-orange-500" />
       </div>
+
       <div className="bg-white p-6 rounded-xl shadow-sm border">
-        <h2 className="text-lg font-bold mb-4">프로젝트 진행 현황</h2>
-        <p className="text-gray-500">프로젝트별 지표가 표시될 예정입니다.</p>
+        <h2 className="text-lg font-bold mb-4 border-b pb-2">담당 프로젝트 현황</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 border-b">
+                <th className="p-3 text-sm font-semibold text-gray-600">프로젝트명</th>
+                <th className="p-3 text-sm font-semibold text-gray-600">상태</th>
+                <th className="p-3 text-sm font-semibold text-gray-600">공정률</th>
+                <th className="p-3 text-sm font-semibold text-gray-600">납품 예정일</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pmProjects.map(p => {
+                const progress = getProjectOverallProgress(p, tasks);
+                const urgency = getDeliveryUrgencyBucket(p);
+                return (
+                  <tr key={p.id} className="border-b hover:bg-gray-50">
+                    <td className="p-3 font-medium text-gray-800">{p.title}</td>
+                    <td className="p-3 text-sm">
+                      <span className="px-2 py-1 bg-gray-100 rounded text-gray-700 font-bold">{p.status}</span>
+                    </td>
+                    <td className="p-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                          <div className="bg-indigo-600 h-2 rounded-full" style={{ width: `${progress}%` }}></div>
+                        </div>
+                        <span>{progress}%</span>
+                      </div>
+                    </td>
+                    <td className="p-3 text-sm">
+                      <span className={`${urgency === 'URGENT' ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
+                        {p.deliveryDate || '미정'}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+              {pmProjects.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="p-6 text-center text-gray-500">담당 프로젝트가 없습니다.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
