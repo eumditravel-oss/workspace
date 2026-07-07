@@ -1,164 +1,71 @@
 import { PersonnelCard, Project, TaskCard, ApprovalRequest, Notification, AuditLog, PersonalSchedule } from '@/types/models';
+import { 
+  samplePersonnelCards, 
+  sampleProjects, 
+  sampleTaskCards, 
+  samplePersonalSchedules 
+} from './workspaceScheduleSeed';
 
-export const mockUsers: PersonnelCard[] = [
+export const coreUsers: PersonnelCard[] = [
   {
-    id: 'u1',
-    employeeNumber: 'E001',
-    name: 'Alice Admin',
-    email: 'alice@example.com',
+    id: 'u1-super',
+    employeeNumber: 'HQ-001',
+    name: 'System Admin',
+    displayName: '최고 관리자',
+    email: 'admin@eumdi.com',
     phone: '010-0000-0001',
-    departmentId: 'd_all',
-    departmentName: 'Management',
-    position: 'Director',
+    departmentId: 'dept-hq',
+    departmentName: '본사',
+    position: '이사',
     jobTitle: 'Super Admin',
     role: 'SUPER_ADMIN',
     permissionLevel: 100,
     employmentStatus: 'ACTIVE',
-    joinedAt: '2020-01-01',
     availableWorkHoursPerDay: 8,
-    defaultWorkStartTime: '09:00',
-    defaultWorkEndTime: '18:00',
-    canManageDepartments: true,
-    canManageProjects: true,
-    canApproveSchedules: true,
-    canViewAllDepartments: true,
-    canViewDepartmentOnly: false,
-    canViewAssignedProjectsOnly: false,
-    canViewOwnTasksOnly: false,
-    createdAt: '2020-01-01T00:00:00Z',
-    updatedAt: '2020-01-01T00:00:00Z'
   },
   {
-    id: 'u2',
-    employeeNumber: 'E002',
-    name: 'Bob Manager',
-    email: 'bob@example.com',
+    id: 'user-manager-structure-vn',
+    employeeNumber: 'VN-MGR-001',
+    name: 'VN Structure Manager',
+    displayName: '구조팀 부서장',
+    email: 'vn-mgr@eumdi.com',
     phone: '010-0000-0002',
-    departmentId: 'd1',
-    departmentName: 'Design Dept',
-    position: 'Manager',
-    jobTitle: 'Dept Manager',
+    departmentId: 'dept-structure-vn',
+    departmentName: 'VN Structure Team',
+    position: '부장',
+    jobTitle: 'VN Structure Team Manager',
     role: 'DEPARTMENT_MANAGER',
     permissionLevel: 80,
     employmentStatus: 'ACTIVE',
-    joinedAt: '2021-01-01',
     availableWorkHoursPerDay: 8,
-    defaultWorkStartTime: '09:00',
-    defaultWorkEndTime: '18:00',
-    canManageDepartments: false,
-    canManageProjects: true,
-    canApproveSchedules: true,
-    canViewAllDepartments: false,
-    canViewDepartmentOnly: true,
-    canViewAssignedProjectsOnly: false,
-    canViewOwnTasksOnly: false,
-    createdAt: '2021-01-01T00:00:00Z',
-    updatedAt: '2021-01-01T00:00:00Z'
   },
   {
-    id: 'u3',
-    employeeNumber: 'E003',
-    name: 'Charlie PM',
-    email: 'charlie@example.com',
+    id: 'user-pm-structure-vn',
+    employeeNumber: 'VN-PM-001',
+    name: 'VN Structure PM',
+    displayName: '구조팀 PM',
+    email: 'vn-pm@eumdi.com',
     phone: '010-0000-0003',
-    departmentId: 'd1',
-    departmentName: 'Design Dept',
-    position: 'Senior',
-    jobTitle: 'Project Manager',
+    departmentId: 'dept-structure-vn',
+    departmentName: 'VN Structure Team',
+    position: '차장',
+    jobTitle: 'VN Structure PM',
     role: 'PM',
     permissionLevel: 50,
-    managerId: 'u2',
+    managerId: 'user-manager-structure-vn',
     employmentStatus: 'ACTIVE',
-    joinedAt: '2022-01-01',
     availableWorkHoursPerDay: 8,
-    defaultWorkStartTime: '09:00',
-    defaultWorkEndTime: '18:00',
-    canManageDepartments: false,
-    canManageProjects: false,
-    canApproveSchedules: false,
-    canViewAllDepartments: false,
-    canViewDepartmentOnly: false,
-    canViewAssignedProjectsOnly: true,
-    canViewOwnTasksOnly: false,
-    createdAt: '2022-01-01T00:00:00Z',
-    updatedAt: '2022-01-01T00:00:00Z'
-  },
-  {
-    id: 'u4',
-    employeeNumber: 'E004',
-    name: 'Dave Worker',
-    email: 'dave@example.com',
-    phone: '010-0000-0004',
-    departmentId: 'd1',
-    departmentName: 'Design Dept',
-    position: 'Staff',
-    jobTitle: 'Designer',
-    role: 'WORKER',
-    permissionLevel: 10,
-    managerId: 'u2',
-    pmId: 'u3',
-    employmentStatus: 'ACTIVE',
-    joinedAt: '2023-01-01',
-    availableWorkHoursPerDay: 8,
-    defaultWorkStartTime: '09:00',
-    defaultWorkEndTime: '18:00',
-    canManageDepartments: false,
-    canManageProjects: false,
-    canApproveSchedules: false,
-    canViewAllDepartments: false,
-    canViewDepartmentOnly: false,
-    canViewAssignedProjectsOnly: false,
-    canViewOwnTasksOnly: true,
-    createdAt: '2023-01-01T00:00:00Z',
-    updatedAt: '2023-01-01T00:00:00Z'
   }
 ];
 
-export const mockProjects: Project[] = [
-  {
-    id: 'p1',
-    clientName: 'Client A',
-    title: 'Website Redesign',
-    description: 'Redesign the main website',
-    priority: 'HIGH',
-    status: 'IN_PROGRESS',
-    departmentId: 'd1',
-    managerId: 'u2',
-    pmId: 'u3',
-    startDate: '2026-07-01',
-    dueDate: '2026-08-31',
-    progress: 30,
-    createdAt: '2026-06-25T00:00:00Z',
-    updatedAt: '2026-07-05T00:00:00Z'
-  }
-];
+export const mockUsers: PersonnelCard[] = [...coreUsers, ...samplePersonnelCards];
 
-export const mockTasks: TaskCard[] = [
-  {
-    id: 't1',
-    projectId: 'p1',
-    title: 'Design wireframes',
-    description: 'Create initial wireframes for homepage',
-    status: 'IN_PROGRESS',
-    priority: 'HIGH',
-    assigneeId: 'u4',
-    pmId: 'u3',
-    managerId: 'u2',
-    departmentId: 'd1',
-    startDate: '2026-07-05',
-    dueDate: '2026-07-10',
-    progress: 50,
-    orderIndex: 0,
-    isAdditionalTask: false,
-    approvalStatus: 'APPROVED',
-    completionStatus: 'IN_PROGRESS',
-    createdBy: 'u3',
-    createdAt: '2026-07-01T00:00:00Z',
-    updatedAt: '2026-07-05T00:00:00Z'
-  }
-];
+export const mockProjects: Project[] = [...sampleProjects];
+
+export const mockTasks: TaskCard[] = [...sampleTaskCards];
+
+export const mockPersonalSchedules: PersonalSchedule[] = [...samplePersonalSchedules];
 
 export const mockApprovalRequests: ApprovalRequest[] = [];
 export const mockNotifications: Notification[] = [];
 export const mockAuditLogs: AuditLog[] = [];
-export const mockPersonalSchedules: PersonalSchedule[] = [];

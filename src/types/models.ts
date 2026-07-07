@@ -6,31 +6,35 @@ export interface PersonnelCard {
   id: UserId;
   employeeNumber: string;
   name: string;
-  email: string;
-  phone: string;
+  displayName?: string;
+  koreanAlias?: string;
+  email?: string;
+  phone?: string;
   departmentId: DepartmentId;
-  departmentName: string;
+  departmentName?: string;
+  teamName?: string;
+  groupName?: string;
   position: string;
   jobTitle: string;
   role: Role;
-  permissionLevel: number;
+  permissionLevel?: number;
   managerId?: UserId;
   pmId?: UserId;
   employmentStatus: 'ACTIVE' | 'INACTIVE' | 'LEAVE';
-  joinedAt: string;
+  joinedAt?: string;
   profileImageUrl?: string;
   availableWorkHoursPerDay: number;
-  defaultWorkStartTime: string;
-  defaultWorkEndTime: string;
-  canManageDepartments: boolean;
-  canManageProjects: boolean;
-  canApproveSchedules: boolean;
-  canViewAllDepartments: boolean;
-  canViewDepartmentOnly: boolean;
-  canViewAssignedProjectsOnly: boolean;
-  canViewOwnTasksOnly: boolean;
-  createdAt: string;
-  updatedAt: string;
+  defaultWorkStartTime?: string;
+  defaultWorkEndTime?: string;
+  canManageDepartments?: boolean;
+  canManageProjects?: boolean;
+  canApproveSchedules?: boolean;
+  canViewAllDepartments?: boolean;
+  canViewDepartmentOnly?: boolean;
+  canViewAssignedProjectsOnly?: boolean;
+  canViewOwnTasksOnly?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type ProjectStatus = 'INTAKE_RECEIVED' | 'MANAGER_REVIEW' | 'PM_ASSIGNED' | 'SCHEDULE_DRAFTING' | 'SCHEDULE_PENDING_APPROVAL' | 'SCHEDULE_REJECTED' | 'SCHEDULE_APPROVED' | 'IN_PROGRESS' | 'QA_REVIEW' | 'COMPLETED' | 'ON_HOLD';
@@ -40,7 +44,7 @@ export interface Project {
   clientId?: string;
   clientName?: string;
   title: string;
-  description: string;
+  description?: string;
   priority: 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW';
   status: ProjectStatus;
   departmentId: DepartmentId;
@@ -50,11 +54,12 @@ export interface Project {
   dueDate?: string;
   approvedStartDate?: string;
   approvedDueDate?: string;
-  progress: number;
+  progress?: number;
   archiveStatus?: 'ACTIVE' | 'ARCHIVED' | 'RESTORED';
   isDeleted?: boolean;
-  createdAt: string;
-  updatedAt: string;
+  source?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type TaskStatus = 'TODO' | 'READY' | 'IN_PROGRESS' | 'REVIEW' | 'DONE' | 'HOLD' | 'REJECTED';
@@ -64,7 +69,7 @@ export interface TaskCard {
   id: string;
   projectId: string;
   title: string;
-  description: string;
+  description?: string;
   status: TaskStatus;
   priority: 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW';
   assigneeId?: UserId;
@@ -73,16 +78,20 @@ export interface TaskCard {
   departmentId: DepartmentId;
   startDate?: string;
   dueDate?: string;
-  progress: number;
+  progress?: number;
   orderIndex: number;
   parentTaskId?: string;
-  isAdditionalTask: boolean;
+  isAdditionalTask?: boolean;
   approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
   completionStatus?: CompletionStatus;
   isDeleted?: boolean;
-  createdBy: UserId;
-  createdAt: string;
-  updatedAt: string;
+  sourceType?: string;
+  sourceSheet?: string;
+  sourceMonth?: number;
+  sourceAssignmentIds?: string[];
+  createdBy?: UserId;
+  createdAt?: string;
+  updatedAt?: string;
   completedAt?: string;
 }
 
@@ -108,7 +117,7 @@ export interface ApprovalRequest {
   updatedAt: string;
 }
 
-export type ScheduleType = 'PERSONAL_WORK' | 'MEETING' | 'REVIEW' | 'CLIENT_MEETING' | 'INTERNAL_REPORT' | 'PM_PLANNING' | 'MANAGER_REVIEW' | 'DEPARTMENT_MANAGEMENT' | 'ETC';
+export type ScheduleType = 'PERSONAL_WORK' | 'MEETING' | 'REVIEW' | 'CLIENT_MEETING' | 'INTERNAL_REPORT' | 'PM_PLANNING' | 'MANAGER_REVIEW' | 'DEPARTMENT_MANAGEMENT' | 'ETC' | 'OFF';
 
 export interface PersonalSchedule {
   id: string;
@@ -116,23 +125,25 @@ export interface PersonalSchedule {
   ownerRole: Role;
   departmentId: DepartmentId;
   title: string;
-  description: string;
+  description?: string;
   scheduleType: ScheduleType;
   startDateTime: string;
   endDateTime: string;
   isAllDay: boolean;
   visibility: 'PRIVATE' | 'DEPARTMENT' | 'PROJECT_MEMBERS' | 'MANAGER_ONLY' | 'SUPER_ADMIN_ONLY';
   status: 'SCHEDULED' | 'CHANGED' | 'CANCELLED' | 'COMPLETED';
-  createdBy: UserId;
-  updatedBy: UserId;
+  createdBy?: UserId;
+  updatedBy?: UserId;
   changeNotifyTargetIds?: UserId[];
-  requiresApproval: boolean;
-  approvalStatus: 'NOT_REQUIRED' | 'PENDING' | 'APPROVED' | 'REJECTED';
+  requiresApproval?: boolean;
+  approvalStatus?: 'NOT_REQUIRED' | 'PENDING' | 'APPROVED' | 'REJECTED';
   relatedProjectId?: string;
   relatedTaskId?: string;
+  sourceSheet?: string;
+  sourceMonth?: number;
   isDeleted?: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Notification {
