@@ -292,3 +292,39 @@ export interface DeliveryDateChange {
   reason: string;
   createdAt: string;
 }
+
+export interface ImportPreviewSession {
+  id: string;
+  fileName: string;
+  filePath?: string;
+  targetSheet: string;
+  targetMonths: number[];
+  status: 'DETECTED' | 'ANALYZED' | 'VALIDATED' | 'READY_TO_APPLY' | 'APPLIED' | 'FAILED' | 'CANCELLED';
+  totalRows: number;
+  totalAssignments: number;
+  totalProjects: number;
+  totalPersonnel: number;
+  totalWarnings: number;
+  totalErrors: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ImportValidationIssue {
+  id: string;
+  importSessionId: string;
+  severity: 'INFO' | 'WARNING' | 'ERROR' | 'BLOCKER';
+  issueType: string;
+  title: string;
+  description: string;
+  sourceSheet?: string;
+  sourceMonth?: number;
+  sourceRow?: number;
+  sourceColumn?: number;
+  suggestedFix?: string;
+  status: 'OPEN' | 'RESOLVED' | 'IGNORED';
+  resolvedBy?: string;
+  resolvedAt?: string;
+}
+
