@@ -3,7 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import { LayoutDashboard, Briefcase, Calendar, CheckSquare, Bell, Settings, ClipboardList, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Calendar, CheckSquare, Bell, Settings, ClipboardList, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 
 export const Sidebar = () => {
   const pathname = usePathname();
@@ -15,6 +15,7 @@ export const Sidebar = () => {
     { name: '수주 프로젝트', path: '/projects/intake', icon: Briefcase, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER'] },
     { name: '프로젝트 보드', path: '/projects', icon: ClipboardList, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },
     { name: '일정 승인', path: '/approvals', icon: CheckSquare, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER'] },
+    { name: '충돌 관리', path: '/conflicts', icon: AlertTriangle, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM'] },
     { name: '내 업무', path: '/tasks/my', icon: CheckSquare, roles: ['PM', 'WORKER'] },
     { name: '직원 일정표', path: '/schedules', icon: Calendar, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM'] },
     { name: '알림 센터', path: '/notifications', icon: Bell, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },

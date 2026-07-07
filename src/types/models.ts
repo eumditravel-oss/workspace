@@ -221,6 +221,24 @@ export interface PersonalSchedule {
   updatedAt?: string;
 }
 
+export type ConflictResolutionStatus = 'PENDING' | 'RESOLVED_DELAYED' | 'RESOLVED_REASSIGNED' | 'RESOLVED_OVERLAP_ALLOWED' | 'RESOLVED_OVERTIME_APPROVED' | 'RESOLVED_ESCALATED';
+
+export interface ScheduleConflict {
+  id: string;
+  userId: UserId;
+  startDate: string;
+  endDate: string;
+  conflictType: 'LEAVE_OVERLAP' | 'PROJECT_OVERLAP' | 'WORK_OVERLOAD';
+  relatedTaskIds: string[];
+  relatedScheduleIds: string[];
+  description: string;
+  status: ConflictResolutionStatus;
+  resolvedBy?: UserId;
+  resolutionComment?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Notification {
   id: string;
   userId: UserId;

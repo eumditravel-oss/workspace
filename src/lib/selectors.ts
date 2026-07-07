@@ -1,4 +1,4 @@
-import { TaskCard, Project, PersonnelCard, TaskBlocker, ProgressUpdate } from '@/types/models';
+import { TaskCard, Project, PersonnelCard, TaskBlocker, ProgressUpdate, PersonalSchedule, ScheduleConflict } from '@/types/models';
 
 export type DetailedLineStage = 'WAITING' | 'QC_PM_START' | 'IN_PROGRESS' | 'PM_REVIEW' | 'QC_REVIEW' | 'DONE';
 
@@ -141,4 +141,69 @@ export const getProjectOverallProgress = (project: Project, tasks: TaskCard[]): 
   if (projectTasks.length === 0) return 0;
   const total = projectTasks.reduce((sum, t) => sum + calculateTaskProgress(t), 0);
   return Math.round(total / projectTasks.length);
+};
+
+export const detectConflicts = (tasks: TaskCard[], schedules: PersonalSchedule[]): Omit<ScheduleConflict, 'id' | 'createdAt' | 'updatedAt'>[] => {
+  const conflicts: Omit<ScheduleConflict, 'id' | 'createdAt' | 'updatedAt'>[] = [];
+  
+  const userTasksMap = new Map<string, TaskCard[]>();
+  tasks.filter(t => t.status !== 'DONE' && t.assigneeId && t.startDate && t.dueDate).forEach(t => {
+    if (!userTasksMap.has(t.assigneeId!)) userTasksMap.set(t.assigneeId!, []);
+    userTasksMap.get(t.assigneeId!)!.push(t);
+  });
+
+  const userSchedulesMap = new Map<string, PersonalSchedule[]>();
+  schedules.filter(s => s.status === 'SCHEDULED' || s.status === 'CHANGED').forEach(s => {
+    if (!userSchedulesMap.has(s.userId)) userSchedulesMap.set(s.userId, []);
+    userSchedulesMap.get(s.userId)!.push(s);
+  });
+
+  // 1. Task Overlap (WORK_OVERLOAD)
+  for (const [userId, userTasks] of userTasksMap.entries()) {
+    for (let i = 0; i < userTasks.length; i++) {
+      for (let j = i + 1; j < userTasks.length; j++) {
+        const t1 = userTasks[i];
+        const t2 = userTasks[j];
+        if (t1.startDate! <= t2.dueDate! && t1.dueDate! >= t2.startDate!) {
+          conflicts.push({
+            userId,
+            startDate: t1.startDate! > t2.startDate! ? t1.startDate! : t2.startDate!,
+            endDate: t1.dueDate! < t2.dueDate! ? t1.dueDate! : t2.dueDate!,
+            conflictType: 'WORK_OVERLOAD',
+            relatedTaskIds: [t1.id, t2.id],
+            relatedScheduleIds: [],
+            description: `[${t1.title}] 작업과 [${t2.title}] 작업 일정이 겹칩니다.`,
+            status: 'PENDING'
+          });
+        }
+      }
+    }
+  }
+
+  // 2. Schedule vs Task (LEAVE_OVERLAP)
+  for (const [userId, userTasks] of userTasksMap.entries()) {
+    const userSchedules = userSchedulesMap.get(userId) || [];
+    const outOfOfficeSchedules = userSchedules.filter(s => ['OFF', 'CLIENT_MEETING', 'PERSONAL_WORK'].includes(s.scheduleType));
+    
+    for (const task of userTasks) {
+      for (const schedule of outOfOfficeSchedules) {
+        const schedStart = schedule.startDateTime.split('T')[0];
+        const schedEnd = schedule.endDateTime.split('T')[0];
+        if (task.startDate! <= schedEnd && task.dueDate! >= schedStart) {
+          conflicts.push({
+            userId,
+            startDate: task.startDate! > schedStart ? task.startDate! : schedStart,
+            endDate: task.dueDate! < schedEnd ? task.dueDate! : schedEnd,
+            conflictType: 'LEAVE_OVERLAP',
+            relatedTaskIds: [task.id],
+            relatedScheduleIds: [schedule.id],
+            description: `[${schedule.title}] 일정과 [${task.title}] 작업 일정이 겹칩니다.`,
+            status: 'PENDING'
+          });
+        }
+      }
+    }
+  }
+
+  return conflicts;
 };
