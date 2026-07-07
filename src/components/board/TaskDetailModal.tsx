@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { TaskCard, ProgressUpdate } from '@/types/models';
 import { useTaskStore } from '@/store/taskStore';
 import { useAuthStore } from '@/store/authStore';
-import { X, CheckSquare, Clock, FileText, History, ListTodo } from 'lucide-react';
+import { X, CheckSquare, Clock, FileText, History, ListTodo, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { calculateTaskHealthScore } from '@/lib/selectors';
 
 interface TaskDetailModalProps {
   task: TaskCard;
@@ -14,14 +15,21 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
   const [activeTab, setActiveTab] = useState('OVERVIEW');
   const [newProgress, setNewProgress] = useState(task.progress || 0);
   const [memo, setMemo] = useState('');
+  const [newBlocker, setNewBlocker] = useState('');
   const [error, setError] = useState('');
   
   const currentUser = useAuthStore(state => state.currentUser);
-  const { updateTaskProgress, progressUpdates, checklists, artifacts } = useTaskStore();
+  const { updateTaskProgress, progressUpdates, checklists, artifacts, blockers, addBlocker, resolveBlocker } = useTaskStore();
 
   const taskUpdates = progressUpdates.filter(u => u.taskId === task.id);
   const taskChecklists = checklists.filter(c => c.taskId === task.id);
   const taskArtifacts = artifacts.filter(a => a.taskId === task.id);
+  const taskBlockers = blockers.filter(b => b.taskId === task.id);
+  
+  const healthScore = calculateTaskHealthScore(task, blockers, progressUpdates);
+  const healthColor = healthScore >= 80 ? 'text-green-600 bg-green-50' 
+                    : healthScore >= 50 ? 'text-yellow-600 bg-yellow-50' 
+                    : 'text-red-600 bg-red-50';
 
   const handleUpdateProgress = () => {
     const currentProgress = task.progress || 0;
@@ -40,6 +48,17 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
     alert('진행 내용이 기록되었습니다.');
   };
 
+  const handleAddBlocker = () => {
+    if (newBlocker.trim() === '') return;
+    if (!currentUser) return;
+    addBlocker({
+      taskId: task.id,
+      reporterId: currentUser.id,
+      description: newBlocker
+    });
+    setNewBlocker('');
+  };
+
   const tabs = [
     { id: 'OVERVIEW', label: '개요', icon: <FileText className="w-4 h-4" /> },
     { id: 'PROGRESS', label: '진행 내용', icon: <Clock className="w-4 h-4" /> },
@@ -56,8 +75,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
         {/* Header */}
         <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-gray-50/50">
           <div>
-            <div className="text-xs text-gray-500 font-medium mb-1">
-              Project {task.projectId} · {task.status}
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs text-gray-500 font-medium">Project {task.projectId} · {task.status}</span>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${healthColor}`}>
+                ♥ Health: {healthScore}
+              </span>
             </div>
             <h2 className="text-xl font-bold text-gray-800">{task.title}</h2>
           </div>
@@ -150,6 +172,62 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                   >
                     기록 저장
                   </button>
+                </div>
+              </div>
+
+              {/* Blockers */}
+              <div className="bg-white p-5 rounded-xl border border-red-100 shadow-sm">
+                <h3 className="text-sm font-bold text-red-700 mb-4 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" /> 
+                  장애 요소 (Blockers)
+                </h3>
+                
+                <div className="flex gap-2 mb-4">
+                  <input 
+                    type="text" 
+                    value={newBlocker}
+                    onChange={(e) => setNewBlocker(e.target.value)}
+                    placeholder="작업 진행을 막고 있는 장애물을 입력하세요"
+                    className="flex-1 p-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-400 outline-none"
+                  />
+                  <button 
+                    onClick={handleAddBlocker}
+                    className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors"
+                  >
+                    추가
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {taskBlockers.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-2">등록된 장애 요소가 없습니다.</p>
+                  ) : (
+                    taskBlockers.map(blocker => (
+                      <div key={blocker.id} className={`p-3 border rounded-lg flex justify-between items-start ${blocker.status === 'OPEN' ? 'border-red-200 bg-red-50/50' : 'border-green-200 bg-green-50/50 opacity-60'}`}>
+                        <div>
+                          <p className={`text-sm ${blocker.status === 'OPEN' ? 'text-red-800 font-medium' : 'text-green-800 line-through'}`}>
+                            {blocker.description}
+                          </p>
+                          <div className="text-xs mt-1 text-gray-500">
+                            {blocker.reporterId} · {new Date(blocker.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                        {blocker.status === 'OPEN' && (
+                          <button 
+                            onClick={() => currentUser && resolveBlocker(blocker.id, currentUser.id)}
+                            className="text-xs bg-white text-green-600 px-2 py-1 border border-green-200 rounded font-medium hover:bg-green-50"
+                          >
+                            해결 완료
+                          </button>
+                        )}
+                        {blocker.status === 'RESOLVED' && (
+                          <span className="text-xs text-green-600 flex items-center gap-1 font-medium">
+                            <CheckCircle2 className="w-3 h-3" /> 해결됨
+                          </span>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 

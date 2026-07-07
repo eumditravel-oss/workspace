@@ -125,6 +125,17 @@ export interface TaskArtifact {
   createdAt: string;
 }
 
+export interface TaskBlocker {
+  id: string;
+  taskId: string;
+  reporterId: UserId;
+  description: string;
+  status: 'OPEN' | 'RESOLVED';
+  createdAt: string;
+  resolvedAt?: string;
+  resolvedBy?: UserId;
+}
+
 export type ApprovalRequestType = 'SCHEDULE_APPROVAL' | 'SCHEDULE_REJECTION' | 'ADDITIONAL_TASK' | 'OVERTIME_REQUEST' | 'DEADLINE_EXTENSION' | 'TASK_REORDER' | 'PM_ASSIGNMENT' | 'MANPOWER_SUPPORT' | 'PRIORITY_CHANGE' | 'SCHEDULE_REPLAN';
 
 export interface ApprovalRequest {

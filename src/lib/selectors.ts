@@ -1,4 +1,4 @@
-import { TaskCard, Project, PersonnelCard } from '@/types/models';
+import { TaskCard, Project, PersonnelCard, TaskBlocker, ProgressUpdate } from '@/types/models';
 
 export const calculateTaskProgress = (task: TaskCard): number => {
   if (task.status === 'DONE' || task.completionStatus === 'COMPLETED') return 100;
@@ -29,6 +29,45 @@ export const calculateScheduleProgress = (task: TaskCard): number => {
   const elapsed = now - start;
   
   return Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
+};
+
+export const calculateTaskHealthScore = (task: TaskCard, blockers: TaskBlocker[], updates: ProgressUpdate[]): number => {
+  if (task.status === 'DONE' || task.completionStatus === 'COMPLETED') return 100;
+  
+  let score = 100;
+
+  // 1. Unresolved blockers penalty
+  const openBlockers = blockers.filter(b => b.taskId === task.id && b.status === 'OPEN');
+  if (openBlockers.length > 0) {
+    score -= 20;
+  }
+
+  // 2. Overdue penalty
+  if (task.dueDate) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(task.dueDate);
+    if (today > dueDate) {
+      const diffTime = Math.abs(today.getTime() - dueDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      score -= (diffDays * 10);
+    }
+  }
+
+  // 3. Stale update penalty (if in progress and no updates for 3 days)
+  if (task.status === 'IN_PROGRESS' || task.status === 'REVIEW') {
+    const taskUpdates = updates.filter(u => u.taskId === task.id).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const lastUpdateDate = taskUpdates.length > 0 ? new Date(taskUpdates[0].createdAt) : (task.updatedAt ? new Date(task.updatedAt) : new Date(task.createdAt || Date.now()));
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - lastUpdateDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays >= 3) {
+      score -= 15;
+    }
+  }
+
+  return Math.max(0, Math.min(100, score));
 };
 
 export const calculateProjectProgress = (tasks: TaskCard[]): number => {

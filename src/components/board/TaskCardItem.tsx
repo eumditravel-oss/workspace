@@ -5,7 +5,8 @@ import { Clock, User, AlertCircle, FileText, CheckCircle2, AlertTriangle, Calend
 import { useAuthStore } from '@/store/authStore';
 import { useProjectStore } from '@/store/projectStore';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { calculateTaskProgress } from '@/lib/selectors';
+import { calculateTaskProgress, calculateTaskHealthScore } from '@/lib/selectors';
+import { useTaskStore } from '@/store/taskStore';
 
 interface TaskCardItemProps {
   task: TaskCard;
@@ -19,6 +20,8 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
 
   const users = useAuthStore(state => state.users);
   const projects = useProjectStore(state => state.projects);
+  const blockers = useTaskStore(state => state.blockers);
+  const progressUpdates = useTaskStore(state => state.progressUpdates);
 
   const assignee = users.find(u => u.id === task.assigneeId);
   const pm = users.find(u => u.id === task.pmId);
@@ -37,12 +40,14 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
     LOW: 'bg-gray-100 text-gray-700 border-gray-200',
   };
 
-  const isDelayed = useMemo(() => {
-    if (!task.dueDate) return false;
-    const today = new Date().toISOString().split('T')[0];
-    return task.dueDate < today && task.status !== 'DONE';
-  }, [task.dueDate, task.status]);
+  const isDelayed = task.dueDate ? new Date(task.dueDate) < new Date() && task.status !== 'DONE' : false;
+  
+  const healthScore = calculateTaskHealthScore(task, blockers, progressUpdates);
+  const healthColor = healthScore >= 80 ? 'text-green-600 bg-green-50 border-green-200' 
+                    : healthScore >= 50 ? 'text-yellow-600 bg-yellow-50 border-yellow-200' 
+                    : 'text-red-600 bg-red-50 border-red-200';
 
+  const hasOpenBlockers = blockers.some(b => b.taskId === task.id && b.status === 'OPEN');
   const isPendingApproval = task.approvalStatus === 'PENDING';
 
   return (
@@ -55,10 +60,18 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
       className={`bg-white p-3 rounded-lg shadow-sm border ${isDragging ? 'border-blue-400 shadow-md ring-2 ring-blue-100' : 'border-gray-200'} cursor-grab active:cursor-grabbing hover:shadow-md hover:border-gray-300 transition-all group`}
     >
       <div className="flex justify-between items-start mb-2 gap-1 flex-wrap">
-        <div className="flex gap-1 flex-wrap">
-          {task.priority === 'URGENT' && (
-            <span className={`text-[10px] px-1.5 py-0.5 rounded border font-bold ${priorityColors[task.priority]}`}>
-              긴급
+        <div className="flex gap-1.5 flex-wrap flex-1">
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm border ${healthColor}`}>
+            ♥ {healthScore}
+          </span>
+          {hasOpenBlockers && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm border text-red-600 bg-red-50 border-red-200 flex items-center gap-0.5">
+              <AlertCircle className="w-3 h-3" /> Blocker
+            </span>
+          )}
+          {task.isAdditionalTask && (
+            <span className="text-[10px] font-bold bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded shadow-sm border border-purple-100">
+              추가업무
             </span>
           )}
           {isDelayed && (

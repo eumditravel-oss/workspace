@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { TaskCard, TaskStatus, ProgressUpdate, TaskChecklistItem, TaskArtifact, UserId } from '@/types/models';
+import { TaskCard, TaskStatus, ProgressUpdate, TaskChecklistItem, TaskArtifact, TaskBlocker, UserId } from '@/types/models';
 import { mockTasks } from '@/data/mockData';
 
 interface TaskState {
@@ -7,6 +7,7 @@ interface TaskState {
   progressUpdates: ProgressUpdate[];
   checklists: TaskChecklistItem[];
   artifacts: TaskArtifact[];
+  blockers: TaskBlocker[];
   updateTaskStatus: (taskId: string, newStatus: TaskStatus) => void;
   updateTaskProgress: (taskId: string, newProgress: number, authorId: UserId, memo: string, blocker?: string) => void;
   requestTaskCompletion: (taskId: string, memo: string) => void;
@@ -14,6 +15,8 @@ interface TaskState {
   addChecklistItem: (item: Omit<TaskChecklistItem, 'id'>) => void;
   toggleChecklistItem: (itemId: string, completedBy: UserId) => void;
   addArtifact: (artifact: Omit<TaskArtifact, 'id' | 'createdAt'>) => void;
+  addBlocker: (blocker: Omit<TaskBlocker, 'id' | 'status' | 'createdAt'>) => void;
+  resolveBlocker: (blockerId: string, resolvedBy: UserId) => void;
 }
 
 export const useTaskStore = create<TaskState>((set) => ({
@@ -24,6 +27,7 @@ export const useTaskStore = create<TaskState>((set) => ({
     { id: 'chk2', taskId: '1', content: '퍼블리싱 적용', isCompleted: false },
   ],
   artifacts: [],
+  blockers: [],
   updateTaskStatus: (taskId, newStatus) => set((state) => ({
     tasks: state.tasks.map(t => 
       t.id === taskId 
@@ -95,5 +99,15 @@ export const useTaskStore = create<TaskState>((set) => ({
   })),
   addArtifact: (artifact) => set((state) => ({
     artifacts: [...state.artifacts, { ...artifact, id: `art_${Date.now()}`, createdAt: new Date().toISOString() }]
+  })),
+  addBlocker: (blocker) => set((state) => ({
+    blockers: [...state.blockers, { ...blocker, id: `blk_${Date.now()}`, status: 'OPEN', createdAt: new Date().toISOString() }]
+  })),
+  resolveBlocker: (blockerId, resolvedBy) => set((state) => ({
+    blockers: state.blockers.map(b => 
+      b.id === blockerId 
+        ? { ...b, status: 'RESOLVED', resolvedAt: new Date().toISOString(), resolvedBy } 
+        : b
+    )
   }))
 }));
