@@ -1,0 +1,242 @@
+import React, { useState } from 'react';
+import { TaskCard, ProgressUpdate } from '@/types/models';
+import { useTaskStore } from '@/store/taskStore';
+import { useAuthStore } from '@/store/authStore';
+import { X, CheckSquare, Clock, FileText, History, ListTodo } from 'lucide-react';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+
+interface TaskDetailModalProps {
+  task: TaskCard;
+  onClose: () => void;
+}
+
+export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose }) => {
+  const [activeTab, setActiveTab] = useState('OVERVIEW');
+  const [newProgress, setNewProgress] = useState(task.progress || 0);
+  const [memo, setMemo] = useState('');
+  const [error, setError] = useState('');
+  
+  const currentUser = useAuthStore(state => state.currentUser);
+  const { updateTaskProgress, progressUpdates, checklists, artifacts } = useTaskStore();
+
+  const taskUpdates = progressUpdates.filter(u => u.taskId === task.id);
+  const taskChecklists = checklists.filter(c => c.taskId === task.id);
+  const taskArtifacts = artifacts.filter(a => a.taskId === task.id);
+
+  const handleUpdateProgress = () => {
+    const currentProgress = task.progress || 0;
+    const diff = Math.abs(newProgress - currentProgress);
+    
+    if (diff >= 20 && memo.trim().length < 5) {
+      setError('진행률이 크게 변경되었습니다. 진행 내용을 자세히 메모해주세요 (5자 이상).');
+      return;
+    }
+
+    if (!currentUser) return;
+
+    updateTaskProgress(task.id, newProgress, currentUser.id, memo);
+    setMemo('');
+    setError('');
+    alert('진행 내용이 기록되었습니다.');
+  };
+
+  const tabs = [
+    { id: 'OVERVIEW', label: '개요', icon: <FileText className="w-4 h-4" /> },
+    { id: 'PROGRESS', label: '진행 내용', icon: <Clock className="w-4 h-4" /> },
+    { id: 'CHECKLIST', label: '체크리스트', icon: <CheckSquare className="w-4 h-4" /> },
+    { id: 'APPROVALS', label: '승인/신청', icon: <ListTodo className="w-4 h-4" /> },
+    { id: 'ARTIFACTS', label: '산출물', icon: <FileText className="w-4 h-4" /> },
+    { id: 'HISTORY', label: '이력', icon: <History className="w-4 h-4" /> },
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        
+        {/* Header */}
+        <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-gray-50/50">
+          <div>
+            <div className="text-xs text-gray-500 font-medium mb-1">
+              Project {task.projectId} · {task.status}
+            </div>
+            <h2 className="text-xl font-bold text-gray-800">{task.title}</h2>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200 px-4 bg-white">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.id 
+                  ? 'border-blue-500 text-blue-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-6 bg-gray-50/30 custom-scrollbar">
+          
+          {activeTab === 'OVERVIEW' && (
+            <div className="space-y-6">
+              <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">설명</h3>
+                <p className="text-sm text-gray-600 whitespace-pre-wrap">{task.description || '설명이 없습니다.'}</p>
+              </div>
+              
+              <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex gap-12">
+                <div>
+                  <div className="text-xs text-gray-500 mb-1">담당자</div>
+                  <div className="font-medium text-sm">{task.assigneeId || '미배정'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 mb-1">마감일</div>
+                  <div className="font-medium text-sm text-red-600">{task.dueDate || '-'}</div>
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-gray-500 mb-2">진행률</div>
+                  <ProgressBar progress={task.progress || 0} showLabel colorClass="bg-blue-500" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'PROGRESS' && (
+            <div className="space-y-6 max-w-2xl mx-auto">
+              {/* Update Form */}
+              <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-700 mb-4">진행 상황 업데이트</h3>
+                
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600 font-medium">새 진행률</span>
+                    <span className="font-bold text-blue-600">{newProgress}%</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0" max="100" step="5"
+                    value={newProgress}
+                    onChange={(e) => setNewProgress(Number(e.target.value))}
+                    className="w-full accent-blue-600"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm text-gray-600 font-medium mb-2">진행 메모 (작업 내용, 특이사항)</label>
+                  <textarea 
+                    value={memo}
+                    onChange={(e) => setMemo(e.target.value)}
+                    className={`w-full p-3 text-sm border rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-colors ${error ? 'border-red-400' : 'border-gray-200'}`}
+                    rows={3}
+                    placeholder="오늘 진행한 작업 내용이나 막힌 부분을 작성해주세요."
+                  />
+                  {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+                </div>
+
+                <div className="flex justify-end">
+                  <button 
+                    onClick={handleUpdateProgress}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+                  >
+                    기록 저장
+                  </button>
+                </div>
+              </div>
+
+              {/* History Timeline */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-gray-700 border-b pb-2">진행 이력 ({taskUpdates.length})</h3>
+                {taskUpdates.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">기록된 진행 내용이 없습니다.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {taskUpdates.map(update => (
+                      <div key={update.id} className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm text-gray-800">{update.authorId}</span>
+                            <span className="text-xs text-gray-400">{new Date(update.createdAt).toLocaleString()}</span>
+                          </div>
+                          <div className="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                            {update.progressBefore}% → <span className="text-blue-600">{update.progressAfter}%</span>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap mt-2">{update.workSummary || '내용 없음'}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'CHECKLIST' && (
+            <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-700 mb-4">체크리스트</h3>
+              {taskChecklists.length === 0 ? (
+                <p className="text-sm text-gray-400">등록된 항목이 없습니다.</p>
+              ) : (
+                <div className="space-y-2">
+                  {taskChecklists.map(item => (
+                    <div key={item.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
+                      <input type="checkbox" checked={item.isCompleted} readOnly className="w-4 h-4 accent-blue-600" />
+                      <span className={`text-sm ${item.isCompleted ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                        {item.content}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'APPROVALS' && (
+            <div className="text-center py-10 text-sm text-gray-500">
+              승인/신청 이력 연동 준비 중
+            </div>
+          )}
+
+          {activeTab === 'ARTIFACTS' && (
+            <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-700 mb-4">산출물 목록</h3>
+              {taskArtifacts.length === 0 ? (
+                <p className="text-sm text-gray-400">등록된 산출물이 없습니다.</p>
+              ) : (
+                <div className="space-y-2">
+                  {taskArtifacts.map(art => (
+                    <div key={art.id} className="flex justify-between items-center p-3 border rounded-lg hover:border-blue-200 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded">{art.type}</span>
+                        <a href={art.url} target="_blank" rel="noreferrer" className="text-sm text-gray-800 hover:text-blue-600 font-medium">
+                          {art.title}
+                        </a>
+                      </div>
+                      <span className="text-xs text-gray-400">{new Date(art.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'HISTORY' && (
+            <div className="text-center py-10 text-sm text-gray-500">
+              AuditLog 통합 이력 뷰 준비 중
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+};

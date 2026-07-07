@@ -9,7 +9,7 @@ import { calculateTaskProgress } from '@/lib/selectors';
 
 interface TaskCardItemProps {
   task: TaskCard;
-  onClick?: (task: TaskCard) => void;
+  onClick?: () => void;
 }
 
 export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => {
@@ -51,7 +51,7 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
       style={style}
       {...listeners}
       {...attributes}
-      onClick={() => onClick && onClick(task)}
+      onClick={() => onClick?.()}
       className={`bg-white p-3 rounded-lg shadow-sm border ${isDragging ? 'border-blue-400 shadow-md ring-2 ring-blue-100' : 'border-gray-200'} cursor-grab active:cursor-grabbing hover:shadow-md hover:border-gray-300 transition-all group`}
     >
       <div className="flex justify-between items-start mb-2 gap-1 flex-wrap">

@@ -95,6 +95,36 @@ export interface TaskCard {
   completedAt?: string;
 }
 
+export interface ProgressUpdate {
+  id: string;
+  taskId: string;
+  authorId: UserId;
+  progressBefore: number;
+  progressAfter: number;
+  workSummary: string;
+  blocker?: string;
+  createdAt: string;
+}
+
+export interface TaskChecklistItem {
+  id: string;
+  taskId: string;
+  content: string;
+  isCompleted: boolean;
+  completedAt?: string;
+  completedBy?: UserId;
+}
+
+export interface TaskArtifact {
+  id: string;
+  taskId: string;
+  title: string;
+  url: string;
+  type: 'LINK' | 'FILE' | 'GITHUB' | 'FIGMA' | 'DOCUMENT';
+  addedBy: UserId;
+  createdAt: string;
+}
+
 export type ApprovalRequestType = 'SCHEDULE_APPROVAL' | 'SCHEDULE_REJECTION' | 'ADDITIONAL_TASK' | 'OVERTIME_REQUEST' | 'DEADLINE_EXTENSION' | 'TASK_REORDER' | 'PM_ASSIGNMENT' | 'MANPOWER_SUPPORT' | 'PRIORITY_CHANGE' | 'SCHEDULE_REPLAN';
 
 export interface ApprovalRequest {

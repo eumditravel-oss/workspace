@@ -1,16 +1,29 @@
 import { create } from 'zustand';
-import { TaskCard, TaskStatus } from '@/types/models';
+import { TaskCard, TaskStatus, ProgressUpdate, TaskChecklistItem, TaskArtifact, UserId } from '@/types/models';
 import { mockTasks } from '@/data/mockData';
 
 interface TaskState {
   tasks: TaskCard[];
+  progressUpdates: ProgressUpdate[];
+  checklists: TaskChecklistItem[];
+  artifacts: TaskArtifact[];
   updateTaskStatus: (taskId: string, newStatus: TaskStatus) => void;
+  updateTaskProgress: (taskId: string, newProgress: number, authorId: UserId, memo: string, blocker?: string) => void;
   requestTaskCompletion: (taskId: string, memo: string) => void;
   reviewTaskCompletion: (taskId: string, isApproved: boolean) => void;
+  addChecklistItem: (item: Omit<TaskChecklistItem, 'id'>) => void;
+  toggleChecklistItem: (itemId: string, completedBy: UserId) => void;
+  addArtifact: (artifact: Omit<TaskArtifact, 'id' | 'createdAt'>) => void;
 }
 
 export const useTaskStore = create<TaskState>((set) => ({
   tasks: [...mockTasks],
+  progressUpdates: [],
+  checklists: [
+    { id: 'chk1', taskId: '1', content: 'UI 디자인 시안 확인', isCompleted: true, completedAt: new Date().toISOString() },
+    { id: 'chk2', taskId: '1', content: '퍼블리싱 적용', isCompleted: false },
+  ],
+  artifacts: [],
   updateTaskStatus: (taskId, newStatus) => set((state) => ({
     tasks: state.tasks.map(t => 
       t.id === taskId 
@@ -42,5 +55,45 @@ export const useTaskStore = create<TaskState>((set) => ({
           }
         : t
     )
+  })),
+  updateTaskProgress: (taskId, newProgress, authorId, memo, blocker) => set((state) => {
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task) return state;
+
+    const progressBefore = task.progress || 0;
+    
+    // Add ProgressUpdate record
+    const newUpdate: ProgressUpdate = {
+      id: `pu_${Date.now()}`,
+      taskId,
+      authorId,
+      progressBefore,
+      progressAfter: newProgress,
+      workSummary: memo,
+      blocker,
+      createdAt: new Date().toISOString()
+    };
+
+    return {
+      progressUpdates: [newUpdate, ...state.progressUpdates],
+      tasks: state.tasks.map(t =>
+        t.id === taskId
+          ? { ...t, progress: newProgress, updatedAt: new Date().toISOString() }
+          : t
+      )
+    };
+  }),
+  addChecklistItem: (item) => set((state) => ({
+    checklists: [...state.checklists, { ...item, id: `chk_${Date.now()}` }]
+  })),
+  toggleChecklistItem: (itemId, completedBy) => set((state) => ({
+    checklists: state.checklists.map(c => 
+      c.id === itemId 
+        ? { ...c, isCompleted: !c.isCompleted, completedBy: !c.isCompleted ? completedBy : undefined, completedAt: !c.isCompleted ? new Date().toISOString() : undefined }
+        : c
+    )
+  })),
+  addArtifact: (artifact) => set((state) => ({
+    artifacts: [...state.artifacts, { ...artifact, id: `art_${Date.now()}`, createdAt: new Date().toISOString() }]
   }))
 }));

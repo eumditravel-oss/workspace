@@ -4,6 +4,7 @@ import React from 'react';
 import { DndContext, DragEndEvent, closestCorners } from '@dnd-kit/core';
 import { TaskCard, TaskStatus, PersonnelCard } from '@/types/models';
 import { Column } from './Column';
+import { TaskDetailModal } from './TaskDetailModal';
 
 export type BoardViewType = 'DETAILED' | 'PIPELINE' | 'COLLAB' | 'MONTHLY';
 
@@ -39,6 +40,8 @@ const COLLAB_COLUMNS = [
 ];
 
 export const Board: React.FC<BoardProps> = ({ tasks, onMoveTask, currentUser, viewType = 'DETAILED' }) => {
+  const [selectedTask, setSelectedTask] = React.useState<TaskCard | null>(null);
+
   const columns = viewType === 'PIPELINE' ? PIPELINE_COLUMNS 
                 : viewType === 'COLLAB' ? COLLAB_COLUMNS 
                 : DETAILED_COLUMNS;
@@ -72,9 +75,16 @@ export const Board: React.FC<BoardProps> = ({ tasks, onMoveTask, currentUser, vi
             id={col.id as TaskStatus} 
             title={col.title} 
             tasks={tasks.filter(t => t.status === col.id)} 
+            onTaskClick={setSelectedTask}
           />
         ))}
       </div>
+      {selectedTask && (
+        <TaskDetailModal 
+          task={selectedTask} 
+          onClose={() => setSelectedTask(null)} 
+        />
+      )}
     </DndContext>
   );
 };

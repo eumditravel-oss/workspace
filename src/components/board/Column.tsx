@@ -9,9 +9,10 @@ interface ColumnProps {
   id: TaskStatus;
   title: string;
   tasks: TaskCard[];
+  onTaskClick?: (task: TaskCard) => void;
 }
 
-export const Column: React.FC<ColumnProps> = ({ id, title, tasks }) => {
+export const Column: React.FC<ColumnProps> = ({ id, title, tasks, onTaskClick }) => {
   const { setNodeRef } = useDroppable({ id });
   
   const { avgProgress, delayedCount, urgentCount, pendingCount } = getColumnSummary(tasks);
@@ -38,7 +39,7 @@ export const Column: React.FC<ColumnProps> = ({ id, title, tasks }) => {
       
       <div ref={setNodeRef} className="flex-1 overflow-y-auto space-y-3 min-h-[100px] pr-1 pb-4 custom-scrollbar">
         {tasks.map(task => (
-          <TaskCardItem key={task.id} task={task} />
+          <TaskCardItem key={task.id} task={task} onClick={() => onTaskClick?.(task)} />
         ))}
       </div>
     </div>
