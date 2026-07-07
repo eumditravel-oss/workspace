@@ -6,10 +6,13 @@ import { useTaskStore } from '@/store/taskStore';
 import { useAuthStore } from '@/store/authStore';
 import { Board, GroupByOption, BoardViewType } from '@/components/board/Board';
 import { ProjectBoard } from '@/components/board/ProjectBoard';
+import { ProjectPartBoard } from '@/components/board/ProjectPartBoard';
 import { ProjectEvaluationModal } from '@/components/evaluation/ProjectEvaluationModal';
 import { TaskStatus } from '@/types/models';
 import { DetailedLineStage } from '@/lib/selectors';
-import { FileText } from 'lucide-react';
+import { FileText, ArrowLeft, ChevronRight } from 'lucide-react';
+
+export type ExtendedViewType = BoardViewType | 'PART';
 
 export default function ProjectBoardPage() {
   const { projects } = useProjectStore();
@@ -17,7 +20,7 @@ export default function ProjectBoardPage() {
   const { currentUser, users } = useAuthStore();
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [groupBy, setGroupBy] = useState<GroupByOption>('STATUS');
-  const [viewType, setViewType] = useState<BoardViewType>('DETAILED');
+  const [viewType, setViewType] = useState<ExtendedViewType>('PART');
   const [showPersonalSchedules, setShowPersonalSchedules] = useState(false);
   const [showEvaluationModal, setShowEvaluationModal] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<number | 'ALL'>('ALL');
@@ -77,10 +80,35 @@ export default function ProjectBoardPage() {
     }
   };
 
+  const selectedProject = projects.find(p => p.id === selectedProjectId);
+
   return (
     <div className="max-w-7xl mx-auto space-y-4">
+      {/* Breadcrumb & Header */}
       <div className="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border">
-        <h1 className="text-lg font-bold text-gray-800">프로젝트 보드</h1>
+        <div className="flex items-center gap-2">
+          {selectedProject ? (
+            <>
+              <button 
+                onClick={() => setSelectedProjectId('')}
+                className="p-1 hover:bg-gray-100 rounded text-gray-500 transition-colors"
+                title="프로젝트 보드로 돌아가기"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <h1 className="text-lg font-bold text-gray-800 cursor-pointer hover:text-indigo-600" onClick={() => setSelectedProjectId('')}>
+                프로젝트 보드
+              </h1>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <h1 className="text-lg font-bold text-indigo-600 truncate max-wxs">
+                {selectedProject.title}
+              </h1>
+            </>
+          ) : (
+            <h1 className="text-lg font-bold text-gray-800">프로젝트 보드</h1>
+          )}
+        </div>
+        
         <div className="flex gap-2 flex-wrap items-center">
           {currentUser.role === 'PM' && selectedProjectId && (
             <button
@@ -125,15 +153,18 @@ export default function ProjectBoardPage() {
           
           {selectedProjectId && (
             <>
-              <select className="border rounded px-2 py-1 bg-gray-50 text-xs font-medium" value={viewType} onChange={(e) => setViewType(e.target.value as BoardViewType)}>
+              <select className="border rounded px-2 py-1 bg-gray-50 text-xs font-medium" value={viewType} onChange={(e) => setViewType(e.target.value as ExtendedViewType)}>
+                <option value="PART">파트별 보드 View</option>
                 <option value="DETAILED">세부 공정 View</option>
                 <option value="COLLAB">협업 보드 View</option>
               </select>
-              <select className="border rounded px-2 py-1 bg-gray-50 text-xs font-medium" value={groupBy} onChange={(e) => setGroupBy(e.target.value as GroupByOption)}>
-                <option value="STATUS">상태별 보기</option>
-                <option value="ASSIGNEE">담당자별 보기</option>
-                <option value="PRIORITY">우선순위(납품일)별 보기</option>
-              </select>
+              {viewType !== 'PART' && (
+                <select className="border rounded px-2 py-1 bg-gray-50 text-xs font-medium" value={groupBy} onChange={(e) => setGroupBy(e.target.value as GroupByOption)}>
+                  <option value="STATUS">상태별 보기</option>
+                  <option value="ASSIGNEE">담당자별 보기</option>
+                  <option value="PRIORITY">우선순위(납품일)별 보기</option>
+                </select>
+              )}
             </>
           )}
 
@@ -147,14 +178,22 @@ export default function ProjectBoardPage() {
       </div>
 
       {selectedProjectId ? (
-        <Board 
-          tasks={projectTasks} 
-          onMoveTask={handleMoveTask} 
-          currentUser={currentUser} 
-          viewType={viewType}
-          groupBy={groupBy}
-          users={users}
-        />
+        viewType === 'PART' ? (
+          <ProjectPartBoard
+            projectId={selectedProjectId}
+            tasks={projectTasks}
+            users={users}
+          />
+        ) : (
+          <Board 
+            tasks={projectTasks} 
+            onMoveTask={handleMoveTask} 
+            currentUser={currentUser} 
+            viewType={viewType as BoardViewType}
+            groupBy={groupBy}
+            users={users}
+          />
+        )
       ) : (
         <ProjectBoard
           projects={filteredProjects}
