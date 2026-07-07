@@ -13,13 +13,40 @@ interface ColumnProps {
 export const Column: React.FC<ColumnProps> = ({ id, title, tasks }) => {
   const { setNodeRef } = useDroppable({ id });
 
+  const avgProgress = tasks.length > 0 
+    ? Math.round(tasks.reduce((sum, t) => sum + (t.progress || 0), 0) / tasks.length)
+    : 0;
+
+  const delayedCount = tasks.filter(t => {
+    if (!t.dueDate) return false;
+    const today = new Date().toISOString().split('T')[0];
+    return t.dueDate < today && t.status !== 'DONE';
+  }).length;
+
+  const urgentCount = tasks.filter(t => t.priority === 'URGENT').length;
+  const pendingCount = tasks.filter(t => t.approvalStatus === 'PENDING').length;
+
   return (
-    <div className="bg-gray-100 p-4 rounded-xl min-w-[280px] w-72 flex flex-col max-h-[80vh]">
-      <h3 className="font-bold text-gray-700 mb-4 flex justify-between">
-        {title}
-        <span className="bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full text-xs">{tasks.length}</span>
-      </h3>
-      <div ref={setNodeRef} className="flex-1 overflow-y-auto space-y-3 min-h-[100px]">
+    <div className="bg-gray-50/50 p-4 rounded-xl min-w-[300px] w-[300px] flex flex-col max-h-[85vh] border border-gray-200/60 shadow-sm">
+      <div className="mb-4">
+        <h3 className="font-bold text-gray-800 flex justify-between items-center mb-2">
+          {title}
+          <span className="bg-white text-gray-600 px-2.5 py-0.5 rounded-full text-xs font-semibold shadow-sm border border-gray-100">
+            {tasks.length}
+          </span>
+        </h3>
+        
+        {tasks.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 text-[10px] text-gray-500 font-medium bg-white/60 p-2 rounded-lg border border-gray-100">
+            <span>평균 <span className="text-gray-700">{avgProgress}%</span></span>
+            {delayedCount > 0 && <span>· <span className="text-red-500">지연 {delayedCount}</span></span>}
+            {urgentCount > 0 && <span>· <span className="text-orange-500">긴급 {urgentCount}</span></span>}
+            {pendingCount > 0 && <span>· <span className="text-purple-500">대기 {pendingCount}</span></span>}
+          </div>
+        )}
+      </div>
+      
+      <div ref={setNodeRef} className="flex-1 overflow-y-auto space-y-3 min-h-[100px] pr-1 pb-4 custom-scrollbar">
         {tasks.map(task => (
           <TaskCardItem key={task.id} task={task} />
         ))}

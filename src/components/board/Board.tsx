@@ -5,21 +5,43 @@ import { DndContext, DragEndEvent, closestCorners } from '@dnd-kit/core';
 import { TaskCard, TaskStatus, PersonnelCard } from '@/types/models';
 import { Column } from './Column';
 
+export type BoardViewType = 'DETAILED' | 'PIPELINE' | 'COLLAB' | 'MONTHLY';
+
 interface BoardProps {
   tasks: TaskCard[];
   onMoveTask: (taskId: string, status: TaskStatus) => void;
   currentUser: PersonnelCard;
+  viewType?: BoardViewType;
 }
 
-const COLUMNS: { id: TaskStatus; title: string }[] = [
-  { id: 'TODO', title: '할 일' },
-  { id: 'READY', title: '준비' },
+const DETAILED_COLUMNS = [
+  { id: 'TODO', title: '대기' },
+  { id: 'READY', title: '진행 가능' },
   { id: 'IN_PROGRESS', title: '진행 중' },
-  { id: 'REVIEW', title: '검토 요청' },
+  { id: 'REVIEW', title: '검토 중' },
   { id: 'DONE', title: '완료' },
 ];
 
-export const Board: React.FC<BoardProps> = ({ tasks, onMoveTask, currentUser }) => {
+const PIPELINE_COLUMNS = [
+  { id: 'TODO', title: '📥 수주/대기' },
+  { id: 'READY', title: '🇰🇷 기획/정리' },
+  { id: 'IN_PROGRESS', title: '🇻🇳 베트남 작업' },
+  { id: 'REVIEW', title: '🔎 QA/검수' },
+  { id: 'DONE', title: '✅ 완료' },
+];
+
+const COLLAB_COLUMNS = [
+  { id: 'TODO', title: '담당 파트 없음' },
+  { id: 'READY', title: '🇰🇷 한국' },
+  { id: 'IN_PROGRESS', title: '🇻🇳 베트남' },
+  { id: 'REVIEW', title: '🔎 QA' },
+  { id: 'DONE', title: '✅ 완료' },
+];
+
+export const Board: React.FC<BoardProps> = ({ tasks, onMoveTask, currentUser, viewType = 'DETAILED' }) => {
+  const columns = viewType === 'PIPELINE' ? PIPELINE_COLUMNS 
+                : viewType === 'COLLAB' ? COLLAB_COLUMNS 
+                : DETAILED_COLUMNS;
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over) return;
@@ -43,11 +65,11 @@ export const Board: React.FC<BoardProps> = ({ tasks, onMoveTask, currentUser }) 
 
   return (
     <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-      <div className="flex space-x-4 overflow-x-auto pb-4">
-        {COLUMNS.map(col => (
+      <div className="flex space-x-6 overflow-x-auto pb-6 p-2 custom-scrollbar">
+        {columns.map(col => (
           <Column 
             key={col.id} 
-            id={col.id} 
+            id={col.id as TaskStatus} 
             title={col.title} 
             tasks={tasks.filter(t => t.status === col.id)} 
           />
