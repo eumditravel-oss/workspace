@@ -2,18 +2,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
-import { useNotificationStore } from '@/store/notificationStore';
 import { mockUsers } from '@/data/mockData';
 import { Bell, User, ListTodo, TrendingUp } from 'lucide-react';
 import { getUserDisplayName } from '@/lib/localization';
+import { NotificationPopover } from './NotificationPopover';
 
 export const Header = () => {
   const { currentUser, loginAs } = useAuthStore();
-  const { notifications } = useNotificationStore();
-
-  const unreadCount = currentUser 
-    ? notifications.filter(n => n.userId === currentUser.id && !n.isRead).length
-    : 0;
 
   return (
     <header className="bg-white border-b h-16 flex items-center justify-between px-6">
@@ -43,12 +38,7 @@ export const Header = () => {
           <TrendingUp className="w-4 h-4" /> 성과 평가
         </Link>
 
-        <Link href="/notifications" className="p-2 text-gray-500 hover:bg-gray-100 rounded-full relative">
-          <Bell className="w-5 h-5" />
-          {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          )}
-        </Link>
+        <NotificationPopover />
         <Link href="/settings" className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
           <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold">
             <User className="w-5 h-5" />
