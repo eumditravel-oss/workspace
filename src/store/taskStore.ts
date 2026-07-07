@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { TaskCard, TaskStatus, CompletionStatus, ProgressUpdate, TaskChecklistItem, TaskArtifact, TaskBlocker, UserId } from '@/types/models';
 import { DetailedLineStage } from '@/lib/selectors';
-import { mockTasks } from '@/data/mockData';
+import { fullTasks } from '@/data/fullScheduleSeed';
 
 interface TaskState {
   tasks: TaskCard[];
@@ -24,7 +24,7 @@ interface TaskState {
 }
 
 export const useTaskStore = create<TaskState>((set) => ({
-  tasks: [...mockTasks],
+  tasks: fullTasks,
   progressUpdates: [],
   checklists: [
     { id: 'chk1', taskId: '1', content: 'UI 디자인 시안 확인', isCompleted: true, completedAt: new Date().toISOString() },

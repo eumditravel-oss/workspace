@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Project, ProjectStatus } from '@/types/models';
-import { mockProjects } from '@/data/mockData';
+import { fullProjects } from '@/data/fullScheduleSeed';
 
 interface ProjectState {
   projects: Project[];
@@ -11,7 +11,7 @@ interface ProjectState {
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({
-  projects: [...mockProjects],
+  projects: fullProjects,
   
   addProject: (projectData) => set((state) => {
     const newProject: Project = {

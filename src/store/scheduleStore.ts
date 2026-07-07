@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { PersonalSchedule } from '@/types/models';
-import { mockPersonalSchedules } from '@/data/mockData';
+import { fullSchedules } from '@/data/fullScheduleSeed';
 
 interface ScheduleState {
   schedules: PersonalSchedule[];
@@ -8,7 +8,7 @@ interface ScheduleState {
 }
 
 const initialSchedules: PersonalSchedule[] = [
-  ...mockPersonalSchedules,
+  ...fullSchedules,
   {
     id: 's1',
     userId: 'u4',
