@@ -5,6 +5,7 @@ import { Clock, User, AlertCircle, FileText, CheckCircle2, AlertTriangle, Calend
 import { useAuthStore } from '@/store/authStore';
 import { useProjectStore } from '@/store/projectStore';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { calculateTaskProgress } from '@/lib/selectors';
 
 interface TaskCardItemProps {
   task: TaskCard;
@@ -90,9 +91,9 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
 
       <div className="my-3">
         <ProgressBar 
-          progress={task.progress || 0} 
+          progress={calculateTaskProgress(task)} 
           showLabel={true} 
-          colorClass={task.progress === 100 ? 'bg-green-500' : isDelayed ? 'bg-red-500' : 'bg-blue-500'} 
+          colorClass={calculateTaskProgress(task) === 100 ? 'bg-green-500' : isDelayed ? 'bg-red-500' : 'bg-blue-500'} 
         />
       </div>
 

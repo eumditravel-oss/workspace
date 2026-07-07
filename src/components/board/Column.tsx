@@ -3,6 +3,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { TaskCard } from '@/types/models';
 import { TaskCardItem } from './TaskCardItem';
 import { TaskStatus } from '@/types/models';
+import { getColumnSummary } from '@/lib/selectors';
 
 interface ColumnProps {
   id: TaskStatus;
@@ -12,19 +13,8 @@ interface ColumnProps {
 
 export const Column: React.FC<ColumnProps> = ({ id, title, tasks }) => {
   const { setNodeRef } = useDroppable({ id });
-
-  const avgProgress = tasks.length > 0 
-    ? Math.round(tasks.reduce((sum, t) => sum + (t.progress || 0), 0) / tasks.length)
-    : 0;
-
-  const delayedCount = tasks.filter(t => {
-    if (!t.dueDate) return false;
-    const today = new Date().toISOString().split('T')[0];
-    return t.dueDate < today && t.status !== 'DONE';
-  }).length;
-
-  const urgentCount = tasks.filter(t => t.priority === 'URGENT').length;
-  const pendingCount = tasks.filter(t => t.approvalStatus === 'PENDING').length;
+  
+  const { avgProgress, delayedCount, urgentCount, pendingCount } = getColumnSummary(tasks);
 
   return (
     <div className="bg-gray-50/50 p-4 rounded-xl min-w-[300px] w-[300px] flex flex-col max-h-[85vh] border border-gray-200/60 shadow-sm">
