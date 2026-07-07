@@ -7,7 +7,7 @@ import { getUserDisplayName } from '@/lib/localization';
 import { Column } from './Column';
 import { TaskDetailModal } from './TaskDetailModal';
 import { useProjectStore } from '@/store/projectStore';
-import { getDeliveryUrgencyBucket } from '@/lib/selectors';
+import { getDeliveryUrgencyBucket, getDetailedLineStage } from '@/lib/selectors';
 
 export type BoardViewType = 'DETAILED' | 'COLLAB' | 'MONTHLY';
 export type GroupByOption = 'STATUS' | 'ASSIGNEE' | 'PRIORITY';
@@ -22,10 +22,11 @@ interface BoardProps {
 }
 
 const DETAILED_COLUMNS = [
-  { id: 'TODO', title: '대기' },
-  { id: 'READY', title: '진행 가능' },
-  { id: 'IN_PROGRESS', title: '진행 중' },
-  { id: 'REVIEW', title: '검토 중' },
+  { id: 'WAITING', title: '작업 착수 대기' },
+  { id: 'QC_PM_START', title: 'QC/PM작업착수' },
+  { id: 'IN_PROGRESS', title: '진행중' },
+  { id: 'PM_REVIEW', title: 'PM검토' },
+  { id: 'QC_REVIEW', title: 'QC검토' },
   { id: 'DONE', title: '완료' },
 ];
 
@@ -91,7 +92,10 @@ export const Board: React.FC<BoardProps> = ({ tasks, onMoveTask, currentUser, vi
       <div className="flex space-x-6 overflow-x-auto pb-6 p-2 custom-scrollbar">
         {columns.map(col => {
           const colTasks = tasks.filter(t => {
-            if (groupBy === 'STATUS') return t.status === col.id;
+            if (groupBy === 'STATUS') {
+              if (viewType === 'COLLAB') return t.status === col.id;
+              return getDetailedLineStage(t) === col.id;
+            }
             if (groupBy === 'PRIORITY') {
               const project = useProjectStore.getState().projects.find(p => p.id === t.projectId);
               if (!project) return col.id === 'LOW';

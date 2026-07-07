@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { TaskCard, TaskStatus, ProgressUpdate, TaskChecklistItem, TaskArtifact, TaskBlocker, UserId } from '@/types/models';
+import { TaskCard, TaskStatus, CompletionStatus, ProgressUpdate, TaskChecklistItem, TaskArtifact, TaskBlocker, UserId } from '@/types/models';
+import { DetailedLineStage } from '@/lib/selectors';
 import { mockTasks } from '@/data/mockData';
 
 interface TaskState {
@@ -9,6 +10,7 @@ interface TaskState {
   artifacts: TaskArtifact[];
   blockers: TaskBlocker[];
   updateTaskStatus: (taskId: string, newStatus: TaskStatus) => void;
+  updateDetailedLineStage: (taskId: string, stage: DetailedLineStage) => void;
   updateTaskAssignee: (taskId: string, newAssigneeId: UserId | undefined) => void;
   updateTaskPriority: (taskId: string, newPriority: 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW') => void;
   updateTaskProgress: (taskId: string, newProgress: number, authorId: UserId, memo: string, blocker?: string) => void;
@@ -37,6 +39,49 @@ export const useTaskStore = create<TaskState>((set) => ({
         : t
     )
   })),
+  updateDetailedLineStage: (taskId, stage) => set((state) => {
+    return {
+      tasks: state.tasks.map(t => {
+        if (t.id !== taskId) return t;
+        let newStatus: TaskStatus = t.status;
+        let newCompletion: CompletionStatus | undefined = t.completionStatus;
+        
+        switch (stage) {
+          case 'WAITING':
+            newStatus = 'TODO';
+            newCompletion = 'NOT_STARTED';
+            break;
+          case 'QC_PM_START':
+            newStatus = 'READY';
+            newCompletion = 'NOT_STARTED';
+            break;
+          case 'IN_PROGRESS':
+            newStatus = 'IN_PROGRESS';
+            newCompletion = 'IN_PROGRESS';
+            break;
+          case 'PM_REVIEW':
+            newStatus = 'REVIEW';
+            newCompletion = 'PM_REVIEWING';
+            break;
+          case 'QC_REVIEW':
+            newStatus = 'REVIEW';
+            newCompletion = 'MANAGER_REVIEWING';
+            break;
+          case 'DONE':
+            newStatus = 'DONE';
+            newCompletion = 'COMPLETED';
+            break;
+        }
+        
+        return { 
+          ...t, 
+          status: newStatus, 
+          completionStatus: newCompletion, 
+          updatedAt: new Date().toISOString() 
+        };
+      })
+    };
+  }),
   updateTaskAssignee: (taskId, newAssigneeId) => set((state) => ({
     tasks: state.tasks.map(t => 
       t.id === taskId 

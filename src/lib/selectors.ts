@@ -1,5 +1,18 @@
 import { TaskCard, Project, PersonnelCard, TaskBlocker, ProgressUpdate } from '@/types/models';
 
+export type DetailedLineStage = 'WAITING' | 'QC_PM_START' | 'IN_PROGRESS' | 'PM_REVIEW' | 'QC_REVIEW' | 'DONE';
+
+export const getDetailedLineStage = (task: TaskCard): DetailedLineStage => {
+  if (task.status === 'DONE' || task.completionStatus === 'COMPLETED') return 'DONE';
+  if (task.status === 'REVIEW') {
+    if (task.completionStatus === 'MANAGER_REVIEWING' || task.completionStatus === 'MANAGER_APPROVED') return 'QC_REVIEW';
+    return 'PM_REVIEW'; // PM_REVIEWING, WORKER_DONE, etc.
+  }
+  if (task.status === 'IN_PROGRESS') return 'IN_PROGRESS';
+  if (task.status === 'READY') return 'QC_PM_START';
+  return 'WAITING'; // TODO, HOLD, REJECTED
+};
+
 export const calculateTaskProgress = (task: TaskCard): number => {
   if (task.status === 'DONE' || task.completionStatus === 'COMPLETED') return 100;
   if (task.progress !== undefined) return task.progress;

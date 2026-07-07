@@ -8,11 +8,12 @@ import { Board, GroupByOption, BoardViewType } from '@/components/board/Board';
 import { ProjectBoard } from '@/components/board/ProjectBoard';
 import { ProjectEvaluationModal } from '@/components/evaluation/ProjectEvaluationModal';
 import { TaskStatus } from '@/types/models';
+import { DetailedLineStage } from '@/lib/selectors';
 import { FileText } from 'lucide-react';
 
 export default function ProjectBoardPage() {
   const { projects } = useProjectStore();
-  const { tasks, updateTaskStatus, updateTaskAssignee, updateTaskPriority } = useTaskStore();
+  const { tasks, updateTaskStatus, updateDetailedLineStage, updateTaskAssignee, updateTaskPriority } = useTaskStore();
   const { currentUser, users } = useAuthStore();
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [groupBy, setGroupBy] = useState<GroupByOption>('STATUS');
@@ -46,7 +47,11 @@ export default function ProjectBoardPage() {
 
   const handleMoveTask = (taskId: string, targetId: string, groupByKey: GroupByOption) => {
     if (groupByKey === 'STATUS') {
-      updateTaskStatus(taskId, targetId as TaskStatus);
+      if (viewType === 'DETAILED') {
+        updateDetailedLineStage(taskId, targetId as DetailedLineStage);
+      } else {
+        updateTaskStatus(taskId, targetId as TaskStatus);
+      }
     } else if (groupByKey === 'ASSIGNEE') {
       updateTaskAssignee(taskId, targetId === 'UNASSIGNED' ? undefined : targetId);
     } else if (groupByKey === 'PRIORITY') {
