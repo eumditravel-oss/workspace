@@ -12,10 +12,34 @@ export const Header = () => {
 
   return (
     <header className="bg-white border-b h-14 flex items-center justify-between px-6 z-40">
-      <div className="flex items-center">
+      <div className="flex items-center gap-4">
         <h2 className="text-lg font-semibold text-gray-800">
           {currentUser ? `${currentUser.departmentName} - ${currentUser.role}` : '로그인 필요'}
         </h2>
+        {currentUser && ['SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(currentUser.role) && (
+          <div className="flex bg-gray-100 rounded-lg p-1 border">
+            <button
+              onClick={() => useAuthStore.getState().setAppMode('DAILY_WORK')}
+              className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${
+                useAuthStore.getState().appMode === 'DAILY_WORK'
+                  ? 'bg-white text-indigo-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              실사용 모드
+            </button>
+            <button
+              onClick={() => useAuthStore.getState().setAppMode('ADMIN_VALIDATION')}
+              className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${
+                useAuthStore.getState().appMode === 'ADMIN_VALIDATION'
+                  ? 'bg-white text-rose-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              운영 검증 모드
+            </button>
+          </div>
+        )}
       </div>
       <div className="flex items-center space-x-4">
         {/* Mock Login Switcher */}

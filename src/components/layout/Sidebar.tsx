@@ -4,14 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { useUiStore } from '@/store/uiStore';
-import { LayoutDashboard, Briefcase, Calendar, CheckSquare, Bell, Settings, ClipboardList, ChevronLeft, AlertTriangle, Menu } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Calendar, CheckSquare, Bell, Settings, ClipboardList, ChevronLeft, AlertTriangle, Menu, ShieldCheck, Database, FileUp } from 'lucide-react';
 
 export const Sidebar = () => {
   const pathname = usePathname();
-  const { currentUser } = useAuthStore();
+  const { currentUser, appMode } = useAuthStore();
   const { sidebarMode, cycleSidebarMode } = useUiStore();
 
-  const menuItems = [
+  const dailyWorkMenuItems = [
     { name: '통합 대시보드', path: '/', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },
     { name: '수주 프로젝트', path: '/projects/intake', icon: Briefcase, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER'] },
     { name: '프로젝트 보드', path: '/projects', icon: ClipboardList, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },
@@ -20,8 +20,18 @@ export const Sidebar = () => {
     { name: '내 업무', path: '/tasks/my', icon: CheckSquare, roles: ['PM', 'WORKER'] },
     { name: '직원 일정표', path: '/schedules', icon: Calendar, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM'] },
     { name: '알림 센터', path: '/notifications', icon: Bell, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },
-    { name: '설정', path: '/settings', icon: Settings, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },
+    { name: '내 설정', path: '/settings', icon: Settings, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },
   ];
+
+  const adminValidationMenuItems = [
+    { name: '운영 설정', path: '/settings/workspace', icon: Settings, roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
+    { name: 'Excel 검증', path: '/settings/import', icon: FileUp, roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
+    { name: '데이터 품질', path: '/settings/data-quality', icon: ShieldCheck, roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
+    { name: '대량 수정', path: '/settings/bulk-edit', icon: Database, roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
+    { name: '권한 시뮬레이터', path: '/settings/permissions', icon: ShieldCheck, roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
+  ];
+
+  const menuItems = appMode === 'ADMIN_VALIDATION' ? adminValidationMenuItems : dailyWorkMenuItems;
 
   const visibleMenus = menuItems.filter(item => currentUser && item.roles.includes(currentUser.role));
 
