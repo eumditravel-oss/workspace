@@ -342,3 +342,21 @@ export interface DataQualityCheck {
   suggestedFix?: string;
 }
 
+
+export interface PermissionSimulationResult {
+  id: string;
+  simulatedUserId: string;
+  simulatedBy: string;
+  targetScreen: string;
+  targetProjectId?: string;
+  targetMonth?: string;
+  visibleProjects: string[];
+  hiddenProjects: string[];
+  visibleEmployees: string[];
+  hiddenEmployees: string[];
+  visibleSchedules: string[];
+  hiddenSchedules: string[];
+  warnings: string[];
+  createdAt: string;
+}
+
