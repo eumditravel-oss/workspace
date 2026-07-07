@@ -102,3 +102,28 @@ export const normalizeScopeName = (rawName: string): string => {
   if (!rawName) return '';
   return rawName.replace(/[\n\r]+/g, ' ').trim();
 };
+
+export const getDeliveryUrgencyBucket = (project: Project, today: Date = new Date()): 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW' => {
+  if (!project.deliveryDate) return 'LOW';
+  
+  const delivery = new Date(project.deliveryDate);
+  delivery.setHours(0, 0, 0, 0);
+  const current = new Date(today);
+  current.setHours(0, 0, 0, 0);
+  
+  const diffTime = delivery.getTime() - current.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays <= 3) return 'URGENT';
+  if (diffDays <= 7) return 'HIGH';
+  if (diffDays <= 14) return 'NORMAL';
+  return 'LOW';
+};
+
+export const getProjectOverallProgress = (project: Project, tasks: TaskCard[]): number => {
+  if (project.progress !== undefined && project.progress !== null) return project.progress;
+  const projectTasks = tasks.filter(t => t.projectId === project.id && !t.isDeleted);
+  if (projectTasks.length === 0) return 0;
+  const total = projectTasks.reduce((sum, t) => sum + calculateTaskProgress(t), 0);
+  return Math.round(total / projectTasks.length);
+};

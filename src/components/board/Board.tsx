@@ -6,6 +6,8 @@ import { TaskCard, TaskStatus, PersonnelCard } from '@/types/models';
 import { getUserDisplayName } from '@/lib/localization';
 import { Column } from './Column';
 import { TaskDetailModal } from './TaskDetailModal';
+import { useProjectStore } from '@/store/projectStore';
+import { getDeliveryUrgencyBucket } from '@/lib/selectors';
 
 export type BoardViewType = 'DETAILED' | 'PIPELINE' | 'COLLAB' | 'MONTHLY';
 export type GroupByOption = 'STATUS' | 'ASSIGNEE' | 'PRIORITY';
@@ -100,7 +102,12 @@ export const Board: React.FC<BoardProps> = ({ tasks, onMoveTask, currentUser, vi
         {columns.map(col => {
           const colTasks = tasks.filter(t => {
             if (groupBy === 'STATUS') return t.status === col.id;
-            if (groupBy === 'PRIORITY') return t.priority === col.id;
+            if (groupBy === 'PRIORITY') {
+              const project = useProjectStore.getState().projects.find(p => p.id === t.projectId);
+              if (!project) return col.id === 'LOW';
+              const urgency = getDeliveryUrgencyBucket(project);
+              return urgency === col.id;
+            }
             if (groupBy === 'ASSIGNEE') return (col.id === 'UNASSIGNED' && !t.assigneeId) || t.assigneeId === col.id;
             return false;
           });

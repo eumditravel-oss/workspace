@@ -58,6 +58,11 @@ export interface Project {
   archiveStatus?: 'ACTIVE' | 'ARCHIVED' | 'RESTORED';
   isDeleted?: boolean;
   source?: string;
+  deliveryDate?: string;
+  deliveryDateStatus?: "UNSET" | "SCHEDULED" | "CHANGED" | "OVERDUE" | "DELIVERED";
+  deliveryDateUpdatedAt?: string;
+  deliveryDateUpdatedBy?: string;
+  deliveryDateChangeReason?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -210,5 +215,15 @@ export interface AuditLog {
   beforeValue?: string;
   afterValue?: string;
   message: string;
+  createdAt: string;
+}
+
+export interface DeliveryDateChange {
+  id: string;
+  projectId: string;
+  beforeDeliveryDate?: string;
+  afterDeliveryDate: string;
+  changedBy: string;
+  reason: string;
   createdAt: string;
 }

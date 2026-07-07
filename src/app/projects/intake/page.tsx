@@ -14,6 +14,7 @@ export default function IntakePage() {
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newPriority, setNewPriority] = useState<'URGENT'|'HIGH'|'NORMAL'|'LOW'>('NORMAL');
+  const [newDeliveryDate, setNewDeliveryDate] = useState('');
 
   // Authorization Check
   if (!currentUser) return <div className="p-6">로그인이 필요합니다.</div>;
@@ -32,10 +33,12 @@ export default function IntakePage() {
       description: newDesc,
       priority: newPriority,
       departmentId: currentUser.departmentId,
+      deliveryDate: newDeliveryDate || undefined,
     });
     setNewTitle('');
     setNewDesc('');
     setNewPriority('NORMAL');
+    setNewDeliveryDate('');
     setShowForm(false);
   };
 
@@ -80,6 +83,14 @@ export default function IntakePage() {
               <option value="URGENT">Urgent</option>
             </select>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">납품 예정일</label>
+            <input 
+              type="date" 
+              value={newDeliveryDate} onChange={e => setNewDeliveryDate(e.target.value)}
+              className="w-full border rounded-lg p-2"
+            />
+          </div>
           <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold">
             등록하기
           </button>
@@ -94,6 +105,7 @@ export default function IntakePage() {
               <th className="p-4 text-sm font-semibold text-gray-600">상태</th>
               <th className="p-4 text-sm font-semibold text-gray-600">우선순위</th>
               <th className="p-4 text-sm font-semibold text-gray-600">시작일</th>
+              <th className="p-4 text-sm font-semibold text-gray-600">납품일</th>
               <th className="p-4 text-sm font-semibold text-gray-600">PM 배정</th>
             </tr>
           </thead>
@@ -114,6 +126,14 @@ export default function IntakePage() {
                       className="border rounded p-2 text-sm"
                       value={p.startDate || ''}
                       onChange={(e) => updateProjectField(p.id, 'startDate', e.target.value)}
+                    />
+                  </td>
+                  <td className="p-4">
+                    <input 
+                      type="date" 
+                      className="border rounded p-2 text-sm"
+                      value={p.deliveryDate || ''}
+                      onChange={(e) => updateProjectField(p.id, 'deliveryDate', e.target.value)}
                     />
                   </td>
                   <td className="p-4">
