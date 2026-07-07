@@ -173,9 +173,23 @@ export interface ApprovalRequest {
   requestedDueDate?: string;
   reviewedBy?: UserId;
   reviewComment?: string;
+  alternativeType?: ApprovalRequestType;
   isDeleted?: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ApprovalWorkflowStep {
+  stepIndex: number;
+  role: Role;
+  required: boolean;
+}
+
+export interface ApprovalWorkflowTemplate {
+  id: string;
+  requestType: ApprovalRequestType;
+  steps: ApprovalWorkflowStep[];
+  isActive: boolean;
 }
 
 export type ScheduleType = 'PERSONAL_WORK' | 'MEETING' | 'REVIEW' | 'CLIENT_MEETING' | 'INTERNAL_REPORT' | 'PM_PLANNING' | 'MANAGER_REVIEW' | 'DEPARTMENT_MANAGEMENT' | 'ETC' | 'OFF';

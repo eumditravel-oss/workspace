@@ -2,6 +2,7 @@
 import React from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useApprovalStore } from '@/store/approvalStore';
+import { ApprovalRequestType } from '@/types/models';
 
 export default function ApprovalsPage() {
   const { currentUser } = useAuthStore();
@@ -12,12 +13,38 @@ export default function ApprovalsPage() {
     return <div className="p-6 text-red-500 font-bold">권한이 없습니다. 결재 권한자만 접근 가능합니다.</div>;
   }
 
-  // Only show requests pending for this manager or super admin
-  const pendingRequests = requests.filter(r => r.status === 'PENDING' && (currentUser.role === 'SUPER_ADMIN' || r.managerId === currentUser.id));
-  const completedRequests = requests.filter(r => r.status !== 'PENDING' && (currentUser.role === 'SUPER_ADMIN' || r.managerId === currentUser.id));
+  // Only show requests pending for this manager or super admin, or PM
+  const pendingRequests = requests.filter(r => 
+    (r.status === 'PENDING' && r.pmId === currentUser.id && currentUser.role === 'PM') ||
+    (r.status === 'MANAGER_REVIEWING' && r.managerId === currentUser.id) ||
+    (r.status === 'PENDING' && r.managerId === currentUser.id && !r.pmId) || // No PM, goes straight to manager
+    (currentUser.role === 'SUPER_ADMIN' && ['PENDING', 'MANAGER_REVIEWING'].includes(r.status))
+  );
+  
+  const completedRequests = requests.filter(r => !['PENDING', 'MANAGER_REVIEWING'].includes(r.status));
 
-  const handleAction = (id: string, action: 'APPROVED' | 'REJECTED') => {
-    updateApprovalStatus(id, action, currentUser.id, action === 'REJECTED' ? '반려됨' : '승인됨');
+  const handleAction = (id: string, action: 'APPROVED' | 'REJECTED', alternativeType?: ApprovalRequestType) => {
+    const req = requests.find(r => r.id === id);
+    if (!req) return;
+
+    let comment = '';
+    if (action === 'REJECTED' || alternativeType) {
+      comment = window.prompt(action === 'REJECTED' ? '반려 사유를 필수로 입력해주세요.' : '대안 승인 사유를 입력해주세요.') || '';
+      if (!comment) {
+        alert('사유 입력은 필수입니다.');
+        return;
+      }
+    }
+
+    let nextStatus: 'APPROVED' | 'REJECTED' | 'MANAGER_REVIEWING' = action;
+    
+    // If PM is approving, it goes to Manager
+    if (action === 'APPROVED' && currentUser.role === 'PM' && req.managerId) {
+      nextStatus = 'MANAGER_REVIEWING';
+      comment = 'PM 1차 승인';
+    }
+
+    updateApprovalStatus(id, nextStatus, currentUser.id, comment, alternativeType);
   };
 
   return (
@@ -45,9 +72,24 @@ export default function ApprovalsPage() {
                     <td className="p-4 font-medium text-gray-800">{r.type}</td>
                     <td className="p-4 text-sm text-gray-800">{r.title}</td>
                     <td className="p-4 text-sm text-gray-500 max-w-xs truncate">{r.reason}</td>
-                    <td className="p-4 space-x-2 flex">
+                    <td className="p-4 space-x-2 flex flex-wrap gap-2">
                       <button onClick={() => handleAction(r.id, 'APPROVED')} className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">승인</button>
                       <button onClick={() => handleAction(r.id, 'REJECTED')} className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">반려</button>
+                      
+                      {['DEPARTMENT_MANAGER', 'SUPER_ADMIN'].includes(currentUser.role) && (
+                        <>
+                          {r.type === 'OVERTIME_REQUEST' && (
+                            <button onClick={() => handleAction(r.id, 'APPROVED', 'DEADLINE_EXTENSION')} className="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700">
+                              일정 연장으로 대안 승인
+                            </button>
+                          )}
+                          {r.type === 'DEADLINE_EXTENSION' && (
+                            <button onClick={() => handleAction(r.id, 'APPROVED', 'MANPOWER_SUPPORT')} className="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700">
+                              인력 지원으로 대안 승인
+                            </button>
+                          )}
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -79,7 +121,7 @@ export default function ApprovalsPage() {
                     <td className="p-4 font-medium text-gray-800">{r.title}</td>
                     <td className="p-4 text-sm font-bold">
                       <span className={r.status === 'APPROVED' ? 'text-green-600' : 'text-red-600'}>
-                        {r.status}
+                        {r.status} {r.alternativeType ? `(대안: ${r.alternativeType})` : ''}
                       </span>
                     </td>
                     <td className="p-4 text-sm text-gray-500">{r.reviewComment}</td>
