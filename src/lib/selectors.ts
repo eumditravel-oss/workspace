@@ -158,15 +158,24 @@ export const getProjectWorkParts = (projectId: string, tasks: TaskCard[], users:
       }
     }
     
-    const scopeName = t.scopeName || 'General';
-    const partKey = `${teamName}-${scopeName}`;
+    let scopeName = t.scopeName;
+    if (!scopeName || scopeName === 'General') {
+      const match = t.title.match(/^\[(.*?)\]/);
+      if (match) {
+        scopeName = match[1].trim();
+      } else {
+        scopeName = 'General';
+      }
+    }
+    
+    const partKey = scopeName;
     
     if (!partsMap.has(partKey)) {
       partsMap.set(partKey, {
-        id: `part_${projectId}_${partKey.replace(/[^a-zA-Z0-9]/g, '_')}`,
+        id: `part_${projectId}_${partKey.replace(/[^a-zA-Z0-9 ]/g, '_')}`,
         projectId,
         teamName,
-        partName: `${teamName} - ${scopeName}`,
+        partName: scopeName,
         scopeNames: [scopeName],
         source: 'SYSTEM',
         orderIndex: partsMap.size,
@@ -184,11 +193,21 @@ export const getPartTaskCards = (partId: string, parts: ProjectWorkPart[], tasks
   const part = parts.find(p => p.id === partId);
   if (!part) return [];
   
-  return tasks.filter(t => 
-    t.projectId === part.projectId && 
-    !t.isDeleted && 
-    (t.scopeName === part.scopeNames[0] || (!t.scopeName && part.scopeNames[0] === 'General'))
-  );
+  return tasks.filter(t => {
+    if (t.projectId !== part.projectId || t.isDeleted) return false;
+    
+    let scopeName = t.scopeName;
+    if (!scopeName || scopeName === 'General') {
+      const match = t.title.match(/^\[(.*?)\]/);
+      if (match) {
+        scopeName = match[1].trim();
+      } else {
+        scopeName = 'General';
+      }
+    }
+    
+    return scopeName === part.scopeNames[0];
+  });
 };
 
 export const getPartEmployees = (partId: string, parts: ProjectWorkPart[], tasks: TaskCard[], users: PersonnelCard[]): PersonnelCard[] => {

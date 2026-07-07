@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
-import { usePersonnelStore } from '@/store/personnelStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useTaskStore } from '@/store/taskStore';
 import { canViewProject, canViewEmployeeSchedule } from '@/lib/permissions';
@@ -10,8 +9,7 @@ import { ShieldCheck, UserCircle, LayoutDashboard, CalendarDays, Eye, EyeOff } f
 import { PermissionSimulationResult } from '@/types/models';
 
 export default function PermissionSimulatorPage() {
-  const { currentUser } = useAuthStore();
-  const { personnel } = usePersonnelStore();
+  const { currentUser, users: personnel } = useAuthStore();
   const { projects } = useProjectStore();
   const { tasks } = useTaskStore();
   
