@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { mockUsers } from '@/data/mockData';
-import { Bell, User } from 'lucide-react';
+import { Bell, User, ListTodo, TrendingUp } from 'lucide-react';
 import { getUserDisplayName } from '@/lib/localization';
 
 export const Header = () => {
@@ -35,6 +35,13 @@ export const Header = () => {
             </option>
           ))}
         </select>
+
+        <Link href="/approvals" className="hover:text-blue-600 transition-colors flex items-center gap-2 text-sm font-medium text-gray-600">
+          <ListTodo className="w-4 h-4" /> 결재함
+        </Link>
+        <Link href="/evaluation" className="hover:text-blue-600 transition-colors flex items-center gap-2 text-sm font-medium text-gray-600">
+          <TrendingUp className="w-4 h-4" /> 성과 평가
+        </Link>
 
         <Link href="/notifications" className="p-2 text-gray-500 hover:bg-gray-100 rounded-full relative">
           <Bell className="w-5 h-5" />
