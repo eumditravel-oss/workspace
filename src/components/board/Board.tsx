@@ -9,7 +9,7 @@ import { TaskDetailModal } from './TaskDetailModal';
 import { useProjectStore } from '@/store/projectStore';
 import { getDeliveryUrgencyBucket } from '@/lib/selectors';
 
-export type BoardViewType = 'DETAILED' | 'PIPELINE' | 'COLLAB' | 'MONTHLY';
+export type BoardViewType = 'DETAILED' | 'COLLAB' | 'MONTHLY';
 export type GroupByOption = 'STATUS' | 'ASSIGNEE' | 'PRIORITY';
 
 interface BoardProps {
@@ -29,19 +29,11 @@ const DETAILED_COLUMNS = [
   { id: 'DONE', title: '완료' },
 ];
 
-const PIPELINE_COLUMNS = [
-  { id: 'TODO', title: '📥 수주/대기' },
-  { id: 'READY', title: '🇰🇷 기획/정리' },
-  { id: 'IN_PROGRESS', title: '🇻🇳 베트남 작업' },
-  { id: 'REVIEW', title: '🔎 QA/검수' },
-  { id: 'DONE', title: '✅ 완료' },
-];
-
 const COLLAB_COLUMNS = [
-  { id: 'TODO', title: '담당 파트 없음' },
-  { id: 'READY', title: '🇰🇷 한국' },
-  { id: 'IN_PROGRESS', title: '🇻🇳 베트남' },
-  { id: 'REVIEW', title: '🔎 QA' },
+  { id: 'TODO', title: '📥 수주/대기' },
+  { id: 'READY', title: '🇰🇷 CONCOST' },
+  { id: 'IN_PROGRESS', title: '🇻🇳 VIET_QS' },
+  { id: 'REVIEW', title: '🔎 QC/검수' },
   { id: 'DONE', title: '✅ 완료' },
 ];
 
@@ -50,9 +42,7 @@ export const Board: React.FC<BoardProps> = ({ tasks, onMoveTask, currentUser, vi
 
   const getColumns = () => {
     if (groupBy === 'STATUS') {
-      return viewType === 'PIPELINE' ? PIPELINE_COLUMNS 
-           : viewType === 'COLLAB' ? COLLAB_COLUMNS 
-           : DETAILED_COLUMNS;
+      return viewType === 'COLLAB' ? COLLAB_COLUMNS : DETAILED_COLUMNS;
     }
     if (groupBy === 'PRIORITY') {
       return [

@@ -20,10 +20,7 @@ export default function ProjectBoardPage() {
   const [showEvaluationModal, setShowEvaluationModal] = useState(false);
 
   const applyPreset = (preset: string) => {
-    if (preset === 'PIPELINE_ALL') {
-      setViewType('PIPELINE');
-      setGroupBy('STATUS');
-    } else if (preset === 'ASSIGNEE_VIEW') {
+    if (preset === 'ASSIGNEE_VIEW') {
       setViewType('DETAILED');
       setGroupBy('ASSIGNEE');
     } else if (preset === 'PRIORITY_VIEW') {
@@ -86,9 +83,8 @@ export default function ProjectBoardPage() {
             defaultValue=""
           >
             <option value="" disabled>🌟 프리셋 선택</option>
-            <option value="PIPELINE_ALL">전체 파이프라인</option>
             <option value="ASSIGNEE_VIEW">작업자별 부하(Assignee)</option>
-            <option value="PRIORITY_VIEW">우선순위별 현황</option>
+            <option value="PRIORITY_VIEW">납품일 임박도 현황</option>
           </select>
 
           <select
@@ -96,8 +92,7 @@ export default function ProjectBoardPage() {
             value={viewType}
             onChange={(e) => setViewType(e.target.value as BoardViewType)}
           >
-            <option value="DETAILED">상세 보드</option>
-            <option value="PIPELINE">파이프라인 보드</option>
+            <option value="DETAILED">상세라인 보드</option>
             <option value="COLLAB">협업 보드</option>
           </select>
 
@@ -106,9 +101,9 @@ export default function ProjectBoardPage() {
             value={groupBy}
             onChange={(e) => setGroupBy(e.target.value as GroupByOption)}
           >
-            <option value="STATUS">상태별 그룹</option>
+            <option value="STATUS">단계별 그룹</option>
             <option value="ASSIGNEE">담당자별 그룹</option>
-            <option value="PRIORITY">우선순위별 그룹</option>
+            <option value="PRIORITY">납품일 임박도 그룹</option>
           </select>
 
           <select 
