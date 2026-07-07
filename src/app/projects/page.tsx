@@ -29,13 +29,6 @@ export default function ProjectBoardPage() {
     }
   };
 
-  // Auto-select first accessible project
-  useEffect(() => {
-    if (!selectedProjectId && accessibleProjects.length > 0) {
-      setSelectedProjectId(accessibleProjects[0].id);
-    }
-  }, [projects, currentUser]);
-
   if (!currentUser) return <div className="p-6">로그인이 필요합니다.</div>;
 
   const accessibleProjects = projects.filter(p => {
@@ -45,6 +38,18 @@ export default function ProjectBoardPage() {
     if (currentUser.role === 'WORKER') return true; // In real app, check assignment
     return false;
   });
+
+  // Auto-select first accessible project
+  useEffect(() => {
+    let mounted = true;
+    if (!selectedProjectId && accessibleProjects.length > 0) {
+      // Small timeout to avoid sync update warning
+      setTimeout(() => {
+        if (mounted) setSelectedProjectId(accessibleProjects[0].id);
+      }, 0);
+    }
+    return () => { mounted = false; };
+  }, [accessibleProjects, selectedProjectId]);
 
   const projectTasks = tasks.filter(t => t.projectId === selectedProjectId);
 

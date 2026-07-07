@@ -7,6 +7,7 @@ interface ProjectState {
   addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'progress'>) => void;
   assignPM: (projectId: string, pmId: string) => void;
   updateProjectStatus: (projectId: string, status: ProjectStatus) => void;
+  updateProjectField: (projectId: string, field: keyof Project, value: any) => void;
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({
@@ -36,6 +37,14 @@ export const useProjectStore = create<ProjectState>((set) => ({
     projects: state.projects.map(p =>
       p.id === projectId
         ? { ...p, status, updatedAt: new Date().toISOString() }
+        : p
+    )
+  })),
+
+  updateProjectField: (projectId, field, value) => set((state) => ({
+    projects: state.projects.map(p =>
+      p.id === projectId
+        ? { ...p, [field]: value, updatedAt: new Date().toISOString() }
         : p
     )
   }))

@@ -6,7 +6,7 @@ import { TaskStatus } from '@/types/models';
 import { getColumnSummary } from '@/lib/selectors';
 
 interface ColumnProps {
-  id: TaskStatus;
+  id: string;
   title: string;
   tasks: TaskCard[];
   onTaskClick?: (task: TaskCard) => void;

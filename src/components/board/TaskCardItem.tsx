@@ -1,12 +1,13 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { TaskCard } from '@/types/models';
-import { Clock, User, AlertCircle, FileText, CheckCircle2, AlertTriangle, Calendar } from 'lucide-react';
+import { Clock, User, AlertCircle, FileText } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useProjectStore } from '@/store/projectStore';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { calculateTaskProgress, calculateTaskHealthScore } from '@/lib/selectors';
 import { useTaskStore } from '@/store/taskStore';
+import { getUserDisplayName } from '@/lib/localization';
 
 interface TaskCardItemProps {
   task: TaskCard;
@@ -32,13 +33,6 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
     zIndex: isDragging ? 999 : undefined,
     opacity: isDragging ? 0.8 : 1,
   } : undefined;
-
-  const priorityColors = {
-    URGENT: 'bg-red-100 text-red-700 border-red-200',
-    HIGH: 'bg-orange-100 text-orange-700 border-orange-200',
-    NORMAL: 'bg-blue-100 text-blue-700 border-blue-200',
-    LOW: 'bg-gray-100 text-gray-700 border-gray-200',
-  };
 
   const isDelayed = task.dueDate ? new Date(task.dueDate) < new Date() && task.status !== 'DONE' : false;
   
@@ -114,11 +108,11 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
         <div className="flex items-center gap-2">
           <div className="flex items-center" title="담당자">
             <User className="w-3 h-3 mr-1" />
-            <span className="truncate max-w-[65px]">{assignee?.displayName || '미배정'}</span>
+            <span className="truncate max-w-[65px]">{assignee ? getUserDisplayName(assignee) : '미배정'}</span>
           </div>
           {pm && (
-            <div className="flex items-center text-gray-400" title="PM">
-              <span className="truncate max-w-[45px]">({pm.displayName})</span>
+            <div className="flex items-center text-indigo-600 font-medium" title={`PM: ${pm.name}`}>
+              <span className="truncate max-w-[45px]">({getUserDisplayName(pm)})</span>
             </div>
           )}
         </div>

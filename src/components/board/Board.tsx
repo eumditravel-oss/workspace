@@ -3,6 +3,7 @@
 import React from 'react';
 import { DndContext, DragEndEvent, closestCorners } from '@dnd-kit/core';
 import { TaskCard, TaskStatus, PersonnelCard } from '@/types/models';
+import { getUserDisplayName } from '@/lib/localization';
 import { Column } from './Column';
 import { TaskDetailModal } from './TaskDetailModal';
 
@@ -60,7 +61,7 @@ export const Board: React.FC<BoardProps> = ({ tasks, onMoveTask, currentUser, vi
       ];
     }
     if (groupBy === 'ASSIGNEE') {
-      const assigneeCols = users.map(u => ({ id: u.id, title: u.displayName || u.name }));
+      const assigneeCols = users.map(u => ({ id: u.id, title: getUserDisplayName(u) }));
       return [{ id: 'UNASSIGNED', title: '미배정' }, ...assigneeCols];
     }
     return DETAILED_COLUMNS;
@@ -106,7 +107,7 @@ export const Board: React.FC<BoardProps> = ({ tasks, onMoveTask, currentUser, vi
           return (
             <Column 
               key={col.id} 
-              id={col.id as any} 
+              id={col.id as string} 
               title={col.title} 
               tasks={colTasks} 
               onTaskClick={setSelectedTask}

@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Project, PersonnelCard } from '@/types/models';
 import { useAuthStore } from '@/store/authStore';
+import { getUserDisplayName } from '@/lib/localization';
 import { useProjectStore } from '@/store/projectStore';
 import { mockUsers } from '@/data/mockData';
 
 export default function IntakePage() {
   const { currentUser } = useAuthStore();
-  const { projects, addProject, assignPM } = useProjectStore();
+  const { projects, addProject, assignPM, updateProjectField } = useProjectStore();
   const [showForm, setShowForm] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
@@ -91,29 +93,38 @@ export default function IntakePage() {
               <th className="p-4 text-sm font-semibold text-gray-600">프로젝트명</th>
               <th className="p-4 text-sm font-semibold text-gray-600">상태</th>
               <th className="p-4 text-sm font-semibold text-gray-600">우선순위</th>
+              <th className="p-4 text-sm font-semibold text-gray-600">시작일</th>
               <th className="p-4 text-sm font-semibold text-gray-600">PM 배정</th>
             </tr>
           </thead>
           <tbody>
             {intakeProjects.length === 0 ? (
               <tr>
-                <td colSpan={4} className="p-6 text-center text-gray-500">대기 중인 수주 프로젝트가 없습니다.</td>
+                <td colSpan={5} className="p-6 text-center text-gray-500">대기 중인 수주 프로젝트가 없습니다.</td>
               </tr>
             ) : (
-              intakeProjects.map(proj => (
-                <tr key={proj.id} className="border-b hover:bg-gray-50">
-                  <td className="p-4 font-medium text-gray-800">{proj.title}</td>
-                  <td className="p-4 text-sm text-gray-500">{proj.status}</td>
-                  <td className="p-4 text-sm text-gray-500">{proj.priority}</td>
+              intakeProjects.map(p => (
+                <tr key={p.id} className="border-b hover:bg-gray-50">
+                  <td className="p-4 font-medium text-gray-800">{p.title}</td>
+                  <td className="p-4 text-sm text-gray-500">{p.status}</td>
+                  <td className="p-4 text-sm text-gray-500">{p.priority}</td>
+                  <td className="p-4">
+                    <input 
+                      type="date" 
+                      className="border rounded p-2 text-sm"
+                      value={p.startDate || ''}
+                      onChange={(e) => updateProjectField(p.id, 'startDate', e.target.value)}
+                    />
+                  </td>
                   <td className="p-4">
                     <select
                       className="border rounded px-2 py-1 text-sm bg-gray-50"
-                      value={proj.pmId || ''}
-                      onChange={(e) => assignPM(proj.id, e.target.value)}
+                      value={p.pmId || ''}
+                      onChange={(e) => assignPM(p.id, e.target.value)}
                     >
                       <option value="" disabled>PM 배정 필요</option>
                       {pms.map(pm => (
-                        <option key={pm.id} value={pm.id}>{pm.name}</option>
+                        <option key={pm.id} value={pm.id}>{getUserDisplayName(pm)}</option>
                       ))}
                     </select>
                   </td>

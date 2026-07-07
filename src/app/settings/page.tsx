@@ -2,6 +2,7 @@
 import React from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { User, Shield, Briefcase, Mail } from 'lucide-react';
+import { getUserDisplayName } from '@/lib/localization';
 
 export default function SettingsPage() {
   const { currentUser } = useAuthStore();
@@ -17,7 +18,7 @@ export default function SettingsPage() {
         <div className="grid grid-cols-2 gap-6">
           <div>
             <label className="block text-sm text-gray-500 mb-1 flex items-center"><User className="w-4 h-4 mr-1" />이름</label>
-            <div className="font-medium text-gray-900">{currentUser.name}</div>
+            <div className="font-medium text-gray-900">{getUserDisplayName(currentUser)}</div>
           </div>
           <div>
             <label className="block text-sm text-gray-500 mb-1 flex items-center"><Shield className="w-4 h-4 mr-1" />권한 (Role)</label>

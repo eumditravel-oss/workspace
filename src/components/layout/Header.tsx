@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { mockUsers } from '@/data/mockData';
 import { Bell, User } from 'lucide-react';
+import { getUserDisplayName } from '@/lib/localization';
 
 export const Header = () => {
   const { currentUser, loginAs } = useAuthStore();
@@ -30,7 +31,7 @@ export const Header = () => {
         >
           {mockUsers.map(u => (
             <option key={u.id} value={u.id}>
-              {u.name} ({u.jobTitle})
+              {getUserDisplayName(u)} ({u.jobTitle})
             </option>
           ))}
         </select>
@@ -45,7 +46,7 @@ export const Header = () => {
           <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold">
             <User className="w-5 h-5" />
           </div>
-          <span className="text-sm font-medium text-gray-700">{currentUser?.name}</span>
+          <span className="text-sm font-medium text-gray-700">{getUserDisplayName(currentUser)}</span>
         </Link>
       </div>
     </header>
