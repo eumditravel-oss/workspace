@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { TaskCard, ProgressUpdate } from '@/types/models';
 import { useTaskStore } from '@/store/taskStore';
+import { useEvaluationStore } from '@/store/evaluationStore';
 import { useAuthStore } from '@/store/authStore';
-import { X, CheckSquare, Clock, FileText, History, ListTodo, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, CheckSquare, Clock, FileText, History, ListTodo, AlertCircle, CheckCircle2, ShieldAlert, Plus } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { QcIssueModal } from '@/components/evaluation/QcIssueModal';
 import { calculateTaskHealthScore } from '@/lib/selectors';
 
 interface TaskDetailModalProps {
@@ -17,14 +19,17 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
   const [memo, setMemo] = useState('');
   const [newBlocker, setNewBlocker] = useState('');
   const [error, setError] = useState('');
+  const [showQcModal, setShowQcModal] = useState(false);
   
   const currentUser = useAuthStore(state => state.currentUser);
   const { updateTaskProgress, progressUpdates, checklists, artifacts, blockers, addBlocker, resolveBlocker } = useTaskStore();
+  const { qcIssues } = useEvaluationStore();
 
   const taskUpdates = progressUpdates.filter(u => u.taskId === task.id);
   const taskChecklists = checklists.filter(c => c.taskId === task.id);
   const taskArtifacts = artifacts.filter(a => a.taskId === task.id);
   const taskBlockers = blockers.filter(b => b.taskId === task.id);
+  const taskQcIssues = qcIssues.filter(q => q.taskId === task.id);
   
   const healthScore = calculateTaskHealthScore(task, blockers, progressUpdates);
   const healthColor = healthScore >= 80 ? 'text-green-600 bg-green-50' 
@@ -65,6 +70,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
     { id: 'CHECKLIST', label: '체크리스트', icon: <CheckSquare className="w-4 h-4" /> },
     { id: 'APPROVALS', label: '승인/신청', icon: <ListTodo className="w-4 h-4" /> },
     { id: 'ARTIFACTS', label: '산출물', icon: <FileText className="w-4 h-4" /> },
+    { id: 'EVALUATION', label: 'QC/평가', icon: <ShieldAlert className="w-4 h-4" /> },
     { id: 'HISTORY', label: '이력', icon: <History className="w-4 h-4" /> },
   ];
 
@@ -307,6 +313,52 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
             </div>
           )}
 
+          {activeTab === 'EVALUATION' && (
+            <div className="space-y-6">
+              <div className="bg-white p-5 rounded-xl border border-red-100 shadow-sm">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-bold text-red-800 flex items-center gap-2">
+                    <ShieldAlert className="w-5 h-5" /> QC 오류 목록
+                  </h3>
+                  <button 
+                    onClick={() => setShowQcModal(true)}
+                    className="flex items-center gap-1 bg-red-50 text-red-700 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-red-100 transition-colors border border-red-200"
+                  >
+                    <Plus className="w-4 h-4" /> 오류 등록
+                  </button>
+                </div>
+                
+                {taskQcIssues.length === 0 ? (
+                  <p className="text-sm text-gray-400 py-6 text-center">등록된 QC 오류가 없습니다.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {taskQcIssues.map(issue => (
+                      <div key={issue.id} className="p-4 border border-gray-200 rounded-lg hover:border-red-300 transition-colors relative bg-gray-50/50">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex gap-2 items-center">
+                            <span className="text-xs font-bold px-2 py-0.5 rounded bg-red-100 text-red-800">{issue.issueStage}</span>
+                            <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-200 text-gray-700">{issue.severity}</span>
+                            <span className="text-xs font-bold px-2 py-0.5 rounded bg-yellow-100 text-yellow-800">가중치 {issue.weightPercent}%</span>
+                          </div>
+                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${issue.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
+                            {issue.status}
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-gray-800 text-sm">{issue.title}</h4>
+                        <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{issue.description}</p>
+                        
+                        <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+                          <span className="text-xs text-gray-500">보고자: {issue.reportedBy}</span>
+                          <span className="text-xs text-gray-400 font-mono">{new Date(issue.createdAt).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {activeTab === 'HISTORY' && (
             <div className="text-center py-10 text-sm text-gray-500">
               AuditLog 통합 이력 뷰 준비 중
@@ -315,6 +367,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
 
         </div>
       </div>
+      {showQcModal && <QcIssueModal task={task} onClose={() => setShowQcModal(false)} />}
     </div>
   );
 };
