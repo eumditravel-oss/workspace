@@ -7,12 +7,15 @@ import { Column } from './Column';
 import { TaskDetailModal } from './TaskDetailModal';
 
 export type BoardViewType = 'DETAILED' | 'PIPELINE' | 'COLLAB' | 'MONTHLY';
+export type GroupByOption = 'STATUS' | 'ASSIGNEE' | 'PRIORITY';
 
 interface BoardProps {
   tasks: TaskCard[];
-  onMoveTask: (taskId: string, status: TaskStatus) => void;
+  onMoveTask: (taskId: string, targetId: string, groupByKey: GroupByOption) => void;
   currentUser: PersonnelCard;
   viewType?: BoardViewType;
+  groupBy?: GroupByOption;
+  users?: PersonnelCard[];
 }
 
 const DETAILED_COLUMNS = [
@@ -39,45 +42,77 @@ const COLLAB_COLUMNS = [
   { id: 'DONE', title: '✅ 완료' },
 ];
 
-export const Board: React.FC<BoardProps> = ({ tasks, onMoveTask, currentUser, viewType = 'DETAILED' }) => {
+export const Board: React.FC<BoardProps> = ({ tasks, onMoveTask, currentUser, viewType = 'DETAILED', groupBy = 'STATUS', users = [] }) => {
   const [selectedTask, setSelectedTask] = React.useState<TaskCard | null>(null);
 
-  const columns = viewType === 'PIPELINE' ? PIPELINE_COLUMNS 
-                : viewType === 'COLLAB' ? COLLAB_COLUMNS 
-                : DETAILED_COLUMNS;
+  const getColumns = () => {
+    if (groupBy === 'STATUS') {
+      return viewType === 'PIPELINE' ? PIPELINE_COLUMNS 
+           : viewType === 'COLLAB' ? COLLAB_COLUMNS 
+           : DETAILED_COLUMNS;
+    }
+    if (groupBy === 'PRIORITY') {
+      return [
+        { id: 'URGENT', title: '🔴 긴급' },
+        { id: 'HIGH', title: '🟠 높음' },
+        { id: 'NORMAL', title: '🔵 보통' },
+        { id: 'LOW', title: '⚪ 낮음' },
+      ];
+    }
+    if (groupBy === 'ASSIGNEE') {
+      const assigneeCols = users.map(u => ({ id: u.id, title: u.displayName || u.name }));
+      return [{ id: 'UNASSIGNED', title: '미배정' }, ...assigneeCols];
+    }
+    return DETAILED_COLUMNS;
+  };
+
+  const columns = getColumns();
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over) return;
 
     const taskId = active.id as string;
-    const newStatus = over.id as TaskStatus;
+    const targetId = over.id as string;
 
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
     // Permissions check
-    if (currentUser.role === 'WORKER' && task.assigneeId !== currentUser.id) {
-      alert('자신의 업무카드만 이동할 수 있습니다.');
-      return;
+    if (currentUser.role === 'WORKER') {
+      if (groupBy === 'ASSIGNEE') {
+        alert('작업자는 타인에게 업무를 배정할 수 없습니다.');
+        return;
+      }
+      if (task.assigneeId !== currentUser.id) {
+        alert('자신의 업무카드만 이동할 수 있습니다.');
+        return;
+      }
     }
 
-    if (task.status !== newStatus) {
-      onMoveTask(taskId, newStatus);
-    }
+    onMoveTask(taskId, targetId, groupBy);
   };
 
   return (
     <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
       <div className="flex space-x-6 overflow-x-auto pb-6 p-2 custom-scrollbar">
-        {columns.map(col => (
-          <Column 
-            key={col.id} 
-            id={col.id as TaskStatus} 
-            title={col.title} 
-            tasks={tasks.filter(t => t.status === col.id)} 
-            onTaskClick={setSelectedTask}
-          />
-        ))}
+        {columns.map(col => {
+          const colTasks = tasks.filter(t => {
+            if (groupBy === 'STATUS') return t.status === col.id;
+            if (groupBy === 'PRIORITY') return t.priority === col.id;
+            if (groupBy === 'ASSIGNEE') return (col.id === 'UNASSIGNED' && !t.assigneeId) || t.assigneeId === col.id;
+            return false;
+          });
+          return (
+            <Column 
+              key={col.id} 
+              id={col.id as any} 
+              title={col.title} 
+              tasks={colTasks} 
+              onTaskClick={setSelectedTask}
+            />
+          );
+        })}
       </div>
       {selectedTask && (
         <TaskDetailModal 

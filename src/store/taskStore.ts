@@ -9,6 +9,8 @@ interface TaskState {
   artifacts: TaskArtifact[];
   blockers: TaskBlocker[];
   updateTaskStatus: (taskId: string, newStatus: TaskStatus) => void;
+  updateTaskAssignee: (taskId: string, newAssigneeId: UserId | undefined) => void;
+  updateTaskPriority: (taskId: string, newPriority: 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW') => void;
   updateTaskProgress: (taskId: string, newProgress: number, authorId: UserId, memo: string, blocker?: string) => void;
   requestTaskCompletion: (taskId: string, memo: string) => void;
   reviewTaskCompletion: (taskId: string, isApproved: boolean) => void;
@@ -32,6 +34,20 @@ export const useTaskStore = create<TaskState>((set) => ({
     tasks: state.tasks.map(t => 
       t.id === taskId 
         ? { ...t, status: newStatus, updatedAt: new Date().toISOString() } 
+        : t
+    )
+  })),
+  updateTaskAssignee: (taskId, newAssigneeId) => set((state) => ({
+    tasks: state.tasks.map(t => 
+      t.id === taskId 
+        ? { ...t, assigneeId: newAssigneeId, updatedAt: new Date().toISOString() } 
+        : t
+    )
+  })),
+  updateTaskPriority: (taskId, newPriority) => set((state) => ({
+    tasks: state.tasks.map(t => 
+      t.id === taskId 
+        ? { ...t, priority: newPriority, updatedAt: new Date().toISOString() } 
         : t
     )
   })),
