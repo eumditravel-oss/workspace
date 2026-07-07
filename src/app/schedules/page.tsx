@@ -5,6 +5,8 @@ import { useScheduleStore } from '@/store/scheduleStore';
 import { useProjectStore } from '@/store/projectStore';
 import { PersonalSchedule, Project } from '@/types/models';
 import { getUserDisplayName } from '@/lib/localization';
+import { canViewSchedule, canViewEmployeeSchedule } from '@/lib/permissions';
+import { LeaveRegistrationModal } from '@/components/schedule/LeaveRegistrationModal';
 
 export default function SchedulesPage() {
   const { currentUser, users } = useAuthStore();
@@ -13,18 +15,16 @@ export default function SchedulesPage() {
   const [activeTab, setActiveTab] = useState<'MONTHLY_MATRIX' | 'PROJECT_SCHEDULE' | 'USER_DETAIL'>('MONTHLY_MATRIX');
   
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   if (!currentUser) return <div className="p-6">로그인이 필요합니다.</div>;
-  if (['WORKER'].includes(currentUser.role)) {
-    return <div className="p-6 text-red-500 font-bold">권한이 없습니다. 관리자 및 PM만 전체 일정표를 볼 수 있습니다.</div>;
-  }
 
-  // Filter based on role
+  const visibleUsers = users.filter(u => canViewEmployeeSchedule(currentUser, u));
+
+  // Filter based on role and rules
   const visibleSchedules = schedules.filter(s => {
-    if (currentUser.role === 'SUPER_ADMIN') return true;
-    if (currentUser.role === 'DEPARTMENT_MANAGER') return s.departmentId === currentUser.departmentId;
-    if (currentUser.role === 'PM') return s.visibility !== 'MANAGER_ONLY' && s.visibility !== 'SUPER_ADMIN_ONLY';
-    return false;
+    const targetUser = users.find(u => u.id === s.userId);
+    return canViewSchedule(currentUser, s, targetUser);
   });
 
   const year = currentDate.getFullYear();
@@ -73,6 +73,13 @@ export default function SchedulesPage() {
           >
             직원별 상세
           </button>
+          
+          <button 
+            className="px-4 py-2 rounded-lg text-sm font-bold bg-green-600 text-white hover:bg-green-700 ml-4 shadow-sm"
+            onClick={() => setShowLeaveModal(true)}
+          >
+            + 휴가/일정 등록
+          </button>
         </div>
       </div>
 
@@ -108,7 +115,7 @@ export default function SchedulesPage() {
                 </tr>
               </thead>
               <tbody>
-                {users.map(user => {
+                {visibleUsers.map(user => {
                   const userSchedules = visibleSchedules.filter(s => s.userId === user.id);
                   if (userSchedules.length === 0) return null;
 
@@ -186,6 +193,11 @@ export default function SchedulesPage() {
           </div>
         )}
       </div>
+
+      <LeaveRegistrationModal 
+        isOpen={showLeaveModal} 
+        onClose={() => setShowLeaveModal(false)} 
+      />
     </div>
   );
 }

@@ -42,12 +42,35 @@ export const canApproveRequest = (user: PersonnelCard, request: ApprovalRequest)
   return false;
 };
 
-export const canViewSchedule = (user: PersonnelCard, schedule: PersonalSchedule): boolean => {
-  if (user.role === 'SUPER_ADMIN') return true;
-  if (user.id === schedule.userId) return true;
-  if (user.role === 'DEPARTMENT_MANAGER') return user.departmentId === schedule.departmentId;
-  if (user.role === 'PM') return user.departmentId === schedule.departmentId;
-  return false;
+export const canViewEmployeeSchedule = (viewer: PersonnelCard, targetUser: PersonnelCard): boolean => {
+  if (viewer.role === 'SUPER_ADMIN') return true;
+  if (viewer.id === targetUser.id) return true;
+  
+  // Workers cannot see PM, MANAGER, or SUPER_ADMIN schedules
+  if (viewer.role === 'WORKER' && ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM'].includes(targetUser.role)) {
+    return false;
+  }
+  
+  // Default: can see if in the same department
+  return viewer.departmentId === targetUser.departmentId;
+};
+
+export const canViewSchedule = (viewer: PersonnelCard, schedule: PersonalSchedule, targetUser?: PersonnelCard): boolean => {
+  if (viewer.role === 'SUPER_ADMIN') return true;
+  if (viewer.id === schedule.userId) return true;
+  
+  // If targetUser is provided, check if we can even view their schedules
+  if (targetUser && !canViewEmployeeSchedule(viewer, targetUser)) return false;
+
+  // Visibility level checks
+  if (schedule.visibility === 'PRIVATE') return false;
+  if (schedule.visibility === 'SUPER_ADMIN_ONLY') return false;
+  if (schedule.visibility === 'MANAGER_ONLY' && !['SUPER_ADMIN', 'DEPARTMENT_MANAGER'].includes(viewer.role)) return false;
+
+  // Department level
+  if (schedule.visibility === 'DEPARTMENT' && viewer.departmentId !== schedule.departmentId) return false;
+  
+  return true;
 };
 
 export const getVisibleProjects = (user: PersonnelCard, projects: Project[]): Project[] => {

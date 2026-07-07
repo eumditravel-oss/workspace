@@ -4,7 +4,8 @@ import { mockApprovalRequests } from '@/data/mockData';
 
 interface ApprovalState {
   requests: ApprovalRequest[];
-  updateApprovalStatus: (id: string, status: 'APPROVED' | 'REJECTED', reviewerId: string, comment?: string) => void;
+  addRequest: (request: Omit<ApprovalRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => void;
+  updateApprovalStatus: (id: string, status: 'APPROVED' | 'REJECTED' | 'PM_APPROVED' | 'MANAGER_REVIEWING', reviewerId: string, comment?: string) => void;
 }
 
 const initialRequests: ApprovalRequest[] = [
@@ -26,6 +27,15 @@ const initialRequests: ApprovalRequest[] = [
 
 export const useApprovalStore = create<ApprovalState>((set) => ({
   requests: initialRequests,
+  addRequest: (requestData) => set((state) => ({
+    requests: [...state.requests, {
+      ...requestData,
+      id: `apr_${Date.now()}`,
+      status: 'PENDING',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }]
+  })),
   updateApprovalStatus: (id, status, reviewerId, comment) => set((state) => ({
     requests: state.requests.map(r => 
       r.id === id 
