@@ -67,6 +67,23 @@ export interface Project {
   updatedAt?: string;
 }
 
+export interface ProjectWorkPart {
+  id: string;
+  projectId: string;
+  departmentId?: string;
+  teamName?: string;
+  groupName?: string;
+  partName: string;
+  scopeNames: string[];
+  source: "EXCEL_TEAM" | "EXCEL_SCOPE" | "MANUAL" | "SYSTEM";
+  orderIndex: number;
+  managerId?: string;
+  pmId?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type TaskStatus = 'TODO' | 'READY' | 'IN_PROGRESS' | 'REVIEW' | 'DONE' | 'HOLD' | 'REJECTED';
 export type CompletionStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'WORKER_DONE' | 'PM_REVIEWING' | 'PM_APPROVED' | 'MANAGER_REVIEWING' | 'MANAGER_APPROVED' | 'COMPLETED' | 'REOPENED' | 'REJECTED';
 
@@ -75,6 +92,7 @@ export interface TaskCard {
   projectId: string;
   title: string;
   description?: string;
+  scopeName?: string;
   status: TaskStatus;
   priority: 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW';
   assigneeId?: UserId;

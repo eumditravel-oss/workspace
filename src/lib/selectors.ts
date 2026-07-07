@@ -1,4 +1,4 @@
-import { TaskCard, Project, PersonnelCard, TaskBlocker, ProgressUpdate, PersonalSchedule, ScheduleConflict } from '@/types/models';
+import { TaskCard, Project, PersonnelCard, TaskBlocker, ProgressUpdate, PersonalSchedule, ScheduleConflict, ProjectWorkPart } from '@/types/models';
 
 export type DetailedLineStage = 'WAITING' | 'QC_PM_START' | 'IN_PROGRESS' | 'PM_REVIEW' | 'QC_REVIEW' | 'DONE';
 
@@ -141,6 +141,73 @@ export const getProjectOverallProgress = (project: Project, tasks: TaskCard[]): 
   if (projectTasks.length === 0) return 0;
   const total = projectTasks.reduce((sum, t) => sum + calculateTaskProgress(t), 0);
   return Math.round(total / projectTasks.length);
+};
+
+export const getProjectWorkParts = (projectId: string, tasks: TaskCard[], users: PersonnelCard[]): ProjectWorkPart[] => {
+  const projectTasks = tasks.filter(t => t.projectId === projectId && !t.isDeleted);
+  const partsMap = new Map<string, ProjectWorkPart>();
+  
+  projectTasks.forEach(t => {
+    let teamName = 'Unassigned';
+    if (t.assigneeId) {
+      const assignee = users.find(u => u.id === t.assigneeId);
+      if (assignee?.teamName) {
+        teamName = assignee.teamName;
+      } else if (assignee?.departmentName) {
+        teamName = assignee.departmentName;
+      }
+    }
+    
+    const scopeName = t.scopeName || 'General';
+    const partKey = `${teamName}-${scopeName}`;
+    
+    if (!partsMap.has(partKey)) {
+      partsMap.set(partKey, {
+        id: `part_${projectId}_${partKey.replace(/[^a-zA-Z0-9]/g, '_')}`,
+        projectId,
+        teamName,
+        partName: `${teamName} - ${scopeName}`,
+        scopeNames: [scopeName],
+        source: 'SYSTEM',
+        orderIndex: partsMap.size,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    }
+  });
+  
+  return Array.from(partsMap.values()).sort((a, b) => a.orderIndex - b.orderIndex);
+};
+
+export const getPartTaskCards = (partId: string, parts: ProjectWorkPart[], tasks: TaskCard[]): TaskCard[] => {
+  const part = parts.find(p => p.id === partId);
+  if (!part) return [];
+  
+  return tasks.filter(t => 
+    t.projectId === part.projectId && 
+    !t.isDeleted && 
+    (t.scopeName === part.scopeNames[0] || (!t.scopeName && part.scopeNames[0] === 'General'))
+  );
+};
+
+export const getPartEmployees = (partId: string, parts: ProjectWorkPart[], tasks: TaskCard[], users: PersonnelCard[]): PersonnelCard[] => {
+  const partTasks = getPartTaskCards(partId, parts, tasks);
+  const assigneeIds = Array.from(new Set(partTasks.map(t => t.assigneeId).filter(Boolean)));
+  return assigneeIds.map(id => users.find(u => u.id === id)).filter(Boolean) as PersonnelCard[];
+};
+
+export const getPartProgress = (partId: string, parts: ProjectWorkPart[], tasks: TaskCard[]): number => {
+  const partTasks = getPartTaskCards(partId, parts, tasks);
+  if (partTasks.length === 0) return 0;
+  
+  const totalProgress = partTasks.reduce((sum, t) => sum + calculateTaskProgress(t), 0);
+  return Math.round(totalProgress / partTasks.length);
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+export const getPartScheduleAssignments = (_partId: string, _parts: ProjectWorkPart[], _assignments: unknown[]): unknown[] => {
+  return []; // Placeholder for ScheduleAssignments
 };
 
 export const detectConflicts = (tasks: TaskCard[], schedules: PersonalSchedule[]): Omit<ScheduleConflict, 'id' | 'createdAt' | 'updatedAt'>[] => {
