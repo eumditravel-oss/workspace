@@ -7,7 +7,7 @@ interface ProjectState {
   addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'progress'>) => void;
   assignPM: (projectId: string, pmId: string) => void;
   updateProjectStatus: (projectId: string, status: ProjectStatus) => void;
-  updateProjectField: (projectId: string, field: keyof Project, value: any) => void;
+  updateProjectField: <K extends keyof Project>(projectId: string, field: K, value: Project[K]) => void;
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({

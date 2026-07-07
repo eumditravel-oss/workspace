@@ -10,6 +10,7 @@ import { ProjectPartBoard } from '@/components/board/ProjectPartBoard';
 import { ProjectEvaluationModal } from '@/components/evaluation/ProjectEvaluationModal';
 import { TaskStatus } from '@/types/models';
 import { DetailedLineStage } from '@/lib/selectors';
+import { canViewProject, canViewTask } from '@/lib/permissions';
 import { FileText, ArrowLeft, ChevronRight } from 'lucide-react';
 
 export type ExtendedViewType = BoardViewType | 'PART';
@@ -38,10 +39,10 @@ export default function ProjectBoardPage() {
   if (!currentUser) return <div className="p-6">로그인이 필요합니다.</div>;
 
   const accessibleProjects = projects.filter(p => {
-    if (currentUser.role === 'SUPER_ADMIN') return true;
-    if (currentUser.role === 'DEPARTMENT_MANAGER') return p.departmentId === currentUser.departmentId;
-    if (currentUser.role === 'PM') return p.pmId === currentUser.id;
-    if (currentUser.role === 'WORKER') return true; // In real app, check assignment
+    if (canViewProject(currentUser, p)) return true;
+    if (currentUser.role === 'WORKER') {
+      return tasks.some(t => t.projectId === p.id && t.assigneeId === currentUser.id && !t.isDeleted);
+    }
     return false;
   });
 
@@ -64,7 +65,7 @@ export default function ProjectBoardPage() {
 
   // Auto-select removed to show Project Summary Board by default
 
-  const projectTasks = tasks.filter(t => t.projectId === selectedProjectId);
+  const projectTasks = tasks.filter(t => t.projectId === selectedProjectId && !t.isDeleted && canViewTask(currentUser, t));
 
   const handleMoveTask = (taskId: string, targetId: string, groupByKey: GroupByOption) => {
     if (groupByKey === 'STATUS') {

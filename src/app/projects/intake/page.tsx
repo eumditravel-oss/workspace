@@ -74,7 +74,7 @@ export default function IntakePage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">우선순위</label>
             <select 
-              value={newPriority} onChange={e => setNewPriority(e.target.value as any)}
+              value={newPriority} onChange={e => setNewPriority(e.target.value as 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW')}
               className="w-full border rounded-lg p-2"
             >
               <option value="LOW">Low</option>

@@ -62,7 +62,7 @@ export const QcIssueModal: React.FC<QcIssueModalProps> = ({ task, onClose }) => 
             <label className="block text-sm font-semibold text-gray-700 mb-1">발견 단계</label>
             <select 
               value={issueStage} 
-              onChange={(e) => setIssueStage(e.target.value as any)}
+              onChange={(e) => setIssueStage(e.target.value as 'SUBMISSION_REVIEW' | 'FINAL_REVIEW' | 'DELIVERY_REVIEW' | 'POST_DELIVERY')}
               className="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400"
             >
               <option value="SUBMISSION_REVIEW">제출자료 검토사항</option>
@@ -99,7 +99,7 @@ export const QcIssueModal: React.FC<QcIssueModalProps> = ({ task, onClose }) => 
               <label className="block text-sm font-semibold text-gray-700 mb-1">심각도</label>
               <select 
                 value={severity} 
-                onChange={(e) => setSeverity(e.target.value as any)}
+                onChange={(e) => setSeverity(e.target.value as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')}
                 className="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400"
               >
                 <option value="LOW">LOW (경미)</option>
