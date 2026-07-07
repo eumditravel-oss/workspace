@@ -372,3 +372,15 @@ export interface WorkspaceSetting {
   updatedAt: string;
 }
 
+
+export interface BulkEditSession {
+  id: string;
+  targetEntityType: string;
+  totalItems: number;
+  changedItems: number;
+  status: 'DRAFT' | 'PREVIEW' | 'APPLIED' | 'CANCELLED';
+  createdBy: string;
+  createdAt: string;
+  appliedAt?: string;
+}
+
