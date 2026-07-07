@@ -1,11 +1,18 @@
 'use client';
 import React from 'react';
+import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
+import { useNotificationStore } from '@/store/notificationStore';
 import { mockUsers } from '@/data/mockData';
 import { Bell, User } from 'lucide-react';
 
 export const Header = () => {
   const { currentUser, loginAs } = useAuthStore();
+  const { notifications } = useNotificationStore();
+
+  const unreadCount = currentUser 
+    ? notifications.filter(n => n.userId === currentUser.id && !n.isRead).length
+    : 0;
 
   return (
     <header className="bg-white border-b h-16 flex items-center justify-between px-6">
@@ -28,16 +35,18 @@ export const Header = () => {
           ))}
         </select>
 
-        <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full relative">
+        <Link href="/notifications" className="p-2 text-gray-500 hover:bg-gray-100 rounded-full relative">
           <Bell className="w-5 h-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
-        <div className="flex items-center space-x-2">
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          )}
+        </Link>
+        <Link href="/settings" className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
           <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold">
             <User className="w-5 h-5" />
           </div>
           <span className="text-sm font-medium text-gray-700">{currentUser?.name}</span>
-        </div>
+        </Link>
       </div>
     </header>
   );
