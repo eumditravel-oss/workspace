@@ -20,6 +20,7 @@ export default function ProjectBoardPage() {
   const [viewType, setViewType] = useState<BoardViewType>('DETAILED');
   const [showPersonalSchedules, setShowPersonalSchedules] = useState(false);
   const [showEvaluationModal, setShowEvaluationModal] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<number | 'ALL'>('ALL');
 
   const applyPreset = (preset: string) => {
     if (preset === 'ASSIGNEE_VIEW') {
@@ -39,6 +40,23 @@ export default function ProjectBoardPage() {
     if (currentUser.role === 'PM') return p.pmId === currentUser.id;
     if (currentUser.role === 'WORKER') return true; // In real app, check assignment
     return false;
+  });
+
+  const filteredProjects = accessibleProjects.filter(p => {
+    if (selectedMonth === 'ALL') return true;
+    
+    // Filter by tasks that overlap with the selected month
+    const pTasks = tasks.filter(t => t.projectId === p.id && !t.isDeleted);
+    return pTasks.some(t => {
+      if (!t.startDate && !t.dueDate) return false;
+      const start = t.startDate ? new Date(t.startDate) : new Date(t.dueDate!);
+      const end = t.dueDate ? new Date(t.dueDate) : new Date(t.startDate!);
+      
+      const targetMonthStart = new Date(2026, selectedMonth - 1, 1);
+      const targetMonthEnd = new Date(2026, selectedMonth, 0, 23, 59, 59);
+      
+      return start <= targetMonthEnd && end >= targetMonthStart;
+    });
   });
 
   // Auto-select removed to show Project Summary Board by default
@@ -79,7 +97,7 @@ export default function ProjectBoardPage() {
             defaultValue=""
           >
             <option value="" disabled>🌟 프리셋 선택</option>
-            <option value="ASSIGNEE_VIEW">작업자별 부하(Assignee)</option>
+            <option value="ASSIGNEE_VIEW">진행중인 프로젝트(Assignee)</option>
             <option value="PRIORITY_VIEW">납품일 임박도 현황</option>
           </select>
 
@@ -90,6 +108,17 @@ export default function ProjectBoardPage() {
           >
             <option value="DETAILED">상세라인 보드</option>
             <option value="COLLAB">협업 보드</option>
+          </select>
+
+          <select
+            className="border rounded-lg p-2 bg-white text-sm font-semibold border-gray-300"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
+          >
+            <option value="ALL">전체 기간</option>
+            {[1, 2, 3, 4, 5, 6, 7].map(m => (
+              <option key={m} value={m}>2026년 {m}월</option>
+            ))}
           </select>
 
           <select
@@ -136,7 +165,7 @@ export default function ProjectBoardPage() {
         />
       ) : (
         <ProjectBoard
-          projects={accessibleProjects}
+          projects={filteredProjects}
           tasks={tasks}
           groupBy={groupBy}
           onProjectClick={setSelectedProjectId}

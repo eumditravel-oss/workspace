@@ -14,7 +14,7 @@ export const DepartmentManagerDashboard = () => {
   const deptProjects = projects.filter(p => !p.isDeleted && p.archiveStatus !== 'ARCHIVED' && p.departmentId === currentUser?.departmentId);
   const deptTasks = tasks.filter(t => deptProjects.some(p => p.id === t.projectId));
 
-  const urgentProjectsCount = deptProjects.filter(p => getDeliveryUrgencyBucket(p) === 'URGENT').length;
+  const urgentProjectsCount = deptProjects.filter(p => getDeliveryUrgencyBucket(p) === 'WITHIN_1_WEEK').length;
   const pendingApprovalsCount = deptTasks.filter(t => t.approvalStatus === 'PENDING').length;
   
   const delayedTasksCount = deptTasks.filter(t => {
@@ -65,7 +65,7 @@ export const DepartmentManagerDashboard = () => {
                       </div>
                     </td>
                     <td className="p-3 text-sm">
-                      <span className={`${urgency === 'URGENT' ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
+                      <span className={`${urgency === 'WITHIN_1_WEEK' ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
                         {p.deliveryDate || '미정'}
                       </span>
                     </td>

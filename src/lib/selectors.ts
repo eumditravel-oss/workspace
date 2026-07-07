@@ -116,8 +116,10 @@ export const normalizeScopeName = (rawName: string): string => {
   return rawName.replace(/[\n\r]+/g, ' ').trim();
 };
 
-export const getDeliveryUrgencyBucket = (project: Project, today: Date = new Date()): 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW' => {
-  if (!project.deliveryDate) return 'LOW';
+export type DeliveryPresetBucket = 'WITHIN_1_WEEK' | 'WITHIN_2_WEEKS' | 'WITHIN_1_MONTH' | 'UNSET';
+
+export const getDeliveryUrgencyBucket = (project: Project, today: Date = new Date()): DeliveryPresetBucket => {
+  if (!project.deliveryDate) return 'UNSET';
   
   const delivery = new Date(project.deliveryDate);
   delivery.setHours(0, 0, 0, 0);
@@ -127,10 +129,10 @@ export const getDeliveryUrgencyBucket = (project: Project, today: Date = new Dat
   const diffTime = delivery.getTime() - current.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   
-  if (diffDays <= 3) return 'URGENT';
-  if (diffDays <= 7) return 'HIGH';
-  if (diffDays <= 14) return 'NORMAL';
-  return 'LOW';
+  if (diffDays <= 7) return 'WITHIN_1_WEEK';
+  if (diffDays <= 14) return 'WITHIN_2_WEEKS';
+  if (diffDays <= 30) return 'WITHIN_1_MONTH';
+  return 'UNSET';
 };
 
 export const getProjectOverallProgress = (project: Project, tasks: TaskCard[]): number => {

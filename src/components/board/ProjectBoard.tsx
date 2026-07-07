@@ -15,10 +15,10 @@ export const ProjectBoard: React.FC<Props> = ({ projects, tasks, groupBy, onProj
   const getColumns = () => {
     if (groupBy === 'PRIORITY') {
       return [
-        { id: 'URGENT', title: '🔴 긴급' },
-        { id: 'HIGH', title: '🟠 높음' },
-        { id: 'NORMAL', title: '🔵 보통' },
-        { id: 'LOW', title: '⚪ 낮음' },
+        { id: 'WITHIN_1_WEEK', title: '🔴 납품 1주일 전' },
+        { id: 'WITHIN_2_WEEKS', title: '🟠 납품 2주일 전' },
+        { id: 'WITHIN_1_MONTH', title: '🔵 납품 1달 전' },
+        { id: 'UNSET', title: '⚪ 미정' },
       ];
     }
     // Default to Status groups

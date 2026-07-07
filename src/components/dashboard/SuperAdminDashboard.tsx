@@ -12,7 +12,7 @@ export const SuperAdminDashboard = () => {
   const activeProjects = projects.filter(p => !p.isDeleted && p.archiveStatus !== 'ARCHIVED');
   
   // 지표 계산
-  const urgentProjectsCount = activeProjects.filter(p => getDeliveryUrgencyBucket(p) === 'URGENT').length;
+  const urgentProjectsCount = activeProjects.filter(p => getDeliveryUrgencyBucket(p) === 'WITHIN_1_WEEK').length;
   
   const pendingApprovalsCount = tasks.filter(t => t.approvalStatus === 'PENDING').length;
   
@@ -85,7 +85,7 @@ export const SuperAdminDashboard = () => {
                       </div>
                     </td>
                     <td className="p-3 text-sm">
-                      <span className={`${urgency === 'URGENT' ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
+                      <span className={`${urgency === 'WITHIN_1_WEEK' ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
                         {p.deliveryDate || '미정'}
                       </span>
                     </td>

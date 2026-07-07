@@ -14,7 +14,7 @@ export const PMDashboard = () => {
   const pmProjects = projects.filter(p => !p.isDeleted && p.archiveStatus !== 'ARCHIVED' && p.pmId === currentUser?.id);
   const pmTasks = tasks.filter(t => pmProjects.some(p => p.id === t.projectId));
 
-  const urgentProjectsCount = pmProjects.filter(p => getDeliveryUrgencyBucket(p) === 'URGENT').length;
+  const urgentProjectsCount = pmProjects.filter(p => getDeliveryUrgencyBucket(p) === 'WITHIN_1_WEEK').length;
   const pendingApprovalsCount = pmTasks.filter(t => t.approvalStatus === 'PENDING').length;
   
   const delayedTasksCount = pmTasks.filter(t => {
@@ -65,7 +65,7 @@ export const PMDashboard = () => {
                       </div>
                     </td>
                     <td className="p-3 text-sm">
-                      <span className={`${urgency === 'URGENT' ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
+                      <span className={`${urgency === 'WITHIN_1_WEEK' ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
                         {p.deliveryDate || '미정'}
                       </span>
                     </td>

@@ -78,9 +78,20 @@ export default function SchedulesPage() {
 
       <div className="bg-white rounded-xl shadow-sm border p-4 space-y-4">
         <div className="flex justify-between items-center">
-          <button onClick={prevMonth} className="p-2 bg-gray-100 rounded hover:bg-gray-200">&lt; 이전 달</button>
+          <div className="flex gap-2">
+            <button onClick={prevMonth} className="p-2 bg-gray-100 rounded hover:bg-gray-200">&lt; 이전 달</button>
+            <select
+              className="border rounded-lg p-2 bg-white text-sm font-bold border-gray-300"
+              value={month}
+              onChange={(e) => setCurrentDate(new Date(year, Number(e.target.value), 1))}
+            >
+              {[0, 1, 2, 3, 4, 5, 6].map(m => (
+                <option key={m} value={m}>2026년 {m + 1}월</option>
+              ))}
+            </select>
+            <button onClick={nextMonth} className="p-2 bg-gray-100 rounded hover:bg-gray-200">다음 달 &gt;</button>
+          </div>
           <h2 className="text-lg font-bold">{year}년 {month + 1}월</h2>
-          <button onClick={nextMonth} className="p-2 bg-gray-100 rounded hover:bg-gray-200">다음 달 &gt;</button>
         </div>
 
         {activeTab === 'MONTHLY_MATRIX' && (
