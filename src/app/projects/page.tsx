@@ -78,21 +78,21 @@ export default function ProjectBoardPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border">
-        <h1 className="text-xl font-bold text-gray-800">프로젝트 보드</h1>
-        <div className="flex gap-3 flex-wrap">
+    <div className="max-w-7xl mx-auto space-y-4">
+      <div className="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border">
+        <h1 className="text-lg font-bold text-gray-800">프로젝트 보드</h1>
+        <div className="flex gap-2 flex-wrap items-center">
           {currentUser.role === 'PM' && selectedProjectId && (
             <button
               onClick={() => setShowEvaluationModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 font-semibold text-sm rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors mr-2"
+              className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 font-semibold text-xs rounded border border-blue-200 hover:bg-blue-100 transition-colors mr-1"
             >
-              <FileText className="w-4 h-4" />
+              <FileText className="w-3 h-3" />
               PM 평가 의견
             </button>
           )}
           <select
-            className="border rounded-lg p-2 bg-white text-sm font-semibold text-blue-600 border-blue-200"
+            className="border rounded px-2 py-1 bg-white text-xs font-semibold text-blue-600 border-blue-200"
             onChange={(e) => applyPreset(e.target.value)}
             defaultValue=""
           >
@@ -101,56 +101,48 @@ export default function ProjectBoardPage() {
             <option value="PRIORITY_VIEW">납품일 임박도 현황</option>
           </select>
 
-          <select
-            className="border rounded-lg p-2 bg-gray-50 text-sm"
-            value={viewType}
-            onChange={(e) => setViewType(e.target.value as BoardViewType)}
-          >
-            <option value="DETAILED">상세라인 보드</option>
-            <option value="COLLAB">협업 보드</option>
-          </select>
-
-          <select
-            className="border rounded-lg p-2 bg-white text-sm font-semibold border-gray-300"
+          <select 
+            className="border rounded px-2 py-1 bg-gray-50 text-xs font-medium"
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
           >
-            <option value="ALL">전체 기간</option>
-            {[1, 2, 3, 4, 5, 6, 7].map(m => (
-              <option key={m} value={m}>2026년 {m}월</option>
+            <option value="ALL">전체 월</option>
+            {[6, 7, 8].map(m => (
+              <option key={m} value={m}>{m}월</option>
             ))}
-          </select>
-
-          <select
-            className="border rounded-lg p-2 bg-gray-50 text-sm"
-            value={groupBy}
-            onChange={(e) => setGroupBy(e.target.value as GroupByOption)}
-          >
-            <option value="STATUS">단계별 그룹</option>
-            <option value="ASSIGNEE">담당자별 그룹</option>
-            <option value="PRIORITY">납품일 임박도 그룹</option>
           </select>
 
           <select 
-            className="border rounded-lg p-2 bg-gray-50 min-w-[200px]"
-            value={selectedProjectId} 
+            className="border rounded px-2 py-1 bg-gray-50 text-xs font-medium"
+            value={selectedProjectId}
             onChange={(e) => setSelectedProjectId(e.target.value)}
           >
-            <option value="">전체 프로젝트 뷰</option>
-            {accessibleProjects.map(p => (
+            <option value="">(전체 프로젝트 요약 보기)</option>
+            {filteredProjects.map(p => (
               <option key={p.id} value={p.id}>{p.title}</option>
             ))}
           </select>
+          
+          {selectedProjectId && (
+            <>
+              <select className="border rounded px-2 py-1 bg-gray-50 text-xs font-medium" value={viewType} onChange={(e) => setViewType(e.target.value as BoardViewType)}>
+                <option value="DETAILED">세부 공정 View</option>
+                <option value="COLLAB">협업 보드 View</option>
+              </select>
+              <select className="border rounded px-2 py-1 bg-gray-50 text-xs font-medium" value={groupBy} onChange={(e) => setGroupBy(e.target.value as GroupByOption)}>
+                <option value="STATUS">상태별 보기</option>
+                <option value="ASSIGNEE">담당자별 보기</option>
+                <option value="PRIORITY">우선순위(납품일)별 보기</option>
+              </select>
+            </>
+          )}
 
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 bg-gray-50 px-3 py-1.5 rounded-lg border">
-            <input 
-              type="checkbox" 
-              checked={showPersonalSchedules} 
-              onChange={(e) => setShowPersonalSchedules(e.target.checked)}
-              className="rounded text-blue-600 focus:ring-blue-500"
-            />
-            Off/Day 표시
-          </label>
+          <button 
+            onClick={() => setShowPersonalSchedules(!showPersonalSchedules)}
+            className={`px-3 py-1 text-xs font-semibold rounded ${showPersonalSchedules ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+          >
+            개인일정 표기
+          </button>
         </div>
       </div>
 

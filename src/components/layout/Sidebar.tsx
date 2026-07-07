@@ -3,12 +3,13 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import { LayoutDashboard, Briefcase, Calendar, CheckSquare, Bell, Settings, ClipboardList, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
+import { useUiStore } from '@/store/uiStore';
+import { LayoutDashboard, Briefcase, Calendar, CheckSquare, Bell, Settings, ClipboardList, ChevronLeft, AlertTriangle, Menu } from 'lucide-react';
 
 export const Sidebar = () => {
   const pathname = usePathname();
   const { currentUser } = useAuthStore();
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const { sidebarMode, cycleSidebarMode } = useUiStore();
 
   const menuItems = [
     { name: '통합 대시보드', path: '/', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },
@@ -24,26 +25,31 @@ export const Sidebar = () => {
 
   const visibleMenus = menuItems.filter(item => currentUser && item.roles.includes(currentUser.role));
 
+  const isCompact = sidebarMode === 'COMPACT';
+  const isExpanded = sidebarMode === 'EXPANDED';
+
+  const widthClass = isExpanded ? 'w-64' : isCompact ? 'w-20' : 'w-12';
+
   return (
-    <div className={`${isCollapsed ? 'w-20' : 'w-64'} bg-gray-900 text-white min-h-screen flex flex-col transition-all duration-300 relative`}>
-      <div className={`p-6 ${isCollapsed ? 'text-center px-2' : ''}`}>
-        <h1 className={`font-bold text-white transition-all ${isCollapsed ? 'text-lg' : 'text-2xl'}`}>
-          {isCollapsed ? 'E' : 'EUMDI OS'}
+    <div className={`${widthClass} bg-gray-900 text-white min-h-screen flex flex-col transition-all duration-300 relative z-50`}>
+      <div className={`p-4 ${!isExpanded ? 'text-center flex justify-center' : ''} min-h-16 flex items-center`}>
+        <h1 className={`font-bold text-white transition-all ${isExpanded ? 'text-2xl' : isCompact ? 'text-lg' : 'text-xs truncate'}`}>
+          {isExpanded ? 'EUMDI OS' : isCompact ? 'E' : 'E'}
         </h1>
-        {!isCollapsed && <p className="text-xs text-gray-400 mt-1">Project Management</p>}
       </div>
+      {isExpanded && <div className="px-6 pb-2"><p className="text-xs text-gray-400">Project Management</p></div>}
       
-      <nav className="flex-1 px-3 space-y-2 mt-4">
+      <nav className="flex-1 px-2 space-y-2 mt-2 overflow-y-auto custom-scrollbar overflow-x-hidden">
         {visibleMenus.map((item) => {
           const isActive = pathname === item.path;
           return (
-            <Link key={item.name} href={item.path} className={`flex items-center rounded-lg transition-colors group relative ${isCollapsed ? 'justify-center py-3' : 'px-4 py-3'} ${isActive ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}>
-              <item.icon className={`w-5 h-5 ${isCollapsed ? '' : 'mr-3'}`} />
-              {!isCollapsed && <span>{item.name}</span>}
+            <Link key={item.name} href={item.path} className={`flex items-center rounded-lg transition-colors group relative ${!isExpanded ? 'justify-center py-3' : 'px-4 py-3'} ${isActive ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}>
+              <item.icon className={`flex-shrink-0 ${isExpanded ? 'w-5 h-5 mr-3' : isCompact ? 'w-6 h-6' : 'w-5 h-5'}`} />
+              {isExpanded && <span className="truncate">{item.name}</span>}
               
-              {/* Tooltip for collapsed state */}
-              {isCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible whitespace-nowrap z-50">
+              {/* Tooltip for collapsed states */}
+              {!isExpanded && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible whitespace-nowrap z-[100]">
                   {item.name}
                 </div>
               )}
@@ -53,10 +59,11 @@ export const Sidebar = () => {
       </nav>
 
       <button 
-        onClick={() => setIsCollapsed(!isCollapsed)}
+        onClick={cycleSidebarMode}
         className="p-4 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-800 border-t border-gray-800 transition-colors"
+        title="Toggle sidebar mode"
       >
-        {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+        {!isExpanded ? <Menu className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
       </button>
     </div>
   );

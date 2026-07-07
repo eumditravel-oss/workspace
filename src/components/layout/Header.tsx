@@ -11,7 +11,7 @@ export const Header = () => {
   const { currentUser, loginAs } = useAuthStore();
 
   return (
-    <header className="bg-white border-b h-16 flex items-center justify-between px-6">
+    <header className="bg-white border-b h-14 flex items-center justify-between px-6 z-40">
       <div className="flex items-center">
         <h2 className="text-lg font-semibold text-gray-800">
           {currentUser ? `${currentUser.departmentName} - ${currentUser.role}` : '로그인 필요'}
