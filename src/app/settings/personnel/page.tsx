@@ -6,8 +6,10 @@ import { Users, Save, Download, Upload } from 'lucide-react';
 import { PersonnelCard } from '@/types/models';
 
 export default function PersonnelManagementPage() {
-  const { currentUser, users, loginAs, updateUser } = useAuthStore();
+  const { currentUser, users, updateUser } = useAuthStore();
   const personnel = users;
+  
+  const [editingUser, setEditingUser] = useState<PersonnelCard | null>(null);
   
   if (!currentUser) return <div className="p-6">로그인이 필요합니다.</div>;
   if (!['SUPER_ADMIN', 'SYSTEM_ADMIN', 'DEPARTMENT_MANAGER'].includes(currentUser.role)) {
@@ -97,13 +99,150 @@ export default function PersonnelManagementPage() {
                   </span>
                 </td>
                 <td className="p-3">
-                  <button className="text-indigo-600 hover:underline text-xs font-bold">수정</button>
+                  <button onClick={() => setEditingUser(user)} className="text-indigo-600 hover:underline text-xs font-bold">수정</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {editingUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold mb-4">인사카드 수정</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">이름(표시명)</label>
+                <input 
+                  type="text" 
+                  value={editingUser.displayName || editingUser.name || ''} 
+                  onChange={e => setEditingUser({...editingUser, displayName: e.target.value})}
+                  className="w-full border rounded p-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">회사</label>
+                <select 
+                  value={editingUser.companyId || ''} 
+                  onChange={e => setEditingUser({...editingUser, companyId: e.target.value as any})}
+                  className="w-full border rounded p-2 text-sm"
+                >
+                  <option value="">선택 안함</option>
+                  <option value="CON_COST">CON-COST (한국)</option>
+                  <option value="VIET_QS">Viet_QS (베트남)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">공통 부서</label>
+                <select 
+                  value={editingUser.departmentId || ''} 
+                  onChange={e => setEditingUser({...editingUser, departmentId: e.target.value})}
+                  className="w-full border rounded p-2 text-sm"
+                >
+                  <option value="">선택 안함</option>
+                  <option value="FINISH">마감 (Finishing)</option>
+                  <option value="STRUCTURE">구조 (Structure)</option>
+                  <option value="CIVIL">토목 (Civil)</option>
+                  <option value="DEVELOP">개발 (Develop)</option>
+                </select>
+              </div>
+              {editingUser.companyId === 'VIET_QS' && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">세부 부서 (Viet_QS)</label>
+                  <select 
+                    value={editingUser.subDepartmentId || ''} 
+                    onChange={e => setEditingUser({...editingUser, subDepartmentId: e.target.value})}
+                    className="w-full border rounded p-2 text-sm"
+                  >
+                    <option value="">선택 안함</option>
+                    <optgroup label="마감">
+                      <option value="INTERNAL_1">Internal1</option>
+                      <option value="INTERNAL_2">Internal2</option>
+                      <option value="INTERNAL_3">Internal3</option>
+                      <option value="EXTERNAL">External</option>
+                      <option value="PARTITION_OPENING">Partition & Opening</option>
+                    </optgroup>
+                    <optgroup label="구조">
+                      <option value="VERTICAL">Vertical</option>
+                      <option value="HORIZONTAL_FOUNDATION">Horizontal & Foundation</option>
+                    </optgroup>
+                    <optgroup label="토목">
+                      <option value="CIVIL_SUB">Civil</option>
+                    </optgroup>
+                    <optgroup label="개발">
+                      <option value="DEVELOP_SUB">Develop</option>
+                    </optgroup>
+                  </select>
+                </div>
+              )}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">조직 직급</label>
+                <select 
+                  value={editingUser.organizationRank || ''} 
+                  onChange={e => setEditingUser({...editingUser, organizationRank: e.target.value as any})}
+                  className="w-full border rounded p-2 text-sm"
+                >
+                  <option value="">선택 안함</option>
+                  <option value="CEO">CEO</option>
+                  <option value="VICE_PRESIDENT">Vice President</option>
+                  <option value="MANAGER">Manager (부서장)</option>
+                  <option value="PM">PM (Project Manager)</option>
+                  <option value="TEAM_LEADER">팀장</option>
+                  <option value="DEPUTY_TEAM_LEADER">부팀장</option>
+                  <option value="STAFF">사원 (Staff)</option>
+                  <option value="TRAINEE">수습 (Trainee)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">시스템 권한</label>
+                <select 
+                  value={editingUser.systemRole || editingUser.role} 
+                  onChange={e => setEditingUser({...editingUser, systemRole: e.target.value as any, role: e.target.value as any})}
+                  className="w-full border rounded p-2 text-sm"
+                >
+                  <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+                  <option value="SYSTEM_ADMIN">SYSTEM_ADMIN</option>
+                  <option value="DEPARTMENT_MANAGER">DEPARTMENT_MANAGER</option>
+                  <option value="PM">PM</option>
+                  <option value="WORKER">WORKER</option>
+                  <option value="EVALUATION_ADMIN">EVALUATION_ADMIN</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">상태</label>
+                <select 
+                  value={editingUser.employmentStatus || (editingUser.isActive ? 'ACTIVE' : 'INACTIVE')} 
+                  onChange={e => setEditingUser({...editingUser, employmentStatus: e.target.value})}
+                  className="w-full border rounded p-2 text-sm"
+                >
+                  <option value="ACTIVE">재직 중 (ACTIVE)</option>
+                  <option value="ON_LEAVE">휴직 (ON_LEAVE)</option>
+                  <option value="RESIGNED">퇴사 (RESIGNED)</option>
+                  <option value="INACTIVE">비활성 (INACTIVE)</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <button 
+                onClick={() => setEditingUser(null)} 
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded text-sm font-bold hover:bg-gray-200"
+              >
+                취소
+              </button>
+              <button 
+                onClick={() => {
+                  updateUser(editingUser.id, editingUser);
+                  setEditingUser(null);
+                }} 
+                className="px-4 py-2 bg-indigo-600 text-white rounded text-sm font-bold hover:bg-indigo-700 flex items-center gap-1"
+              >
+                <Save className="w-4 h-4" /> 저장
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

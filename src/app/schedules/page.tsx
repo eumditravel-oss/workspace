@@ -23,7 +23,10 @@ export default function SchedulesPage() {
 
   if (!currentUser) return <div className="p-6">로그인이 필요합니다.</div>;
 
-  const visibleUsers = users.filter(u => canViewEmployeeSchedule(currentUser, u));
+  const visibleUsers = users.filter(u => 
+    (u.employmentStatus === 'ACTIVE' || u.isActive) && 
+    canViewEmployeeSchedule(currentUser, u)
+  );
 
   // Filter based on role and rules
   const visibleSchedules = schedules.filter(s => {
@@ -195,7 +198,6 @@ export default function SchedulesPage() {
                 {visibleUsers.map(user => {
                   const userSchedules = visibleSchedules.filter(s => s.userId === user.id);
                   const userTasks = tasks.filter(t => t.assigneeId === user.id && !t.isDeleted);
-                  if (userSchedules.length === 0 && userTasks.length === 0) return null;
 
                   return (
                     <tr key={user.id} className="hover:bg-gray-50/50 transition-colors group">
@@ -316,8 +318,6 @@ export default function SchedulesPage() {
             {visibleUsers.map(user => {
               const userTasks = tasks.filter(t => t.assigneeId === user.id && !t.isDeleted && t.status !== 'DONE');
               const userSchedules = visibleSchedules.filter(s => s.userId === user.id);
-              
-              if (userTasks.length === 0 && userSchedules.length === 0) return null;
               
               return (
                 <div key={user.id} className="bg-gray-50 rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col h-full">
