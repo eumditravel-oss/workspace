@@ -17,7 +17,7 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
   
   if (parts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-gray-500 bg-white rounded-lg border border-dashed">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--color-text-sub)] bg-[var(--color-surface)] rounded-lg border border-dashed">
         <p>배정된 업무 파트가 없습니다.</p>
       </div>
     );
@@ -32,18 +32,18 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
           const avgProgress = getPartProgress(part.id, parts, tasks);
           
           return (
-            <div key={part.id} className="w-full bg-gray-50 rounded-xl flex flex-col border border-gray-200 shadow-sm">
+            <div key={part.id} className="w-full bg-[var(--color-bg)] rounded-xl flex flex-col border border-[var(--color-border)] shadow-sm">
               {/* Row Header */}
-              <div className="p-4 bg-white rounded-t-xl border-b border-gray-200 flex justify-between items-center sticky top-0 z-10">
+              <div className="p-4 bg-[var(--color-surface)] rounded-t-xl border-b border-[var(--color-border)] flex justify-between items-center sticky top-0 z-10">
                 <div className="flex items-center gap-4">
-                  <h3 className="font-bold text-gray-800 text-base">{part.partName}</h3>
-                  <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full border">
+                  <h3 className="font-bold text-[var(--color-text-main)] text-base">{part.partName}</h3>
+                  <span className="text-xs font-semibold text-[var(--color-text-sub)] bg-gray-100 px-2 py-0.5 rounded-full border">
                     {partTasks.length}건
                   </span>
                 </div>
                 
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-sm text-[var(--color-text-sub)]">
                     <span className="font-medium">참여 {partEmployees.length}명</span>
                     <span className="text-gray-300">|</span>
                     <span className="font-medium text-blue-600">진행률 {avgProgress}%</span>
@@ -68,7 +68,7 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
                   return (
                     <div 
                       key={task.id} 
-                      className="flex-shrink-0 w-[280px] bg-white p-3 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group flex flex-col justify-between"
+                      className="flex-shrink-0 w-[280px] bg-[var(--color-surface)] p-3 rounded-lg shadow-sm border border-[var(--color-border)] hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group flex flex-col justify-between"
                       onClick={() => setSelectedTask(task)}
                     >
                       <div>
@@ -80,18 +80,18 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
                             task.status === 'DONE' ? 'bg-green-100 text-green-700' :
                             task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
                             task.status === 'REVIEW' ? 'bg-purple-100 text-purple-700' :
-                            'bg-gray-100 text-gray-600'
+                            'bg-gray-100 text-[var(--color-text-sub)]'
                           }`}>
                             {task.status}
                           </span>
                         </div>
                         
-                        <h4 className="font-medium text-sm text-gray-800 mb-4 line-clamp-2">{task.title}</h4>
+                        <h4 className="font-medium text-sm text-[var(--color-text-main)] mb-4 line-clamp-2">{task.title}</h4>
                       </div>
                       
-                      <div className="flex items-center justify-between text-xs text-gray-500 mt-auto">
+                      <div className="flex items-center justify-between text-xs text-[var(--color-text-sub)] mt-auto">
                         <div className="flex items-center gap-1.5">
-                          <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">
+                          <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-[var(--color-text-sub)]">
                             {assignee ? (assignee.displayName?.[0] || assignee.name[0]) : '?'}
                           </div>
                           <span className="truncate max-w-[120px]">{assignee ? (assignee.displayName || assignee.name) : '미배정'}</span>
@@ -105,7 +105,7 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
                   );
                 })}
                 {partTasks.length === 0 && (
-                  <div className="flex items-center justify-center w-full py-8 text-sm text-gray-400">
+                  <div className="flex items-center justify-center w-full py-8 text-sm text-[var(--color-text-sub)]">
                     등록된 업무 카드가 없습니다.
                   </div>
                 )}

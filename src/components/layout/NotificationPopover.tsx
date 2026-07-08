@@ -32,7 +32,7 @@ export const NotificationPopover = () => {
       case 'APPROVAL_REQUEST': return <CalendarClock className="w-5 h-5 text-blue-500" />;
       case 'CONFLICT_ALERT': return <AlertCircle className="w-5 h-5 text-red-500" />;
       case 'PROJECT_ASSIGNMENT': return <Briefcase className="w-5 h-5 text-purple-500" />;
-      default: return <FileText className="w-5 h-5 text-gray-500" />;
+      default: return <FileText className="w-5 h-5 text-[var(--color-text-sub)]" />;
     }
   };
 
@@ -47,7 +47,7 @@ export const NotificationPopover = () => {
     <div className="relative" ref={popoverRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 text-gray-500 hover:bg-gray-100 rounded-full relative transition-colors"
+        className="p-2 text-[var(--color-text-sub)] hover:bg-gray-100 rounded-full relative transition-colors"
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
@@ -56,9 +56,9 @@ export const NotificationPopover = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
-          <div className="p-4 border-b flex justify-between items-center bg-gray-50/50">
-            <h3 className="font-bold text-gray-800">알림</h3>
+        <div className="absolute right-0 mt-2 w-80 bg-[var(--color-surface)] rounded-xl shadow-xl border border-[var(--color-border)] z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+          <div className="p-4 border-b flex justify-between items-center bg-[var(--color-bg)]/50">
+            <h3 className="font-bold text-[var(--color-text-main)]">알림</h3>
             {unreadCount > 0 && (
               <button 
                 onClick={() => markAllAsRead(currentUser.id)}
@@ -71,7 +71,7 @@ export const NotificationPopover = () => {
           
           <div className="max-h-96 overflow-y-auto custom-scrollbar">
             {myNotifications.length === 0 ? (
-              <div className="p-8 text-center text-gray-500 text-sm">
+              <div className="p-8 text-center text-[var(--color-text-sub)] text-sm">
                 새로운 알림이 없습니다.
               </div>
             ) : (
@@ -83,7 +83,7 @@ export const NotificationPopover = () => {
                     markAsRead(n.id);
                     setIsOpen(false);
                   }}
-                  className={`block p-4 border-b last:border-0 hover:bg-gray-50 transition-colors ${!n.isRead ? 'bg-blue-50/30' : ''}`}
+                  className={`block p-4 border-b last:border-0 hover:bg-[var(--color-bg)] transition-colors ${!n.isRead ? 'bg-blue-50/30' : ''}`}
                 >
                   <div className="flex gap-3">
                     <div className="flex-shrink-0 mt-0.5">
@@ -91,14 +91,14 @@ export const NotificationPopover = () => {
                     </div>
                     <div>
                       <div className="flex justify-between items-start mb-1">
-                        <span className={`text-sm ${!n.isRead ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
+                        <span className={`text-sm ${!n.isRead ? 'font-bold text-[var(--color-text-main)]' : 'font-medium text-[var(--color-text-main)]'}`}>
                           {n.title}
                         </span>
-                        <span className="text-xs text-gray-400 whitespace-nowrap ml-2">
+                        <span className="text-xs text-[var(--color-text-sub)] whitespace-nowrap ml-2">
                           {new Date(n.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <p className={`text-xs ${!n.isRead ? 'text-gray-700 font-medium' : 'text-gray-500'}`}>
+                      <p className={`text-xs ${!n.isRead ? 'text-[var(--color-text-main)] font-medium' : 'text-[var(--color-text-sub)]'}`}>
                         {n.message}
                       </p>
                     </div>
@@ -108,7 +108,7 @@ export const NotificationPopover = () => {
             )}
           </div>
           
-          <div className="p-3 border-t bg-gray-50 text-center">
+          <div className="p-3 border-t bg-[var(--color-bg)] text-center">
             <Link 
               href="/notifications" 
               onClick={() => setIsOpen(false)}

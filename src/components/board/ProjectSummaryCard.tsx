@@ -1,8 +1,10 @@
 import React from 'react';
 import { Project, TaskCard } from '@/types/models';
 import { getProjectOverallProgress, getProjectDeliveryLifecycle, getProjectDeliveryBadge } from '@/lib/selectors';
-import { AlertCircle, Clock, CheckCircle } from 'lucide-react';
+import { AlertCircle, Clock, CheckCircle, User } from 'lucide-react';
 import { useProjectStore } from '@/store/projectStore';
+import { useAuthStore } from '@/store/authStore';
+import { Badge } from '@/components/ui/Badge';
 
 interface Props {
   project: Project;
@@ -11,80 +13,86 @@ interface Props {
 }
 
 export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick }) => {
+  const { users } = useAuthStore();
+  const { postDeliveryWorkRequests } = useProjectStore();
+
   const progress = getProjectOverallProgress(project, tasks);
   const lifecycle = getProjectDeliveryLifecycle(project);
   const badgeText = getProjectDeliveryBadge(project);
-  
-  const { postDeliveryWorkRequests } = useProjectStore();
+  const pmUser = users.find(u => u.id === project.pmId);
   
   const pendingTasks = tasks.filter(t => t.projectId === project.id && t.status !== 'DONE').length;
   const pendingRequestsCount = postDeliveryWorkRequests.filter(r => r.projectId === project.id && (r.status === 'PENDING_PM' || r.status === 'PENDING_MANAGER' || r.status === 'PENDING_SUPER_ADMIN')).length;
   
-  const getBadgeStyle = () => {
+  const getLifecycleBadgeVariant = () => {
     switch (lifecycle) {
-      case 'OVERDUE': return 'text-red-700 bg-red-100 border-red-300';
-      case 'DUE_TODAY': return 'text-red-600 bg-red-50 border-red-200';
-      case 'DUE_WITHIN_1_WEEK': return 'text-orange-600 bg-orange-50 border-orange-200';
-      case 'DUE_WITHIN_2_WEEKS': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'DUE_WITHIN_1_MONTH': return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'POST_DELIVERY_WORK_REQUESTED': return 'text-purple-600 bg-purple-50 border-purple-200';
-      case 'POST_DELIVERY_WORK_IN_PROGRESS': return 'text-purple-700 bg-purple-100 border-purple-300';
-      case 'REOPENED': return 'text-teal-600 bg-teal-50 border-teal-200';
+      case 'OVERDUE': 
+      case 'DUE_TODAY': return 'ERROR';
+      case 'DUE_WITHIN_1_WEEK': 
+      case 'DUE_WITHIN_2_WEEKS':
+      case 'POST_DELIVERY_WORK_REQUESTED': 
+      case 'POST_DELIVERY_WORK_IN_PROGRESS': return 'WARNING';
+      case 'DUE_WITHIN_1_MONTH':
+      case 'REOPENED': return 'INFO';
       case 'DELIVERY_CLOSED_AUTO':
-      case 'DELIVERY_CLOSED_MANUAL': return 'text-gray-600 bg-gray-100 border-gray-300';
-      default: return 'text-gray-500 bg-gray-50 border-gray-200';
+      case 'DELIVERY_CLOSED_MANUAL': return 'SUCCESS';
+      default: return 'DEFAULT';
     }
   };
 
   return (
     <div 
       onClick={() => onClick(project.id)}
-      className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer space-y-3"
+      className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)] shadow-sm border border-[var(--color-border)] hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 hover:-translate-y-1 transition-all duration-200 cursor-pointer space-y-3 group"
     >
-      <div className="flex justify-between items-start">
-        <h3 className="font-bold text-gray-800 line-clamp-2">{project.title}</h3>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
+          <Badge variant={project.projectSourceType === 'CLIENT_ORDER' ? 'INFO' : 'DEFAULT'}>
+            {project.projectSourceType === 'CLIENT_ORDER' ? '수주' : '내부개발'}
+          </Badge>
+          <Badge variant={getLifecycleBadgeVariant()}>{badgeText}</Badge>
+        </div>
+        <h3 className="font-bold text-[15px] text-[var(--color-text-main)] line-clamp-2 leading-snug group-hover:text-[var(--color-primary)] transition-colors">{project.title}</h3>
       </div>
 
-      <div className="space-y-1">
-        <div className="flex justify-between text-xs text-gray-600 font-medium">
-          <span className={`text-xs font-bold px-2 py-0.5 rounded border ${getBadgeStyle()}`}>{badgeText}</span>
+      <div className="flex items-center justify-between text-[11px] text-[var(--color-text-sub)]">
+        <div className="flex items-center gap-1.5">
+          <div className="w-5 h-5 bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800/50 rounded-full flex items-center justify-center border">
+            <User className="w-3 h-3" />
+          </div>
+          <span className="font-medium">{pmUser?.name || '담당자 미정'}</span>
+        </div>
+        <div className="flex items-center gap-1 font-semibold">
+          <Clock className="w-3 h-3" />
+          <span>{project.projectSourceType === 'INTERNAL_DEVELOPMENT' ? (project.targetDate ? `${project.targetDate} 목표` : '미정') : (project.deliveryDate ? `${project.deliveryDate} 납품` : '미정')}</span>
+        </div>
+      </div>
+
+      <div className="space-y-1.5 pt-1 border-t border-[var(--color-border)]">
+        <div className="flex justify-between text-[11px] font-bold text-[var(--color-text-main)]">
+          <span>진행률</span>
           <span>{progress}%</span>
         </div>
-        <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+        <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
           <div 
-            className="bg-indigo-600 h-2 rounded-full transition-all duration-500" 
+            className="bg-[var(--color-primary)] h-1.5 rounded-full transition-all duration-500" 
             style={{ width: `${progress}%` }}
           />
         </div>
       </div>
 
-      <div className="flex gap-2 text-xs text-gray-500 mt-2">
+      <div className="flex gap-3 text-[11px] font-semibold text-[var(--color-text-sub)]">
         <div className="flex items-center gap-1">
-          <CheckCircle className="w-3 h-3" />
-          <span>남은 업무 {pendingTasks}건</span>
+          <CheckCircle className="w-3.5 h-3.5" />
+          <span>잔여 {pendingTasks}건</span>
         </div>
-        {project.projectSourceType === 'INTERNAL_DEVELOPMENT' ? (
-          project.targetDate && (
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span>{project.targetDate} 목표</span>
-            </div>
-          )
-        ) : (
-          project.deliveryDate && (
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span>{project.deliveryDate} 납품</span>
-            </div>
-          )
+        {pendingRequestsCount > 0 && (
+          <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400">
+            <AlertCircle className="w-3.5 h-3.5" />
+            <span>추가업무 {pendingRequestsCount}건</span>
+          </div>
         )}
       </div>
-      {pendingRequestsCount > 0 && (
-        <div className="mt-2 text-xs font-semibold text-orange-600 flex items-center gap-1 bg-orange-50 p-1.5 rounded border border-orange-200">
-          <AlertCircle className="w-3 h-3" />
-          미결 추가업무 요청 {pendingRequestsCount}건
-        </div>
-      )}
     </div>
   );
 };

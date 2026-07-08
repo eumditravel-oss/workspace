@@ -8,9 +8,9 @@ export default function ConflictsPage() {
   const { currentUser } = useAuthStore();
   const { conflicts, resolveConflict } = useConflictStore();
 
-  if (!currentUser) return <div className="p-6">로그인이 필요합니다.</div>;
+  if (!currentUser) return <div className="py-10 text-center text-[var(--color-text-sub)]">로그인이 필요합니다.</div>;
   if (!['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM'].includes(currentUser.role)) {
-    return <div className="p-6 text-red-500 font-bold">권한이 없습니다. 관리자만 접근 가능합니다.</div>;
+    return <div className="py-10 text-center text-[var(--color-danger)] font-bold">권한이 없습니다. 관리자만 접근 가능합니다.</div>;
   }
 
   // Filter conflicts for this manager/PM
@@ -29,40 +29,40 @@ export default function ConflictsPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 p-6">
+    <div className="max-w-5xl w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">일정 충돌 관리</h1>
-        <p className="text-sm text-gray-500 mb-6">신규 프로젝트 배정이나 일정 변경으로 발생한 충돌 내역을 확인하고 해결합니다.</p>
+        <h1 className="text-2xl font-bold text-[var(--color-text-main)] mb-4">일정 충돌 관리</h1>
+        <p className="text-sm text-[var(--color-text-sub)] mb-6">신규 프로젝트 배정이나 일정 변경으로 발생한 충돌 내역을 확인하고 해결합니다.</p>
         
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden mb-8">
+        <div className="bg-[var(--color-surface)] rounded-xl shadow-sm border overflow-hidden mb-8">
           <div className="bg-red-50 p-4 border-b border-red-100 flex justify-between items-center">
             <h2 className="font-bold text-red-800">해결 대기 중인 충돌 ({pendingConflicts.length})</h2>
           </div>
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 border-b">
-                <th className="p-4 text-sm font-semibold text-gray-600">대상자</th>
-                <th className="p-4 text-sm font-semibold text-gray-600">충돌 기간</th>
-                <th className="p-4 text-sm font-semibold text-gray-600">유형</th>
-                <th className="p-4 text-sm font-semibold text-gray-600">내용</th>
-                <th className="p-4 text-sm font-semibold text-gray-600">액션</th>
+              <tr className="bg-[var(--color-bg)] border-b">
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">대상자</th>
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">충돌 기간</th>
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">유형</th>
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">내용</th>
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">액션</th>
               </tr>
             </thead>
             <tbody>
               {pendingConflicts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-6 text-center text-gray-500">대기 중인 충돌 내역이 없습니다.</td>
+                  <td colSpan={5} className="p-6 text-center text-[var(--color-text-sub)]">대기 중인 충돌 내역이 없습니다.</td>
                 </tr>
               ) : (
                 pendingConflicts.map(c => (
-                  <tr key={c.id} className="border-b hover:bg-gray-50">
-                    <td className="p-4 font-medium text-gray-800">{c.userId}</td>
-                    <td className="p-4 text-sm text-gray-600">{c.startDate} ~ {c.endDate}</td>
+                  <tr key={c.id} className="border-b hover:bg-[var(--color-bg)]">
+                    <td className="p-4 font-medium text-[var(--color-text-main)]">{c.userId}</td>
+                    <td className="p-4 text-sm text-[var(--color-text-sub)]">{c.startDate} ~ {c.endDate}</td>
                     <td className="p-4 text-sm text-red-600 font-bold">{c.conflictType}</td>
-                    <td className="p-4 text-sm text-gray-800">{c.description}</td>
+                    <td className="p-4 text-sm text-[var(--color-text-main)]">{c.description}</td>
                     <td className="p-4 space-y-2">
                       <div className="flex flex-col gap-1">
-                        <button onClick={() => handleResolve(c.id, 'RESOLVED_OVERLAP_ALLOWED')} className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-xs hover:bg-gray-200">중복 진행 허용</button>
+                        <button onClick={() => handleResolve(c.id, 'RESOLVED_OVERLAP_ALLOWED')} className="bg-gray-100 text-[var(--color-text-main)] px-3 py-1 rounded text-xs hover:bg-gray-200">중복 진행 허용</button>
                         <button onClick={() => handleResolve(c.id, 'RESOLVED_DELAYED')} className="bg-blue-100 text-blue-700 px-3 py-1 rounded text-xs hover:bg-blue-200">일정 미루기 승인</button>
                         <button onClick={() => handleResolve(c.id, 'RESOLVED_REASSIGNED')} className="bg-purple-100 text-purple-700 px-3 py-1 rounded text-xs hover:bg-purple-200">담당자 재배정</button>
                         <button onClick={() => handleResolve(c.id, 'RESOLVED_OVERTIME_APPROVED')} className="bg-orange-100 text-orange-700 px-3 py-1 rounded text-xs hover:bg-orange-200">야근 승인</button>
@@ -77,34 +77,34 @@ export default function ConflictsPage() {
       </div>
 
       <div>
-        <h2 className="text-xl font-bold text-gray-800 mb-4">해결 이력</h2>
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <h2 className="text-xl font-bold text-[var(--color-text-main)] mb-4">해결 이력</h2>
+        <div className="bg-[var(--color-surface)] rounded-xl shadow-sm border overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 border-b">
-                <th className="p-4 text-sm font-semibold text-gray-600">대상자 / 기간</th>
-                <th className="p-4 text-sm font-semibold text-gray-600">내용</th>
-                <th className="p-4 text-sm font-semibold text-gray-600">해결 상태</th>
-                <th className="p-4 text-sm font-semibold text-gray-600">코멘트</th>
+              <tr className="bg-[var(--color-bg)] border-b">
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">대상자 / 기간</th>
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">내용</th>
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">해결 상태</th>
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">코멘트</th>
               </tr>
             </thead>
             <tbody>
               {resolvedConflicts.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-6 text-center text-gray-500">해결된 내역이 없습니다.</td>
+                  <td colSpan={4} className="p-6 text-center text-[var(--color-text-sub)]">해결된 내역이 없습니다.</td>
                 </tr>
               ) : (
                 resolvedConflicts.map(c => (
-                  <tr key={c.id} className="border-b hover:bg-gray-50">
+                  <tr key={c.id} className="border-b hover:bg-[var(--color-bg)]">
                     <td className="p-4">
-                      <div className="font-medium text-gray-800">{c.userId}</div>
-                      <div className="text-xs text-gray-500">{c.startDate} ~ {c.endDate}</div>
+                      <div className="font-medium text-[var(--color-text-main)]">{c.userId}</div>
+                      <div className="text-xs text-[var(--color-text-sub)]">{c.startDate} ~ {c.endDate}</div>
                     </td>
-                    <td className="p-4 text-sm text-gray-800">{c.description}</td>
+                    <td className="p-4 text-sm text-[var(--color-text-main)]">{c.description}</td>
                     <td className="p-4 text-sm font-bold text-green-600">
                       {c.status}
                     </td>
-                    <td className="p-4 text-sm text-gray-500">{c.resolutionComment}</td>
+                    <td className="p-4 text-sm text-[var(--color-text-sub)]">{c.resolutionComment}</td>
                   </tr>
                 ))
               )}

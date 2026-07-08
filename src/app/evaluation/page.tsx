@@ -44,7 +44,7 @@ export default function EvaluationPage() {
     return results;
   }, [users, qcIssues, mockWorkloads]);
 
-  if (!currentUser) return <div className="p-6">로그인이 필요합니다.</div>;
+  if (!currentUser) return <div className="py-10 text-center text-[var(--color-text-sub)]">로그인이 필요합니다.</div>;
 
   // Filter based on roles
   const visibleResults = evalResults.filter(res => {
@@ -87,13 +87,13 @@ export default function EvaluationPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex justify-between items-center bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+    <div className="max-w-7xl w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+      <div className="flex justify-between items-center bg-[var(--color-surface)] p-5 rounded-xl shadow-sm border border-[var(--color-border)]">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <TrendingUp className="w-6 h-6 text-blue-600" /> 성과 평가 (2026 1차 운영안)
+          <h1 className="text-2xl font-bold text-[var(--color-text-main)] flex items-center gap-2">
+            <TrendingUp className="w-6 h-6 text-blue-600 dark:text-blue-400" /> 성과 평가 (2026 1차 운영안)
           </h1>
-          <p className="text-sm text-gray-500 mt-1">QC 오류율 및 작업량 기반 다면 평가 현황</p>
+          <p className="text-sm text-[var(--color-text-sub)] mt-1">QC 오류율 및 작업량 기반 다면 평가 현황</p>
         </div>
         
         {currentUser.role === 'SUPER_ADMIN' && (
@@ -108,39 +108,39 @@ export default function EvaluationPage() {
       </div>
 
       {(currentUser.role === 'WORKER' || currentUser.role === 'PM') && myResult && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100 shadow-sm">
-          <h2 className="text-lg font-bold text-blue-900 mb-4">나의 평가 요약</h2>
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-800/50 shadow-sm">
+          <h2 className="text-lg font-bold text-blue-900 dark:text-blue-300 mb-4">나의 평가 요약</h2>
           <div className="grid grid-cols-4 gap-4">
-            <div className="bg-white p-4 rounded-lg shadow-sm">
-              <div className="text-xs text-gray-500 mb-1">인정 작업량</div>
-              <div className="text-2xl font-bold text-gray-800">{myResult.totalWorkload}</div>
+            <div className="bg-[var(--color-surface)] p-4 rounded-lg shadow-sm">
+              <div className="text-xs text-[var(--color-text-sub)] mb-1">인정 작업량</div>
+              <div className="text-2xl font-bold text-[var(--color-text-main)]">{myResult.totalWorkload}</div>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow-sm">
-              <div className="text-xs text-gray-500 mb-1">가중 오류 건수</div>
-              <div className="text-2xl font-bold text-red-600">{myResult.totalWeightedErrorCount.toFixed(1)}</div>
+            <div className="bg-[var(--color-surface)] p-4 rounded-lg shadow-sm">
+              <div className="text-xs text-[var(--color-text-sub)] mb-1">가중 오류 건수</div>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{myResult.totalWeightedErrorCount.toFixed(1)}</div>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow-sm">
-              <div className="text-xs text-gray-500 mb-1">QC 오류율</div>
-              <div className="text-2xl font-bold text-orange-600">{myResult.weightedErrorRate.toFixed(2)}%</div>
+            <div className="bg-[var(--color-surface)] p-4 rounded-lg shadow-sm">
+              <div className="text-xs text-[var(--color-text-sub)] mb-1">QC 오류율</div>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{myResult.weightedErrorRate.toFixed(2)}%</div>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow-sm border-2 border-blue-200">
-              <div className="text-xs text-gray-500 mb-1">최종 품질 점수</div>
-              <div className="text-3xl font-black text-blue-700">{myResult.qualityScore}점</div>
+            <div className="bg-[var(--color-surface)] p-4 rounded-lg shadow-sm border-2 border-blue-200 dark:border-blue-700">
+              <div className="text-xs text-[var(--color-text-sub)] mb-1">최종 품질 점수</div>
+              <div className="text-3xl font-black text-blue-700 dark:text-blue-400">{myResult.qualityScore}점</div>
             </div>
           </div>
         </div>
       )}
 
       {(currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'DEPARTMENT_MANAGER') && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-            <h2 className="font-bold text-gray-800">부서원 평가 목록</h2>
+        <div className="bg-[var(--color-surface)] rounded-xl shadow-sm border border-[var(--color-border)] overflow-hidden">
+          <div className="p-5 border-b border-[var(--color-border)] bg-[var(--color-bg)] flex justify-between items-center">
+            <h2 className="font-bold text-[var(--color-text-main)]">부서원 평가 목록</h2>
             <div className="flex gap-4 items-center">
-              <span className="text-sm font-semibold text-gray-600 bg-white px-3 py-1 rounded-full border">
+              <span className="text-sm font-semibold text-[var(--color-text-sub)] bg-[var(--color-surface)] px-3 py-1 rounded-full border">
                 평균 점수: {avgScore.toFixed(1)}점
               </span>
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-sub)]" />
                 <input 
                   type="text" 
                   value={searchTerm}
@@ -154,7 +154,7 @@ export default function EvaluationPage() {
           
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 text-gray-600 font-semibold border-b">
+              <thead className="bg-[var(--color-bg)] text-[var(--color-text-sub)] font-semibold border-b">
                 <tr>
                   <th className="p-4">작업자</th>
                   <th className="p-4">부서</th>
@@ -166,16 +166,16 @@ export default function EvaluationPage() {
                   <th className="p-4 text-center">상태</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[var(--color-border)]">
                 {filteredResults.map(res => (
-                  <tr key={res.id} className="hover:bg-blue-50/30 transition-colors">
-                    <td className="p-4 font-medium text-gray-800">{res.userId}</td>
-                    <td className="p-4 text-gray-600">{res.departmentId}</td>
+                  <tr key={res.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-900/20 transition-colors">
+                    <td className="p-4 font-medium text-[var(--color-text-main)]">{res.userId}</td>
+                    <td className="p-4 text-[var(--color-text-sub)]">{res.departmentId}</td>
                     <td className="p-4 text-right font-mono">{res.totalWorkload}</td>
                     <td className="p-4 text-right font-mono">{res.totalRawErrorCount}</td>
-                    <td className="p-4 text-right font-mono text-red-600">{res.totalWeightedErrorCount.toFixed(1)}</td>
-                    <td className="p-4 text-right font-mono text-orange-600 font-medium">{res.weightedErrorRate.toFixed(2)}%</td>
-                    <td className="p-4 text-right font-bold text-blue-700">{res.qualityScore}점</td>
+                    <td className="p-4 text-right font-mono text-red-600 dark:text-red-400">{res.totalWeightedErrorCount.toFixed(1)}</td>
+                    <td className="p-4 text-right font-mono text-orange-600 dark:text-orange-400 font-medium">{res.weightedErrorRate.toFixed(2)}%</td>
+                    <td className="p-4 text-right font-bold text-blue-700 dark:text-blue-400">{res.qualityScore}점</td>
                     <td className="p-4 text-center">
                       <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${isLocked ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                         {isLocked ? <CheckCircle2 className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
@@ -186,7 +186,7 @@ export default function EvaluationPage() {
                 ))}
                 {filteredResults.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="p-8 text-center text-gray-400">결과가 없습니다.</td>
+                    <td colSpan={8} className="p-8 text-center text-[var(--color-text-sub)]">결과가 없습니다.</td>
                   </tr>
                 )}
               </tbody>
@@ -196,13 +196,13 @@ export default function EvaluationPage() {
       )}
 
       {(currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'DEPARTMENT_MANAGER') && (
-        <div className="bg-white rounded-xl shadow-sm border border-orange-200 overflow-hidden mt-6">
-          <div className="p-5 border-b border-orange-100 bg-orange-50 flex justify-between items-center">
-            <h2 className="font-bold text-orange-800">대기 중인 이의신청 건 ({pendingAppeals.length})</h2>
+        <div className="bg-[var(--color-surface)] rounded-xl shadow-sm border border-orange-200 dark:border-orange-900/50 overflow-hidden mt-6">
+          <div className="p-5 border-b border-orange-100 dark:border-orange-900/50 bg-orange-50 dark:bg-orange-900/20 flex justify-between items-center">
+            <h2 className="font-bold text-orange-800 dark:text-orange-400">대기 중인 이의신청 건 ({pendingAppeals.length})</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-orange-50/50 text-gray-600 font-semibold border-b">
+              <thead className="bg-orange-50/50 dark:bg-orange-900/10 text-[var(--color-text-sub)] font-semibold border-b">
                 <tr>
                   <th className="p-4">신청자</th>
                   <th className="p-4">관련 오류(대상)</th>
@@ -210,16 +210,16 @@ export default function EvaluationPage() {
                   <th className="p-4 text-center">작업</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[var(--color-border)]">
                 {pendingAppeals.map(appeal => {
                   const issue = qcIssues.find(i => i.id === appeal.targetIssueId);
                   return (
                     <tr key={appeal.id} className="hover:bg-orange-50/30 transition-colors">
-                      <td className="p-4 font-medium text-gray-800">{appeal.requestedBy}</td>
-                      <td className="p-4 text-gray-600">
+                      <td className="p-4 font-medium text-[var(--color-text-main)]">{appeal.requestedBy}</td>
+                      <td className="p-4 text-[var(--color-text-sub)]">
                         {issue ? `[${issue.issueStage}] ${issue.title} (기존 가중치: ${issue.weightPercent}%)` : '알 수 없음'}
                       </td>
-                      <td className="p-4 text-gray-800 max-w-sm truncate" title={appeal.reason}>{appeal.reason}</td>
+                      <td className="p-4 text-[var(--color-text-main)] max-w-sm truncate" title={appeal.reason}>{appeal.reason}</td>
                       <td className="p-4 text-center space-x-2">
                         <button onClick={() => handleReviewAppeal(appeal.id, true)} className="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700">수용</button>
                         <button onClick={() => handleReviewAppeal(appeal.id, false)} className="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-700">기각</button>
@@ -229,7 +229,7 @@ export default function EvaluationPage() {
                 })}
                 {pendingAppeals.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="p-8 text-center text-gray-400">대기 중인 이의신청이 없습니다.</td>
+                    <td colSpan={4} className="p-8 text-center text-[var(--color-text-sub)]">대기 중인 이의신청이 없습니다.</td>
                   </tr>
                 )}
               </tbody>

@@ -19,8 +19,8 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
     <div className="w-full">
       {showLabel && (
         <div className="flex justify-between text-[10px] mb-1">
-          <span className="text-gray-500">진행률</span>
-          <span className="font-medium text-gray-700">{safeProgress}%</span>
+          <span className="text-[var(--color-text-sub)]">진행률</span>
+          <span className="font-medium text-[var(--color-text-main)]">{safeProgress}%</span>
         </div>
       )}
       <div className={`w-full bg-gray-200 rounded-full overflow-hidden ${height}`}>

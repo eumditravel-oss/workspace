@@ -1,16 +1,18 @@
 import React from 'react';
 import { SummaryCard } from './SummaryCard';
-import { CheckCircle, AlertTriangle, Clock, List } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Clock, List, CheckSquare } from 'lucide-react';
 import { useTaskStore } from '@/store/taskStore';
 import { useAuthStore } from '@/store/authStore';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useProjectStore } from '@/store/projectStore';
+import { Badge } from '@/components/ui/Badge';
 
 export const WorkerDashboard = ({ selectedMonth }: { selectedMonth: string | 'ALL' }) => {
   const { currentUser } = useAuthStore();
   const { tasks } = useTaskStore();
   const { projects } = useProjectStore();
 
-  const myTasks = tasks.filter(t => {
+  const workerTasks = tasks.filter(t => {
     if (t.isDeleted || t.assigneeId !== currentUser?.id) return false;
     if (selectedMonth === 'ALL') return true;
     const p = projects.find(p => p.id === t.projectId);
@@ -19,61 +21,101 @@ export const WorkerDashboard = ({ selectedMonth }: { selectedMonth: string | 'AL
     if (!dateStr) return false;
     return dateStr.startsWith(selectedMonth);
   });
-  const inProgressCount = myTasks.filter(t => t.status === 'IN_PROGRESS' || t.status === 'READY').length;
-  const reviewCount = myTasks.filter(t => t.status === 'REVIEW').length;
   
-  const delayedCount = myTasks.filter(t => {
-    if (t.status === 'DONE') return false;
-    if (!t.dueDate) return false;
-    return t.dueDate < new Date().toISOString().split('T')[0];
-  }).length;
+  const completedTasksCount = workerTasks.filter(t => t.status === 'DONE').length;
+  const pendingApprovalsCount = workerTasks.filter(t => t.approvalStatus === 'PENDING').length;
+  const rejectedTasksCount = workerTasks.filter(t => t.approvalStatus === 'REJECTED').length;
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800">내 작업 대시보드</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <SummaryCard title="내 전체 업무" value={myTasks.length.toString()} icon={List} colorClass="bg-blue-500" />
-        <SummaryCard title="진행/대기 중" value={inProgressCount.toString()} icon={AlertTriangle} colorClass="bg-indigo-500" />
-        <SummaryCard title="검토 진행 중" value={reviewCount.toString()} icon={CheckCircle} colorClass="bg-green-500" />
-        <SummaryCard title="지연된 업무" value={delayedCount.toString()} icon={Clock} colorClass="bg-red-500" />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <SummaryCard 
+          title="내 작업" 
+          value={workerTasks.length.toString()} 
+          subtitle="할당된 전체 업무"
+          icon={CheckSquare} 
+          colorClass="bg-indigo-500" 
+        />
+        <SummaryCard 
+          title="완료된 작업" 
+          value={completedTasksCount.toString()} 
+          subtitle="승인 완료된 업무"
+          icon={CheckCircle} 
+          colorClass="bg-green-500" 
+        />
+        <SummaryCard 
+          title="승인 대기" 
+          value={pendingApprovalsCount.toString()} 
+          subtitle="PM 검토 대기 건"
+          icon={Clock} 
+          colorClass="bg-blue-500" 
+        />
+        <SummaryCard 
+          title="수정 요청 (반려)" 
+          value={rejectedTasksCount.toString()} 
+          subtitle="재작업이 필요한 건"
+          icon={AlertTriangle} 
+          colorClass="bg-red-500" 
+        />
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm border">
-        <h2 className="text-lg font-bold mb-4 border-b pb-2">내 업무 현황 요약</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 border-b">
-                <th className="p-3 text-sm font-semibold text-gray-600">업무 제목</th>
-                <th className="p-3 text-sm font-semibold text-gray-600">상태</th>
-                <th className="p-3 text-sm font-semibold text-gray-600">마감 예정일</th>
-                <th className="p-3 text-sm font-semibold text-gray-600">진척도</th>
-              </tr>
-            </thead>
-            <tbody>
-              {myTasks.slice(0, 10).map(t => (
-                <tr key={t.id} className="border-b hover:bg-gray-50">
-                  <td className="p-3 font-medium text-gray-800">{t.title}</td>
-                  <td className="p-3 text-sm">
-                    <span className="px-2 py-1 bg-gray-100 rounded text-gray-700 font-bold">{t.status}</span>
-                  </td>
-                  <td className="p-3 text-sm text-gray-500">
-                    {t.dueDate || '-'}
-                  </td>
-                  <td className="p-3 text-sm font-bold text-indigo-600">
-                    {t.progress || 0}%
-                  </td>
-                </tr>
-              ))}
-              {myTasks.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="p-6 text-center text-gray-500">할당된 업무가 없습니다.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-card)] overflow-hidden shadow-sm">
+        <div className="px-5 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
+          <h2 className="text-[15px] font-bold text-[var(--color-text-main)]">최근 할당된 작업</h2>
         </div>
+        
+        {workerTasks.length === 0 ? (
+          <div className="p-6">
+            <EmptyState 
+              title="할당된 작업이 없습니다."
+              description="PM이 업무를 할당하면 이곳에 표시됩니다."
+            />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-[13px] whitespace-nowrap">
+              <thead className="bg-[var(--color-bg)]/50 border-b border-[var(--color-border)]">
+                <tr>
+                  <th className="px-5 py-3 font-semibold text-[var(--color-text-sub)]">작업명</th>
+                  <th className="px-5 py-3 font-semibold text-[var(--color-text-sub)]">프로젝트</th>
+                  <th className="px-5 py-3 font-semibold text-[var(--color-text-sub)]">상태</th>
+                  <th className="px-5 py-3 font-semibold text-[var(--color-text-sub)]">마감일</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--color-border)]">
+                {workerTasks.slice(0, 10).map(t => {
+                  const project = projects.find(p => p.id === t.projectId);
+                  return (
+                    <tr key={t.id} className="hover:bg-[var(--color-bg)] transition-colors">
+                      <td className="px-5 py-3 font-semibold text-[var(--color-text-main)]">{t.title}</td>
+                      <td className="px-5 py-3 text-[var(--color-text-sub)]">{project?.title || '-'}</td>
+                      <td className="px-5 py-3">
+                        <Badge variant={t.status === 'DONE' ? 'SUCCESS' : t.status === 'IN_PROGRESS' ? 'INFO' : 'DEFAULT'}>
+                          {t.status}
+                        </Badge>
+                        {t.approvalStatus === 'PENDING' && (
+                          <Badge variant="WARNING" className="ml-2">승인 대기</Badge>
+                        )}
+                        {t.approvalStatus === 'REJECTED' && (
+                          <Badge variant="ERROR" className="ml-2">반려</Badge>
+                        )}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className={`font-semibold ${
+                          t.dueDate && t.dueDate < new Date().toISOString().split('T')[0] && t.status !== 'DONE'
+                            ? 'text-[var(--color-danger)]'
+                            : 'text-[var(--color-text-sub)]'
+                        }`}>
+                          {t.dueDate || '미정'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

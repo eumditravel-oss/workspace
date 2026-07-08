@@ -19,14 +19,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body className={`${inter.className} bg-gray-50 text-gray-900`}>
+      <body className={`${inter.className} bg-[var(--color-bg)] text-[var(--color-text-main)]`}>
         <SessionManager />
         <div className="flex min-h-screen">
           <Sidebar />
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-w-0">
             <Header />
-            <main className="flex-1 p-6 overflow-auto">
-              {children}
+            <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[var(--color-bg)]">
+              <div className="page-shell">
+                {children}
+              </div>
             </main>
           </div>
         </div>

@@ -45,9 +45,9 @@ export const QcIssueModal: React.FC<QcIssueModalProps> = ({ task, onClose }) => 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[150] p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-red-50">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[150] p-4">
+      <div className="bg-[var(--color-surface)] rounded-[20px] shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-[var(--color-border)] bg-red-50">
           <div className="flex items-center gap-2 text-red-700 font-bold">
             <AlertTriangle className="w-5 h-5" />
             <h3>QC 오류 등록</h3>
@@ -57,9 +57,9 @@ export const QcIssueModal: React.FC<QcIssueModalProps> = ({ task, onClose }) => 
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="px-6 py-6 space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">발견 단계</label>
+            <label className="block text-sm font-semibold text-[var(--color-text-main)] mb-1">발견 단계</label>
             <select 
               value={issueStage} 
               onChange={(e) => setIssueStage(e.target.value as 'SUBMISSION_REVIEW' | 'FINAL_REVIEW' | 'DELIVERY_REVIEW' | 'POST_DELIVERY')}
@@ -73,7 +73,7 @@ export const QcIssueModal: React.FC<QcIssueModalProps> = ({ task, onClose }) => 
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">오류 제목</label>
+            <label className="block text-sm font-semibold text-[var(--color-text-main)] mb-1">오류 제목</label>
             <input 
               type="text" 
               value={title}
@@ -84,7 +84,7 @@ export const QcIssueModal: React.FC<QcIssueModalProps> = ({ task, onClose }) => 
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">오류 설명</label>
+            <label className="block text-sm font-semibold text-[var(--color-text-main)] mb-1">오류 설명</label>
             <textarea 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -96,7 +96,7 @@ export const QcIssueModal: React.FC<QcIssueModalProps> = ({ task, onClose }) => 
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">심각도</label>
+              <label className="block text-sm font-semibold text-[var(--color-text-main)] mb-1">심각도</label>
               <select 
                 value={severity} 
                 onChange={(e) => setSeverity(e.target.value as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')}
@@ -109,7 +109,7 @@ export const QcIssueModal: React.FC<QcIssueModalProps> = ({ task, onClose }) => 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">QC 가중치 (%)</label>
+              <label className="block text-sm font-semibold text-[var(--color-text-main)] mb-1">QC 가중치 (%)</label>
               <select 
                 value={weightPercent} 
                 onChange={(e) => setWeightPercent(Number(e.target.value))}
@@ -124,10 +124,10 @@ export const QcIssueModal: React.FC<QcIssueModalProps> = ({ task, onClose }) => 
           </div>
         </div>
 
-        <div className="p-5 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+        <div className="px-6 py-4 bg-[var(--color-bg)] border-t border-[var(--color-border)] flex justify-end gap-2">
           <button 
             onClick={onClose}
-            className="px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-semibold text-[var(--color-text-sub)] hover:bg-gray-200 rounded-lg transition-colors"
           >
             취소
           </button>

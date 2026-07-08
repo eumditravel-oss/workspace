@@ -12,15 +12,15 @@ export const Sidebar = () => {
   const { sidebarMode, cycleSidebarMode } = useUiStore();
 
   const dailyWorkMenuItems = [
-    { name: '통합 대시보드', path: '/', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },
-    { name: '수주 프로젝트', path: '/projects/intake', icon: Briefcase, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER'] },
-    { name: '프로젝트 보드', path: '/projects', icon: ClipboardList, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },
-    { name: '일정 승인', path: '/approvals', icon: CheckSquare, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER'] },
-    { name: '충돌 관리', path: '/conflicts', icon: AlertTriangle, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM'] },
+    { name: '대시보드', path: '/', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },
+    { name: '프로젝트', path: '/projects/intake', icon: Briefcase, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER'] },
+    { name: '보드', path: '/projects', icon: ClipboardList, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },
+    { name: '결재', path: '/approvals', icon: CheckSquare, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER'] },
+    { name: '충돌', path: '/conflicts', icon: AlertTriangle, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM'] },
     { name: '내 업무', path: '/tasks/my', icon: CheckSquare, roles: ['PM', 'WORKER'] },
-    { name: '직원 일정표', path: '/schedules', icon: Calendar, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM'] },
-    { name: '알림 센터', path: '/notifications', icon: Bell, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },
-    { name: '내 설정', path: '/settings', icon: Settings, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },
+    { name: '일정표', path: '/schedules', icon: Calendar, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM'] },
+    { name: '알림', path: '/notifications', icon: Bell, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },
+    { name: '설정', path: '/settings', icon: Settings, roles: ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM', 'WORKER'] },
   ];
 
   const adminValidationMenuItems = [
@@ -28,7 +28,7 @@ export const Sidebar = () => {
     { name: 'Excel 검증', path: '/settings/import', icon: FileUp, roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
     { name: '데이터 품질', path: '/settings/data-quality', icon: ShieldCheck, roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
     { name: '대량 수정', path: '/settings/bulk-edit', icon: Database, roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
-    { name: '권한 시뮬레이터', path: '/settings/permissions', icon: ShieldCheck, roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
+    { name: '권한 검증', path: '/settings/permissions', icon: ShieldCheck, roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
   ];
 
   const menuItems = appMode === 'ADMIN_VALIDATION' ? adminValidationMenuItems : dailyWorkMenuItems;
@@ -38,28 +38,28 @@ export const Sidebar = () => {
   const isCompact = sidebarMode === 'COMPACT';
   const isExpanded = sidebarMode === 'EXPANDED';
 
-  const widthClass = isExpanded ? 'w-64' : isCompact ? 'w-20' : 'w-12';
+  const widthClass = isExpanded ? 'w-[220px]' : isCompact ? 'w-16' : 'w-12';
 
   return (
-    <div className={`${widthClass} bg-gray-900 text-white min-h-screen flex flex-col transition-all duration-300 relative z-50`}>
-      <div className={`p-4 ${!isExpanded ? 'text-center flex justify-center' : ''} min-h-16 flex items-center`}>
-        <h1 className={`font-bold text-white transition-all ${isExpanded ? 'text-2xl' : isCompact ? 'text-lg' : 'text-xs truncate'}`}>
+    <div className={`${widthClass} bg-slate-50 border-r border-[var(--color-border)] text-[var(--color-text-main)] min-h-screen flex flex-col transition-all duration-300 relative z-50`}>
+      <div className={`p-4 ${!isExpanded ? 'text-center flex justify-center' : ''} h-14 flex items-center border-b border-[var(--color-border)] bg-slate-50`}>
+        <h1 className={`font-bold text-[var(--color-primary)] transition-all ${isExpanded ? 'text-xl tracking-tight' : isCompact ? 'text-lg' : 'text-xs truncate'}`}>
           {isExpanded ? 'EUMDI OS' : isCompact ? 'E' : 'E'}
         </h1>
       </div>
-      {isExpanded && <div className="px-6 pb-2"><p className="text-xs text-gray-400">Project Management</p></div>}
+      {isExpanded && <div className="px-5 pt-4 pb-2"><p className="text-[11px] font-semibold text-[var(--color-text-sub)] uppercase tracking-wider">Workspace</p></div>}
       
-      <nav className="flex-1 px-2 space-y-2 mt-2 overflow-y-auto custom-scrollbar overflow-x-hidden">
+      <nav className="flex-1 px-3 space-y-1 mt-2 overflow-y-auto custom-scrollbar overflow-x-hidden">
         {visibleMenus.map((item) => {
           const isActive = pathname === item.path;
           return (
-            <Link key={item.name} href={item.path} className={`flex items-center rounded-lg transition-colors group relative ${!isExpanded ? 'justify-center py-3' : 'px-4 py-3'} ${isActive ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}>
-              <item.icon className={`flex-shrink-0 ${isExpanded ? 'w-5 h-5 mr-3' : isCompact ? 'w-6 h-6' : 'w-5 h-5'}`} />
-              {isExpanded && <span className="truncate">{item.name}</span>}
+            <Link key={item.name} href={item.path} className={`flex items-center rounded-lg transition-all group relative ${!isExpanded ? 'justify-center py-3' : 'px-3 py-2.5'} ${isActive ? 'bg-[var(--color-surface)] shadow-sm border border-[var(--color-border)]/50 text-[var(--color-primary)] font-bold' : 'text-[var(--color-text-sub)] hover:bg-gray-200/50 hover:text-[var(--color-text-main)] font-medium border border-transparent'}`}>
+              <item.icon className={`flex-shrink-0 ${isExpanded ? 'w-4 h-4 mr-3' : isCompact ? 'w-5 h-5' : 'w-4 h-4'} ${isActive ? 'text-[var(--color-primary)]' : ''}`} />
+              {isExpanded && <span className="truncate text-[13px]">{item.name}</span>}
               
               {/* Tooltip for collapsed states */}
               {!isExpanded && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible whitespace-nowrap z-[100]">
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible whitespace-nowrap z-[100] shadow-lg">
                   {item.name}
                 </div>
               )}
@@ -70,10 +70,10 @@ export const Sidebar = () => {
 
       <button 
         onClick={cycleSidebarMode}
-        className="p-4 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-800 border-t border-gray-800 transition-colors"
+        className="p-3 m-3 flex items-center justify-center text-[var(--color-text-sub)] hover:text-[var(--color-text-main)] hover:bg-gray-100 rounded-md border border-[var(--color-border)] transition-colors"
         title="Toggle sidebar mode"
       >
-        {!isExpanded ? <Menu className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+        {!isExpanded ? <Menu className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
     </div>
   );

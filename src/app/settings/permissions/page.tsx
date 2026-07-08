@@ -18,9 +18,9 @@ export default function PermissionSimulatorPage() {
   
   const [result, setResult] = useState<PermissionSimulationResult | null>(null);
 
-  if (!currentUser) return <div className="p-6">로그인이 필요합니다.</div>;
+  if (!currentUser) return <div className="py-10 text-center text-[var(--color-text-sub)]">로그인이 필요합니다.</div>;
   if (!['SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(currentUser.role)) {
-    return <div className="p-6 text-red-600 font-bold">접근 권한이 없습니다. (관리자 전용)</div>;
+    return <div className="py-10 text-center text-[var(--color-danger)] font-bold">접근 권한이 없습니다. (관리자 전용)</div>;
   }
 
   const handleSimulate = () => {
@@ -82,24 +82,24 @@ export default function PermissionSimulatorPage() {
   const simUser = personnel.find(p => p.id === selectedUserId);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="bg-white p-6 rounded-xl shadow-sm border flex items-center gap-4">
+    <div className="max-w-6xl w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+      <div className="bg-[var(--color-surface)] p-6 rounded-xl shadow-sm border flex items-center gap-4">
         <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center">
           <ShieldCheck className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-gray-800">권한 시뮬레이터</h1>
-          <p className="text-sm text-gray-500 mt-1">특정 사용자 계정으로 로그인했을 때 볼 수 있는 화면과 데이터를 미리 확인합니다.</p>
+          <h1 className="text-xl font-bold text-[var(--color-text-main)]">권한 시뮬레이터</h1>
+          <p className="text-sm text-[var(--color-text-sub)] mt-1">특정 사용자 계정으로 로그인했을 때 볼 수 있는 화면과 데이터를 미리 확인합니다.</p>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-1 space-y-6">
-          <div className="bg-white p-5 rounded-xl border shadow-sm space-y-4">
-            <h3 className="font-bold text-gray-800 border-b pb-2">시뮬레이션 조건 설정</h3>
+          <div className="bg-[var(--color-surface)] p-5 rounded-xl border shadow-sm space-y-4">
+            <h3 className="font-bold text-[var(--color-text-main)] border-b pb-2">시뮬레이션 조건 설정</h3>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">대상 사용자</label>
+              <label className="block text-sm font-semibold text-[var(--color-text-main)] mb-1">대상 사용자</label>
               <select 
                 value={selectedUserId} 
                 onChange={e => setSelectedUserId(e.target.value)}
@@ -113,17 +113,17 @@ export default function PermissionSimulatorPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">대상 화면</label>
+              <label className="block text-sm font-semibold text-[var(--color-text-main)] mb-1">대상 화면</label>
               <div className="grid grid-cols-2 gap-2">
                 <button 
                   onClick={() => setTargetScreen('PROJECT_BOARD')}
-                  className={`flex items-center justify-center gap-2 py-2 border rounded-lg text-sm font-bold transition-colors ${targetScreen === 'PROJECT_BOARD' ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'text-gray-500 hover:bg-gray-50'}`}
+                  className={`flex items-center justify-center gap-2 py-2 border rounded-lg text-sm font-bold transition-colors ${targetScreen === 'PROJECT_BOARD' ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'text-[var(--color-text-sub)] hover:bg-[var(--color-bg)]'}`}
                 >
                   <LayoutDashboard className="w-4 h-4" /> 프로젝트 보드
                 </button>
                 <button 
                   onClick={() => setTargetScreen('SCHEDULE')}
-                  className={`flex items-center justify-center gap-2 py-2 border rounded-lg text-sm font-bold transition-colors ${targetScreen === 'SCHEDULE' ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'text-gray-500 hover:bg-gray-50'}`}
+                  className={`flex items-center justify-center gap-2 py-2 border rounded-lg text-sm font-bold transition-colors ${targetScreen === 'SCHEDULE' ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'text-[var(--color-text-sub)] hover:bg-[var(--color-bg)]'}`}
                 >
                   <CalendarDays className="w-4 h-4" /> 직원 일정표
                 </button>
@@ -140,13 +140,13 @@ export default function PermissionSimulatorPage() {
           </div>
 
           {simUser && (
-            <div className="bg-gray-50 p-5 rounded-xl border">
-              <h4 className="text-xs font-bold text-gray-500 mb-3">선택된 사용자 프로필</h4>
+            <div className="bg-[var(--color-bg)] p-5 rounded-xl border">
+              <h4 className="text-xs font-bold text-[var(--color-text-sub)] mb-3">선택된 사용자 프로필</h4>
               <div className="flex items-center gap-3 mb-2">
-                <UserCircle className="w-10 h-10 text-gray-400" />
+                <UserCircle className="w-10 h-10 text-[var(--color-text-sub)]" />
                 <div>
-                  <div className="font-bold text-gray-800">{simUser.name}</div>
-                  <div className="text-xs text-gray-500">{simUser.role} · {simUser.departmentId}</div>
+                  <div className="font-bold text-[var(--color-text-main)]">{simUser.name}</div>
+                  <div className="text-xs text-[var(--color-text-sub)]">{simUser.role} · {simUser.departmentId}</div>
                 </div>
               </div>
             </div>
@@ -155,7 +155,7 @@ export default function PermissionSimulatorPage() {
 
         <div className="col-span-2">
           {!result ? (
-            <div className="bg-white rounded-xl border border-dashed border-gray-300 h-full min-h-[400px] flex flex-col items-center justify-center text-gray-400">
+            <div className="bg-[var(--color-surface)] rounded-xl border border-dashed border-[var(--color-border-strong)] h-full min-h-[400px] flex flex-col items-center justify-center text-[var(--color-text-sub)]">
               <ShieldCheck className="w-12 h-12 mb-3 text-gray-300" />
               <p>좌측에서 조건을 설정하고 시뮬레이션을 실행하세요.</p>
             </div>
@@ -171,7 +171,7 @@ export default function PermissionSimulatorPage() {
               )}
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white p-5 rounded-xl border border-green-100 shadow-sm">
+                <div className="bg-[var(--color-surface)] p-5 rounded-xl border border-green-100 shadow-sm">
                   <h3 className="flex items-center gap-2 font-bold text-green-700 mb-4 border-b border-green-50 pb-2">
                     <Eye className="w-5 h-5" /> 열람 가능한 데이터
                   </h3>
@@ -179,16 +179,16 @@ export default function PermissionSimulatorPage() {
                     {targetScreen === 'PROJECT_BOARD' ? (
                       result.visibleProjects.length ? result.visibleProjects.map((p, i) => (
                         <div key={i} className="text-sm px-2 py-1 bg-green-50 text-green-800 rounded">{p}</div>
-                      )) : <div className="text-sm text-gray-400">열람 가능한 프로젝트가 없습니다.</div>
+                      )) : <div className="text-sm text-[var(--color-text-sub)]">열람 가능한 프로젝트가 없습니다.</div>
                     ) : (
                       result.visibleEmployees.length ? result.visibleEmployees.map((e, i) => (
                         <div key={i} className="text-sm px-2 py-1 bg-green-50 text-green-800 rounded">{e}</div>
-                      )) : <div className="text-sm text-gray-400">조회 가능한 일정이 없습니다.</div>
+                      )) : <div className="text-sm text-[var(--color-text-sub)]">조회 가능한 일정이 없습니다.</div>
                     )}
                   </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-xl border border-red-100 shadow-sm">
+                <div className="bg-[var(--color-surface)] p-5 rounded-xl border border-red-100 shadow-sm">
                   <h3 className="flex items-center gap-2 font-bold text-red-700 mb-4 border-b border-red-50 pb-2">
                     <EyeOff className="w-5 h-5" /> 접근 차단된 데이터
                   </h3>
@@ -196,11 +196,11 @@ export default function PermissionSimulatorPage() {
                     {targetScreen === 'PROJECT_BOARD' ? (
                       result.hiddenProjects.length ? result.hiddenProjects.map((p, i) => (
                         <div key={i} className="text-sm px-2 py-1 bg-red-50 text-red-800 rounded">{p}</div>
-                      )) : <div className="text-sm text-gray-400">차단된 프로젝트가 없습니다.</div>
+                      )) : <div className="text-sm text-[var(--color-text-sub)]">차단된 프로젝트가 없습니다.</div>
                     ) : (
                       result.hiddenEmployees.length ? result.hiddenEmployees.map((e, i) => (
                         <div key={i} className="text-sm px-2 py-1 bg-red-50 text-red-800 rounded">{e}</div>
-                      )) : <div className="text-sm text-gray-400">차단된 일정이 없습니다.</div>
+                      )) : <div className="text-sm text-[var(--color-text-sub)]">차단된 일정이 없습니다.</div>
                     )}
                   </div>
                 </div>

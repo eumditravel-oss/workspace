@@ -8,7 +8,7 @@ export default function ApprovalsPage() {
   const { currentUser, users } = useAuthStore();
   const { requests, updateApprovalStatus } = useApprovalStore();
 
-  if (!currentUser) return <div className="p-6">로그인이 필요합니다.</div>;
+  if (!currentUser) return <div className="py-10 text-center text-[var(--color-text-sub)]">로그인이 필요합니다.</div>;
   
   const isDeputyOf = (targetUserId?: string) => {
     if (!targetUserId) return false;
@@ -18,7 +18,7 @@ export default function ApprovalsPage() {
 
   const hasApprovalRights = ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM'].includes(currentUser.role) || users.some(u => u.deputyApproverId === currentUser.id);
   if (!hasApprovalRights) {
-    return <div className="p-6 text-red-500 font-bold">권한이 없습니다. 결재 권한자(또는 대리 결재자)만 접근 가능합니다.</div>;
+    return <div className="py-10 text-center text-[var(--color-danger)] font-bold">권한이 없습니다. 결재 권한자(또는 대리 결재자)만 접근 가능합니다.</div>;
   }
 
   // Only show requests pending for this manager or super admin, or PM
@@ -58,30 +58,30 @@ export default function ApprovalsPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="max-w-5xl w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">대기 중인 결재</h1>
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <h1 className="text-2xl font-bold text-[var(--color-text-main)] mb-4">대기 중인 결재</h1>
+        <div className="bg-[var(--color-surface)] rounded-xl shadow-sm border overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 border-b">
-                <th className="p-4 text-sm font-semibold text-gray-600">결재 유형</th>
-                <th className="p-4 text-sm font-semibold text-gray-600">요청 내역</th>
-                <th className="p-4 text-sm font-semibold text-gray-600">사유</th>
-                <th className="p-4 text-sm font-semibold text-gray-600">액션</th>
+              <tr className="bg-[var(--color-bg)] border-b">
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">결재 유형</th>
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">요청 내역</th>
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">사유</th>
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">액션</th>
               </tr>
             </thead>
             <tbody>
               {pendingRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-6 text-center text-gray-500">대기 중인 결재가 없습니다.</td>
+                  <td colSpan={4} className="p-6 text-center text-[var(--color-text-sub)]">대기 중인 결재가 없습니다.</td>
                 </tr>
               ) : (
                 pendingRequests.map(r => (
-                  <tr key={r.id} className="border-b hover:bg-gray-50">
-                    <td className="p-4 font-medium text-gray-800">{r.type}</td>
-                    <td className="p-4 text-sm text-gray-800">{r.title}</td>
-                    <td className="p-4 text-sm text-gray-500 max-w-xs truncate">{r.reason}</td>
+                  <tr key={r.id} className="border-b hover:bg-[var(--color-bg)]">
+                    <td className="p-4 font-medium text-[var(--color-text-main)]">{r.type}</td>
+                    <td className="p-4 text-sm text-[var(--color-text-main)]">{r.title}</td>
+                    <td className="p-4 text-sm text-[var(--color-text-sub)] max-w-xs truncate">{r.reason}</td>
                     <td className="p-4 space-x-2 flex flex-wrap gap-2">
                       <button onClick={() => handleAction(r.id, 'APPROVED')} className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">승인</button>
                       <button onClick={() => handleAction(r.id, 'REJECTED')} className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">반려</button>
@@ -110,31 +110,31 @@ export default function ApprovalsPage() {
       </div>
 
       <div>
-        <h2 className="text-xl font-bold text-gray-800 mb-4">최근 처리 내역</h2>
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <h2 className="text-xl font-bold text-[var(--color-text-main)] mb-4">최근 처리 내역</h2>
+        <div className="bg-[var(--color-surface)] rounded-xl shadow-sm border overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 border-b">
-                <th className="p-4 text-sm font-semibold text-gray-600">제목</th>
-                <th className="p-4 text-sm font-semibold text-gray-600">결과</th>
-                <th className="p-4 text-sm font-semibold text-gray-600">코멘트</th>
+              <tr className="bg-[var(--color-bg)] border-b">
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">제목</th>
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">결과</th>
+                <th className="p-4 text-sm font-semibold text-[var(--color-text-sub)]">코멘트</th>
               </tr>
             </thead>
             <tbody>
               {completedRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="p-6 text-center text-gray-500">처리 내역이 없습니다.</td>
+                  <td colSpan={3} className="p-6 text-center text-[var(--color-text-sub)]">처리 내역이 없습니다.</td>
                 </tr>
               ) : (
                 completedRequests.map(r => (
-                  <tr key={r.id} className="border-b hover:bg-gray-50">
-                    <td className="p-4 font-medium text-gray-800">{r.title}</td>
+                  <tr key={r.id} className="border-b hover:bg-[var(--color-bg)]">
+                    <td className="p-4 font-medium text-[var(--color-text-main)]">{r.title}</td>
                     <td className="p-4 text-sm font-bold">
                       <span className={r.status === 'APPROVED' ? 'text-green-600' : 'text-red-600'}>
                         {r.status} {r.alternativeType ? `(대안: ${r.alternativeType})` : ''}
                       </span>
                     </td>
-                    <td className="p-4 text-sm text-gray-500">{r.reviewComment}</td>
+                    <td className="p-4 text-sm text-[var(--color-text-sub)]">{r.reviewComment}</td>
                   </tr>
                 ))
               )}

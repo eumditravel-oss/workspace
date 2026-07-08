@@ -55,10 +55,10 @@ export const ProjectBoard: React.FC<Props> = ({ projects, tasks, revisionRequest
         });
 
         return (
-          <div key={col.id} className="bg-gray-50/50 rounded-xl flex flex-col max-h-[calc(100vh-200px)] border border-gray-200">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-100/50 rounded-t-xl">
-              <h2 className="font-bold text-gray-700">{col.title}</h2>
-              <span className="bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full text-xs font-bold">
+          <div key={col.id} className="bg-[var(--color-bg)]/50 rounded-[var(--radius-card)] flex flex-col max-h-[calc(100vh-200px)] border border-[var(--color-border)] shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center bg-[var(--color-surface)]">
+              <h2 className="font-bold text-[15px] text-[var(--color-text-main)] tracking-tight">{col.title}</h2>
+              <span className="bg-gray-100 border border-[var(--color-border)] text-[var(--color-text-sub)] px-2.5 py-0.5 rounded-full text-[11px] font-bold">
                 {colProjects.length}
               </span>
             </div>
@@ -72,7 +72,7 @@ export const ProjectBoard: React.FC<Props> = ({ projects, tasks, revisionRequest
                 />
               ))}
               {colProjects.length === 0 && (
-                <div className="p-4 text-center text-sm text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
+                <div className="p-4 text-center text-sm text-[var(--color-text-sub)] border-2 border-dashed border-[var(--color-border)] rounded-lg">
                   프로젝트가 없습니다
                 </div>
               )}

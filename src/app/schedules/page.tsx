@@ -21,7 +21,7 @@ export default function SchedulesPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showLeaveModal, setShowLeaveModal] = useState(false);
 
-  if (!currentUser) return <div className="p-6">로그인이 필요합니다.</div>;
+  if (!currentUser) return <div className="py-10 text-center text-[var(--color-text-sub)]">로그인이 필요합니다.</div>;
 
   const visibleUsers = users.filter(u => 
     (u.employmentStatus === 'ACTIVE' || u.isActive) && 
@@ -61,7 +61,7 @@ export default function SchedulesPage() {
     if (type === 'OFF') return 'bg-red-100 text-red-800 border-red-200';
     if (type === 'MEETING' || type === 'CLIENT_MEETING') return 'bg-blue-100 text-blue-800 border-blue-200';
     if (type === 'PERSONAL_WORK') return 'bg-green-100 text-green-800 border-green-200';
-    return 'bg-gray-100 text-gray-800 border-gray-200';
+    return 'bg-gray-100 text-[var(--color-text-main)] border-[var(--color-border)]';
   };
 
   const isToday = (d: number) => {
@@ -82,7 +82,7 @@ export default function SchedulesPage() {
     const type = getDayType(d);
     if (type === 'SUN') return 'bg-red-50 text-red-500';
     if (type === 'SAT') return 'bg-blue-50 text-blue-500';
-    return 'bg-gray-50 text-gray-500 font-medium';
+    return 'bg-[var(--color-bg)] text-[var(--color-text-sub)] font-medium';
   };
 
   const getDayCellClass = (d: number) => {
@@ -90,7 +90,7 @@ export default function SchedulesPage() {
     const type = getDayType(d);
     if (type === 'SUN') return 'bg-red-50/30';
     if (type === 'SAT') return 'bg-blue-50/30';
-    return 'bg-white';
+    return 'bg-[var(--color-surface)]';
   };
 
   const getTaskBarClass = (t: TaskCard, d: number) => {
@@ -106,7 +106,7 @@ export default function SchedulesPage() {
     else if (t.status === 'IN_PROGRESS') classes += "bg-indigo-100 text-indigo-800 border-indigo-200 ";
     else if (t.status === 'REVIEW') classes += "bg-purple-100 text-purple-800 border-purple-200 ";
     else if (t.priority === 'URGENT') classes += "bg-orange-100 text-orange-800 border-orange-200 ";
-    else classes += "bg-white text-gray-700 border-gray-200 ";
+    else classes += "bg-[var(--color-surface)] text-[var(--color-text-main)] border-[var(--color-border)] ";
 
     // Bar ends logic
     if (targetDate === start && targetDate === end) {
@@ -123,25 +123,25 @@ export default function SchedulesPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border">
-        <h1 className="text-xl font-bold text-gray-800">통합 일정표</h1>
+    <div className="max-w-7xl w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+      <div className="flex justify-between items-center bg-[var(--color-surface)] p-4 rounded-xl shadow-sm border">
+        <h1 className="text-xl font-bold text-[var(--color-text-main)]">통합 일정표</h1>
         
         <div className="flex gap-2">
           <button 
-            className={`px-4 py-2 rounded-lg text-sm font-bold ${activeTab === 'MONTHLY_MATRIX' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-bold ${activeTab === 'MONTHLY_MATRIX' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-[var(--color-text-sub)] hover:bg-gray-200'}`}
             onClick={() => setActiveTab('MONTHLY_MATRIX')}
           >
             직원 월간 그리드
           </button>
           <button 
-            className={`px-4 py-2 rounded-lg text-sm font-bold ${activeTab === 'PROJECT_SCHEDULE' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-bold ${activeTab === 'PROJECT_SCHEDULE' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-[var(--color-text-sub)] hover:bg-gray-200'}`}
             onClick={() => setActiveTab('PROJECT_SCHEDULE')}
           >
             프로젝트 타임라인
           </button>
           <button 
-            className={`px-4 py-2 rounded-lg text-sm font-bold ${activeTab === 'USER_DETAIL' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-bold ${activeTab === 'USER_DETAIL' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-[var(--color-text-sub)] hover:bg-gray-200'}`}
             onClick={() => setActiveTab('USER_DETAIL')}
           >
             직원별 상세
@@ -156,12 +156,12 @@ export default function SchedulesPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border p-4 space-y-4">
+      <div className="bg-[var(--color-surface)] rounded-xl shadow-sm border p-4 space-y-4">
         <div className="flex justify-between items-center">
           <div className="flex gap-2">
             <button onClick={prevMonth} className="p-2 bg-gray-100 rounded hover:bg-gray-200 text-sm font-medium transition-colors">&lt; 이전 달</button>
             <select
-              className="border rounded-lg p-2 bg-white text-sm font-bold border-gray-300 focus:ring-2 focus:ring-indigo-500"
+              className="border rounded-lg p-2 bg-[var(--color-surface)] text-sm font-bold border-[var(--color-border-strong)] focus:ring-2 focus:ring-indigo-500"
               value={month}
               onChange={(e) => setCurrentDate(new Date(year, Number(e.target.value), 1))}
             >
@@ -171,7 +171,7 @@ export default function SchedulesPage() {
             </select>
             <button onClick={nextMonth} className="p-2 bg-gray-100 rounded hover:bg-gray-200 text-sm font-medium transition-colors">다음 달 &gt;</button>
           </div>
-          <h2 className="text-xl font-extrabold text-gray-800">{year}년 {month + 1}월</h2>
+          <h2 className="text-xl font-extrabold text-[var(--color-text-main)]">{year}년 {month + 1}월</h2>
         </div>
 
         {activeTab === 'MONTHLY_MATRIX' && (
@@ -179,7 +179,7 @@ export default function SchedulesPage() {
             <table className="w-full border-collapse min-w-[1200px]">
               <thead className="sticky top-0 z-20">
                 <tr>
-                  <th className="sticky left-0 bg-white border-b-2 border-r-2 border-gray-200 p-3 text-sm font-bold text-gray-700 min-w-[140px] z-30 shadow-[1px_0_0_0_#e5e7eb]">
+                  <th className="sticky left-0 bg-[var(--color-surface)] border-b-2 border-r-2 border-[var(--color-border)] p-3 text-sm font-bold text-[var(--color-text-main)] min-w-[140px] z-30 shadow-[1px_0_0_0_#e5e7eb]">
                     직원명
                   </th>
                   {daysArray.map(d => (
@@ -200,10 +200,10 @@ export default function SchedulesPage() {
                   const userTasks = tasks.filter(t => t.assigneeId === user.id && !t.isDeleted);
 
                   return (
-                    <tr key={user.id} className="hover:bg-gray-50/50 transition-colors group">
-                      <td className="sticky left-0 bg-white group-hover:bg-gray-50/50 border-b border-r-2 p-3 text-sm font-bold text-gray-800 z-10 shadow-[1px_0_0_0_#e5e7eb]">
+                    <tr key={user.id} className="hover:bg-[var(--color-bg)]/50 transition-colors group">
+                      <td className="sticky left-0 bg-[var(--color-surface)] group-hover:bg-[var(--color-bg)]/50 border-b border-r-2 p-3 text-sm font-bold text-[var(--color-text-main)] z-10 shadow-[1px_0_0_0_#e5e7eb]">
                         {getUserDisplayName(user)}
-                        <div className="text-[10px] font-normal text-gray-500">{user.teamName || user.departmentName}</div>
+                        <div className="text-[10px] font-normal text-[var(--color-text-sub)]">{user.teamName || user.departmentName}</div>
                       </td>
                       {daysArray.map(d => {
                         const daySchedules = userSchedules.filter(s => coversDate(s, d));
@@ -246,7 +246,7 @@ export default function SchedulesPage() {
             <table className="w-full border-collapse min-w-[1000px]">
               <thead className="sticky top-0 z-20">
                 <tr>
-                  <th className="sticky left-0 bg-white border-b-2 border-r-2 p-3 text-sm font-bold text-gray-700 min-w-[240px] z-30 shadow-[1px_0_0_0_#e5e7eb]">프로젝트명 / 담당PM</th>
+                  <th className="sticky left-0 bg-[var(--color-surface)] border-b-2 border-r-2 p-3 text-sm font-bold text-[var(--color-text-main)] min-w-[240px] z-30 shadow-[1px_0_0_0_#e5e7eb]">프로젝트명 / 담당PM</th>
                   {daysArray.map(d => (
                     <th key={d} className={`border-b-2 border-r p-2 text-xs font-medium text-center min-w-[48px] ${getDayHeaderClass(d)}`}>
                       {d}
@@ -260,11 +260,11 @@ export default function SchedulesPage() {
                   const progress = getProjectOverallProgress(project, tasks);
                   
                   return (
-                    <tr key={project.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="sticky left-0 bg-white border-b border-r-2 p-3 text-sm font-bold text-gray-800 z-10 shadow-[1px_0_0_0_#e5e7eb]">
+                    <tr key={project.id} className="hover:bg-[var(--color-bg)]/50 transition-colors">
+                      <td className="sticky left-0 bg-[var(--color-surface)] border-b border-r-2 p-3 text-sm font-bold text-[var(--color-text-main)] z-10 shadow-[1px_0_0_0_#e5e7eb]">
                         <div className="truncate mb-1">{project.title}</div>
-                        <div className="flex items-center gap-2 text-[10px] font-normal text-gray-500">
-                          <span className={`px-1.5 py-0.5 rounded ${project.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{project.status}</span>
+                        <div className="flex items-center gap-2 text-[10px] font-normal text-[var(--color-text-sub)]">
+                          <span className={`px-1.5 py-0.5 rounded ${project.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-[var(--color-text-sub)]'}`}>{project.status}</span>
                           {pm && <span>PM: {getUserDisplayName(pm)}</span>}
                         </div>
                       </td>
@@ -320,64 +320,64 @@ export default function SchedulesPage() {
               const userSchedules = visibleSchedules.filter(s => s.userId === user.id);
               
               return (
-                <div key={user.id} className="bg-gray-50 rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col h-full">
-                  <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
+                <div key={user.id} className="bg-[var(--color-bg)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm flex flex-col h-full">
+                  <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[var(--color-border)]">
                     <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
                       {user.displayName?.[0] || user.name[0]}
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-800">{getUserDisplayName(user)}</h3>
-                      <p className="text-xs text-gray-500">{user.teamName || user.departmentName} · {user.jobTitle}</p>
+                      <h3 className="font-bold text-[var(--color-text-main)]">{getUserDisplayName(user)}</h3>
+                      <p className="text-xs text-[var(--color-text-sub)]">{user.teamName || user.departmentName} · {user.jobTitle}</p>
                     </div>
                   </div>
                   
                   <div className="space-y-4 flex-1">
                     <div>
-                      <h4 className="text-xs font-bold text-gray-600 mb-2 flex justify-between">
+                      <h4 className="text-xs font-bold text-[var(--color-text-sub)] mb-2 flex justify-between">
                         <span>진행 중인 업무</span>
                         <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full">{userTasks.length}건</span>
                       </h4>
                       {userTasks.length > 0 ? (
                         <ul className="space-y-2">
                           {userTasks.slice(0, 3).map(t => (
-                            <li key={t.id} className="text-sm bg-white p-2 rounded border border-gray-100 shadow-sm">
-                              <div className="font-medium text-gray-800 truncate" title={t.title}>{t.title}</div>
-                              <div className="flex justify-between mt-1 text-xs text-gray-500">
+                            <li key={t.id} className="text-sm bg-[var(--color-surface)] p-2 rounded border border-[var(--color-border)] shadow-sm">
+                              <div className="font-medium text-[var(--color-text-main)] truncate" title={t.title}>{t.title}</div>
+                              <div className="flex justify-between mt-1 text-xs text-[var(--color-text-sub)]">
                                 <span>{t.startDate?.substring(5)} ~ {t.dueDate?.substring(5)}</span>
                                 <span className="font-medium text-indigo-600">{t.progress || 0}%</span>
                               </div>
                             </li>
                           ))}
                           {userTasks.length > 3 && (
-                            <li className="text-xs text-center text-gray-400 font-medium pt-1">
+                            <li className="text-xs text-center text-[var(--color-text-sub)] font-medium pt-1">
                               +{userTasks.length - 3}개의 다른 업무
                             </li>
                           )}
                         </ul>
                       ) : (
-                        <div className="text-xs text-gray-400 bg-white p-2 rounded text-center border border-dashed border-gray-200">배정된 업무 없음</div>
+                        <div className="text-xs text-[var(--color-text-sub)] bg-[var(--color-surface)] p-2 rounded text-center border border-dashed border-[var(--color-border)]">배정된 업무 없음</div>
                       )}
                     </div>
                     
                     <div>
-                      <h4 className="text-xs font-bold text-gray-600 mb-2">예정된 개인 스케줄</h4>
+                      <h4 className="text-xs font-bold text-[var(--color-text-sub)] mb-2">예정된 개인 스케줄</h4>
                       {userSchedules.length > 0 ? (
                         <ul className="space-y-2">
                           {userSchedules.slice(0, 3).map(s => (
-                            <li key={s.id} className="text-xs flex items-center gap-2 bg-white p-2 rounded border border-gray-100">
+                            <li key={s.id} className="text-xs flex items-center gap-2 bg-[var(--color-surface)] p-2 rounded border border-[var(--color-border)]">
                               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${s.scheduleType === 'OFF' ? 'bg-red-400' : 'bg-blue-400'}`}></span>
                               <span className="truncate flex-1 font-medium">{s.title}</span>
-                              <span className="text-gray-400 flex-shrink-0">{s.startDateTime.substring(5,10)}</span>
+                              <span className="text-[var(--color-text-sub)] flex-shrink-0">{s.startDateTime.substring(5,10)}</span>
                             </li>
                           ))}
                           {userSchedules.length > 3 && (
-                            <li className="text-xs text-center text-gray-400 font-medium pt-1">
+                            <li className="text-xs text-center text-[var(--color-text-sub)] font-medium pt-1">
                               +{userSchedules.length - 3}개의 스케줄
                             </li>
                           )}
                         </ul>
                       ) : (
-                        <div className="text-xs text-gray-400 bg-white p-2 rounded text-center border border-dashed border-gray-200">스케줄 없음</div>
+                        <div className="text-xs text-[var(--color-text-sub)] bg-[var(--color-surface)] p-2 rounded text-center border border-dashed border-[var(--color-border)]">스케줄 없음</div>
                       )}
                     </div>
                   </div>

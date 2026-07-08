@@ -13,9 +13,9 @@ export default function DataQualityPage() {
   const [filterSeverity, setFilterSeverity] = useState<string>('ALL');
   const [filterStatus, setFilterStatus] = useState<string>('OPEN');
 
-  if (!currentUser) return <div className="p-6">로그인이 필요합니다.</div>;
+  if (!currentUser) return <div className="py-10 text-center text-[var(--color-text-sub)]">로그인이 필요합니다.</div>;
   if (!['SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(currentUser.role)) {
-    return <div className="p-6 text-red-600 font-bold">접근 권한이 없습니다. (관리자 전용)</div>;
+    return <div className="py-10 text-center text-[var(--color-danger)] font-bold">접근 권한이 없습니다. (관리자 전용)</div>;
   }
 
   const filteredChecks = checks.filter(c => {
@@ -31,15 +31,15 @@ export default function DataQualityPage() {
   const resolvedCount = checks.filter(c => c.status === 'RESOLVED').length;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border">
+    <div className="max-w-7xl w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+      <div className="flex justify-between items-center bg-[var(--color-surface)] p-4 rounded-xl shadow-sm border">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center">
             <ShieldAlert className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-800">데이터 품질 검사</h1>
-            <p className="text-xs text-gray-500">
+            <h1 className="text-xl font-bold text-[var(--color-text-main)]">데이터 품질 검사</h1>
+            <p className="text-xs text-[var(--color-text-sub)]">
               마지막 검사: {lastCheckTime ? new Date(lastCheckTime).toLocaleString() : '기록 없음'}
             </p>
           </div>
@@ -55,11 +55,11 @@ export default function DataQualityPage() {
       </div>
 
       <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col justify-between">
-          <div className="text-gray-500 text-xs font-bold mb-1 flex items-center gap-1">
+        <div className="bg-[var(--color-surface)] p-4 rounded-xl border shadow-sm flex flex-col justify-between">
+          <div className="text-[var(--color-text-sub)] text-xs font-bold mb-1 flex items-center gap-1">
             <ShieldAlert className="w-3 h-3" /> 전체 검사 항목
           </div>
-          <div className="text-2xl font-extrabold text-gray-800">{checks.length}</div>
+          <div className="text-2xl font-extrabold text-[var(--color-text-main)]">{checks.length}</div>
         </div>
         <div className="bg-red-50 p-4 rounded-xl border border-red-100 shadow-sm flex flex-col justify-between">
           <div className="text-red-500 text-xs font-bold mb-1">BLOCKER</div>
@@ -75,11 +75,11 @@ export default function DataQualityPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-        <div className="p-4 border-b bg-gray-50 flex gap-4">
+      <div className="bg-[var(--color-surface)] rounded-xl border shadow-sm overflow-hidden">
+        <div className="p-4 border-b bg-[var(--color-bg)] flex gap-4">
           <select 
             value={filterCategory} onChange={e => setFilterCategory(e.target.value)}
-            className="border rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 bg-white"
+            className="border rounded-lg px-3 py-1.5 text-sm font-medium text-[var(--color-text-main)] bg-[var(--color-surface)]"
           >
             <option value="ALL">모든 카테고리</option>
             <option value="PERSONNEL">인사/직원 (PERSONNEL)</option>
@@ -89,7 +89,7 @@ export default function DataQualityPage() {
 
           <select 
             value={filterSeverity} onChange={e => setFilterSeverity(e.target.value)}
-            className="border rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 bg-white"
+            className="border rounded-lg px-3 py-1.5 text-sm font-medium text-[var(--color-text-main)] bg-[var(--color-surface)]"
           >
             <option value="ALL">모든 심각도</option>
             <option value="BLOCKER">BLOCKER</option>
@@ -99,7 +99,7 @@ export default function DataQualityPage() {
 
           <select 
             value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-            className="border rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 bg-white"
+            className="border rounded-lg px-3 py-1.5 text-sm font-medium text-[var(--color-text-main)] bg-[var(--color-surface)]"
           >
             <option value="ALL">모든 상태</option>
             <option value="OPEN">미해결 (OPEN)</option>
@@ -110,7 +110,7 @@ export default function DataQualityPage() {
 
         <div className="divide-y">
           {filteredChecks.map(check => (
-            <div key={check.id} className={`p-5 transition-colors ${check.status !== 'OPEN' ? 'opacity-50 bg-gray-50' : 'hover:bg-gray-50'}`}>
+            <div key={check.id} className={`p-5 transition-colors ${check.status !== 'OPEN' ? 'opacity-50 bg-[var(--color-bg)]' : 'hover:bg-[var(--color-bg)]'}`}>
               <div className="flex gap-4">
                 <div className="pt-1">
                   {check.severity === 'BLOCKER' ? <ShieldAlert className="w-5 h-5 text-red-500" /> :
@@ -120,28 +120,28 @@ export default function DataQualityPage() {
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="inline-block px-2 py-0.5 bg-gray-200 text-gray-700 text-[10px] font-bold rounded mb-1 mr-2">
+                      <span className="inline-block px-2 py-0.5 bg-gray-200 text-[var(--color-text-main)] text-[10px] font-bold rounded mb-1 mr-2">
                         {check.category}
                       </span>
-                      <h4 className={`font-bold inline-block ${check.severity === 'BLOCKER' ? 'text-red-700' : 'text-gray-800'}`}>
+                      <h4 className={`font-bold inline-block ${check.severity === 'BLOCKER' ? 'text-red-700' : 'text-[var(--color-text-main)]'}`}>
                         {check.title}
                       </h4>
                     </div>
                     <div className="flex gap-2">
                       {check.status === 'OPEN' && (
                         <>
-                          <button onClick={() => ignoreCheck(check.id)} className="text-xs px-3 py-1.5 rounded border text-gray-500 hover:bg-gray-100 font-medium">무시 처리</button>
+                          <button onClick={() => ignoreCheck(check.id)} className="text-xs px-3 py-1.5 rounded border text-[var(--color-text-sub)] hover:bg-gray-100 font-medium">무시 처리</button>
                           <button onClick={() => resolveCheck(check.id)} className="text-xs px-3 py-1.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-bold flex items-center gap-1">
                             <CheckCircle2 className="w-3 h-3" /> 해결 완료
                           </button>
                         </>
                       )}
                       {check.status !== 'OPEN' && (
-                        <span className="text-xs font-bold text-gray-400 border px-2 py-1 rounded bg-white">{check.status}</span>
+                        <span className="text-xs font-bold text-[var(--color-text-sub)] border px-2 py-1 rounded bg-[var(--color-surface)]">{check.status}</span>
                       )}
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600 mt-2">{check.description}</p>
+                  <p className="text-sm text-[var(--color-text-sub)] mt-2">{check.description}</p>
                   
                   {check.suggestedFix && (
                     <div className="mt-3 text-xs bg-blue-50 text-blue-800 p-2.5 rounded-lg border border-blue-100 flex items-start gap-2">
@@ -163,7 +163,7 @@ export default function DataQualityPage() {
           ))}
 
           {filteredChecks.length === 0 && (
-            <div className="p-12 text-center text-gray-500 font-medium">
+            <div className="p-12 text-center text-[var(--color-text-sub)] font-medium">
               조건에 맞는 품질 검사 항목이 없습니다.
             </div>
           )}

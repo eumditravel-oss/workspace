@@ -51,7 +51,7 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
       {...listeners}
       {...attributes}
       onClick={() => onClick?.()}
-      className={`bg-white p-3 rounded-lg shadow-sm border ${isDragging ? 'border-blue-400 shadow-md ring-2 ring-blue-100' : 'border-gray-200'} cursor-grab active:cursor-grabbing hover:shadow-md hover:border-gray-300 transition-all group`}
+      className={`bg-[var(--color-surface)] p-3 rounded-lg shadow-sm border ${isDragging ? 'border-blue-400 shadow-md ring-2 ring-blue-100' : 'border-[var(--color-border)]'} cursor-grab active:cursor-grabbing hover:shadow-md hover:border-[var(--color-border-strong)] transition-all group`}
     >
       <div className="flex justify-between items-start mb-2 gap-1 flex-wrap">
         <div className="flex gap-1.5 flex-wrap flex-1">
@@ -80,7 +80,7 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
           )}
         </div>
         {task.sourceSheet && (
-          <span className="text-[9px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100 flex items-center whitespace-nowrap">
+          <span className="text-[9px] text-[var(--color-text-sub)] bg-[var(--color-bg)] px-1.5 py-0.5 rounded border border-[var(--color-border)] flex items-center whitespace-nowrap">
             <FileText className="w-2.5 h-2.5 mr-0.5" />
             {task.sourceSheet}
           </span>
@@ -88,10 +88,10 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
       </div>
 
       <div className="mb-2">
-        <span className="text-[10px] font-medium text-gray-500 mb-0.5 block truncate">
+        <span className="text-[10px] font-medium text-[var(--color-text-sub)] mb-0.5 block truncate">
           {project?.title || 'Unknown Project'}
         </span>
-        <h4 className="font-semibold text-gray-800 text-sm leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
+        <h4 className="font-semibold text-[var(--color-text-main)] text-sm leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
           {task.title}
         </h4>
       </div>
@@ -104,7 +104,7 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
         />
       </div>
 
-      <div className="flex items-center justify-between text-[11px] text-gray-500 mt-2 border-t pt-2 border-gray-50">
+      <div className="flex items-center justify-between text-[11px] text-[var(--color-text-sub)] mt-2 border-t pt-2 border-gray-50">
         <div className="flex items-center gap-2">
           <div className="flex items-center" title="담당자">
             <User className="w-3 h-3 mr-1" />
@@ -116,7 +116,7 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
             </div>
           )}
         </div>
-        <div className="flex items-center bg-gray-50 px-1.5 py-0.5 rounded" title="마감일">
+        <div className="flex items-center bg-[var(--color-bg)] px-1.5 py-0.5 rounded" title="마감일">
           <Clock className={`w-3 h-3 mr-1 ${isDelayed ? 'text-red-500' : ''}`} />
           <span className={isDelayed ? 'text-red-600 font-medium' : ''}>
             {task.dueDate ? task.dueDate.substring(5) : '-'}

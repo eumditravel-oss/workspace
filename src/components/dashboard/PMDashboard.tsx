@@ -5,6 +5,8 @@ import { useProjectStore } from '@/store/projectStore';
 import { useTaskStore } from '@/store/taskStore';
 import { useAuthStore } from '@/store/authStore';
 import { getDeliveryUrgencyBucket, getProjectOverallProgress } from '@/lib/selectors';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Badge } from '@/components/ui/Badge';
 
 export const PMDashboard = ({ selectedMonth }: { selectedMonth: string | 'ALL' }) => {
   const { currentUser } = useAuthStore();
@@ -31,61 +33,98 @@ export const PMDashboard = ({ selectedMonth }: { selectedMonth: string | 'ALL' }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800">PM 대시보드</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <SummaryCard title="담당 프로젝트" value={pmProjects.length.toString()} icon={Briefcase} colorClass="bg-blue-500" />
-        <SummaryCard title="긴급 납품 프로젝트" value={urgentProjectsCount.toString()} icon={AlertTriangle} colorClass="bg-red-500" />
-        <SummaryCard title="검토 대기 업무" value={pendingApprovalsCount.toString()} icon={CheckCircle} colorClass="bg-green-500" />
-        <SummaryCard title="지연 업무" value={delayedTasksCount.toString()} icon={Clock} colorClass="bg-orange-500" />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <SummaryCard 
+          title="담당 프로젝트" 
+          value={pmProjects.length.toString()} 
+          subtitle="PM으로 배정된 프로젝트"
+          icon={Briefcase} 
+          colorClass="bg-blue-500" 
+        />
+        <SummaryCard 
+          title="납품 경과 프로젝트" 
+          value={urgentProjectsCount.toString()} 
+          subtitle="납품일 1주일 이내 및 경과"
+          icon={AlertTriangle} 
+          colorClass="bg-red-500" 
+        />
+        <SummaryCard 
+          title="검토 대기 업무" 
+          value={pendingApprovalsCount.toString()} 
+          subtitle="팀원 작업물 검토 대기 건"
+          icon={CheckCircle} 
+          colorClass="bg-green-500" 
+        />
+        <SummaryCard 
+          title="지연/충돌 업무" 
+          value={delayedTasksCount.toString()} 
+          subtitle="마감일 경과 또는 미처리 건"
+          icon={Clock} 
+          colorClass="bg-orange-500" 
+        />
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm border">
-        <h2 className="text-lg font-bold mb-4 border-b pb-2">담당 프로젝트 현황</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 border-b">
-                <th className="p-3 text-sm font-semibold text-gray-600">프로젝트명</th>
-                <th className="p-3 text-sm font-semibold text-gray-600">상태</th>
-                <th className="p-3 text-sm font-semibold text-gray-600">공정률</th>
-                <th className="p-3 text-sm font-semibold text-gray-600">납품 예정일</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pmProjects.map(p => {
-                const progress = getProjectOverallProgress(p, tasks);
-                const urgency = getDeliveryUrgencyBucket(p);
-                return (
-                  <tr key={p.id} className="border-b hover:bg-gray-50">
-                    <td className="p-3 font-medium text-gray-800">{p.title}</td>
-                    <td className="p-3 text-sm">
-                      <span className="px-2 py-1 bg-gray-100 rounded text-gray-700 font-bold">{p.status}</span>
-                    </td>
-                    <td className="p-3 text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 bg-gray-200 rounded-full h-2">
-                          <div className="bg-indigo-600 h-2 rounded-full" style={{ width: `${progress}%` }}></div>
-                        </div>
-                        <span>{progress}%</span>
-                      </div>
-                    </td>
-                    <td className="p-3 text-sm">
-                      <span className={`${urgency === 'WITHIN_1_WEEK' ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
-                        {p.deliveryDate || '미정'}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-              {pmProjects.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="p-6 text-center text-gray-500">담당 프로젝트가 없습니다.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-card)] overflow-hidden shadow-sm">
+        <div className="px-5 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
+          <h2 className="text-[15px] font-bold text-[var(--color-text-main)]">월별 프로젝트 요약</h2>
         </div>
+        
+        {pmProjects.length === 0 ? (
+          <div className="p-6">
+            <EmptyState 
+              title="담당 중인 프로젝트가 없습니다."
+              description="PM으로 배정된 프로젝트 내역이 이곳에 표시됩니다."
+            />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-[13px] whitespace-nowrap">
+              <thead className="bg-[var(--color-bg)]/50 border-b border-[var(--color-border)]">
+                <tr>
+                  <th className="px-5 py-3 font-semibold text-[var(--color-text-sub)]">프로젝트명</th>
+                  <th className="px-5 py-3 font-semibold text-[var(--color-text-sub)]">구분</th>
+                  <th className="px-5 py-3 font-semibold text-[var(--color-text-sub)]">상태</th>
+                  <th className="px-5 py-3 font-semibold text-[var(--color-text-sub)]">공정률</th>
+                  <th className="px-5 py-3 font-semibold text-[var(--color-text-sub)]">납품 예정일</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--color-border)]">
+                {pmProjects.map(p => {
+                  const progress = getProjectOverallProgress(p, tasks);
+                  const urgency = getDeliveryUrgencyBucket(p);
+                  return (
+                    <tr key={p.id} className="hover:bg-[var(--color-bg)] transition-colors">
+                      <td className="px-5 py-3 font-semibold text-[var(--color-text-main)]">{p.title}</td>
+                      <td className="px-5 py-3">
+                        <Badge variant={p.projectSourceType === 'CLIENT_ORDER' ? 'INFO' : 'DEFAULT'}>
+                          {p.projectSourceType === 'CLIENT_ORDER' ? '수주' : '내부개발'}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-3">
+                        <Badge variant={p.status === 'COMPLETED' ? 'SUCCESS' : p.status === 'IN_PROGRESS' ? 'INFO' : 'DEFAULT'}>
+                          {p.status}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-20 bg-gray-200 rounded-full h-1.5">
+                            <div className="bg-[var(--color-primary)] h-1.5 rounded-full" style={{ width: `${progress}%` }}></div>
+                          </div>
+                          <span className="font-semibold text-[var(--color-text-sub)] w-8">{progress}%</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className={`font-semibold ${urgency === 'WITHIN_1_WEEK' ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-sub)]'}`}>
+                          {p.deliveryDate || '미정'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
