@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { ScheduleConflict, ConflictResolutionStatus } from '@/types/models';
+import { useNotificationStore } from '@/store/notificationStore';
 
 interface ConflictState {
   conflicts: ScheduleConflict[];
@@ -24,9 +25,19 @@ export const useConflictStore = create<ConflictState>((set) => ({
     }
   ],
   addConflicts: (newConflicts) => set((state) => {
-    // Avoid adding duplicates based on user, dates, and related ids
     const existingIds = state.conflicts.map(c => c.id);
     const uniqueNew = newConflicts.filter(c => !existingIds.includes(c.id));
+    
+    uniqueNew.forEach(c => {
+      useNotificationStore.getState().addNotification({
+        userId: c.userId,
+        type: 'SYSTEM',
+        title: '일정 충돌 감지',
+        message: c.description,
+        priority: 'CRITICAL'
+      });
+    });
+
     return { conflicts: [...state.conflicts, ...uniqueNew] };
   }),
   resolveConflict: (id, status, resolvedBy, comment) => set((state) => ({

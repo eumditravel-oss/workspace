@@ -20,8 +20,8 @@ const validateJsonData = () => {
       process.exit(1);
     }
 
-    if (!data.data || !Array.isArray(data.data.projects) || !Array.isArray(data.data.personnel)) {
-      console.error('[Error] Invalid data structure. Missing projects or personnel array.');
+    if (!data.data || !Array.isArray(data.data.projects) || !Array.isArray(data.data.personnel) || !Array.isArray(data.data.settings)) {
+      console.error('[Error] Invalid data structure. Missing projects, personnel, or settings array.');
       process.exit(1);
     }
 

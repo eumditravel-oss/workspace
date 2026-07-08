@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { QcIssue, ProjectEvaluationContext, EvaluationAppeal } from '@/lib/evaluation/types';
+import { useNotificationStore } from '@/store/notificationStore';
+import { useAuthStore } from '@/store/authStore';
 
 interface EvaluationState {
   qcIssues: QcIssue[];
@@ -87,25 +89,54 @@ export const useEvaluationStore = create<EvaluationState>((set) => ({
     return { projectContexts: [...state.projectContexts, newContext] };
   }),
   
-  addAppeal: (appealData) => set((state) => ({
-    appeals: [...state.appeals, {
-      ...appealData,
-      id: `apl_${Date.now()}`,
-      status: 'PENDING',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }]
-  })),
-  
-  updateAppealStatus: (appealId, status, reviewedBy, comment) => set((state) => ({
-    appeals: state.appeals.map(a => 
-      a.id === appealId ? {
-        ...a,
-        status,
-        reviewedBy,
-        reviewComment: comment,
+  addAppeal: (appealData) => set((state) => {
+    const { users } = useAuthStore.getState();
+    const admins = users.filter(u => u.role === 'SUPER_ADMIN' || u.role === 'DEPARTMENT_MANAGER');
+    
+    admins.forEach(admin => {
+      useNotificationStore.getState().addNotification({
+        userId: admin.id,
+        type: 'SYSTEM',
+        title: '신규 성과평가 이의신청',
+        message: `사용자 ${appealData.requestedBy}가 이의신청을 제기했습니다.`,
+        priority: 'NORMAL'
+      });
+    });
+
+    return {
+      appeals: [...state.appeals, {
+        ...appealData,
+        id: `apl_${Date.now()}`,
+        status: 'PENDING',
+        createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
-      } : a
-    )
-  }))
+      }]
+    };
+  }),
+  
+  updateAppealStatus: (appealId, status, reviewedBy, comment) => set((state) => {
+    const appeal = state.appeals.find(a => a.id === appealId);
+    
+    if (appeal && (status === 'ACCEPTED' || status === 'REJECTED')) {
+      useNotificationStore.getState().addNotification({
+        userId: appeal.requestedBy,
+        type: 'SYSTEM',
+        title: `이의신청 ${status === 'ACCEPTED' ? '수용' : '기각'} 알림`,
+        message: `제출하신 성과평가 이의신청이 ${status === 'ACCEPTED' ? '수용' : '기각'} 처리되었습니다.\n검토자 의견: ${comment || '없음'}`,
+        priority: status === 'REJECTED' ? 'HIGH' : 'NORMAL'
+      });
+    }
+
+    return {
+      appeals: state.appeals.map(a => 
+        a.id === appealId ? {
+          ...a,
+          status,
+          reviewedBy,
+          reviewComment: comment,
+          updatedAt: new Date().toISOString()
+        } : a
+      )
+    };
+  })
 }));

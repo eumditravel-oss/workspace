@@ -5,6 +5,8 @@ import { fullSchedules } from '@/data/fullScheduleSeed';
 interface ScheduleState {
   schedules: PersonalSchedule[];
   addSchedule: (schedule: Omit<PersonalSchedule, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'approvalStatus'>) => void;
+  replaceSchedules: (schedules: PersonalSchedule[]) => void;
+  resetSchedules: () => void;
 }
 
 const initialSchedules: PersonalSchedule[] = [
@@ -39,8 +41,9 @@ export const useScheduleStore = create<ScheduleState>((set) => ({
       id: `s${Date.now()}`,
       status: 'SCHEDULED',
       approvalStatus: scheduleData.requiresApproval ? 'PENDING' : 'NOT_REQUIRED',
-      createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }]
-  }))
+  })),
+  replaceSchedules: (schedules) => set({ schedules }),
+  resetSchedules: () => set({ schedules: [] })
 }));

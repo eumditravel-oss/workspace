@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { ApprovalRequest, ApprovalWorkflowTemplate, ApprovalRequestType } from '@/types/models';
 import { mockApprovalRequests } from '@/data/mockData';
+import { useNotificationStore } from '@/store/notificationStore';
 
 interface ApprovalState {
   requests: ApprovalRequest[];
@@ -8,6 +9,10 @@ interface ApprovalState {
   addRequest: (request: Omit<ApprovalRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => void;
   updateApprovalStatus: (id: string, status: 'APPROVED' | 'REJECTED' | 'PM_APPROVED' | 'MANAGER_REVIEWING', reviewerId: string, comment?: string, alternativeType?: ApprovalRequestType) => void;
   updateTemplate: (templateId: string, updates: Partial<ApprovalWorkflowTemplate>) => void;
+  replaceRequests: (requests: ApprovalRequest[]) => void;
+  resetRequests: () => void;
+  replaceTemplates: (templates: ApprovalWorkflowTemplate[]) => void;
+  resetTemplates: () => void;
 }
 
 const initialRequests: ApprovalRequest[] = [
@@ -59,16 +64,39 @@ export const useApprovalStore = create<ApprovalState>((set) => ({
       updatedAt: new Date().toISOString()
     }]
   })),
-  updateApprovalStatus: (id, status, reviewerId, comment, alternativeType) => set((state) => ({
-    requests: state.requests.map(r => 
-      r.id === id 
-        ? { ...r, status, reviewedBy: reviewerId, reviewComment: comment, alternativeType, updatedAt: new Date().toISOString() }
-        : r
-    )
-  })),
+  updateApprovalStatus: (id, status, reviewerId, comment, alternativeType) => set((state) => {
+    const request = state.requests.find(r => r.id === id);
+    
+    // Audit Log (Console)
+    console.log(`[AUDIT] Approval Request ${id} status changed to ${status} by User ${reviewerId}. Comment: ${comment || 'N/A'}`);
+
+    if (request && (status === 'APPROVED' || status === 'REJECTED')) {
+      // Send Notification to requester
+      useNotificationStore.getState().addNotification({
+        userId: request.requestedBy,
+        type: 'SYSTEM',
+        title: `결재 ${status === 'APPROVED' ? '승인' : '반려'} 알림`,
+        message: `요청하신 [${request.title}] 결재가 ${status === 'APPROVED' ? '승인' : '반려'} 처리되었습니다.\n검토자 의견: ${comment || '없음'}`,
+        priority: status === 'REJECTED' ? 'HIGH' : 'NORMAL',
+        relatedApprovalId: request.id
+      });
+    }
+
+    return {
+      requests: state.requests.map(r => 
+        r.id === id 
+          ? { ...r, status, reviewedBy: reviewerId, reviewComment: comment, alternativeType, updatedAt: new Date().toISOString() }
+          : r
+      )
+    };
+  }),
   updateTemplate: (templateId, updates) => set((state) => ({
     templates: state.templates.map(t => 
       t.id === templateId ? { ...t, ...updates } : t
     )
-  }))
+  })),
+  replaceRequests: (requests) => set({ requests }),
+  resetRequests: () => set({ requests: [] }),
+  replaceTemplates: (templates) => set({ templates }),
+  resetTemplates: () => set({ templates: [] })
 }));

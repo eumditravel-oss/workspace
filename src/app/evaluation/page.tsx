@@ -109,7 +109,27 @@ export default function EvaluationPage() {
 
       {(currentUser.role === 'WORKER' || currentUser.role === 'PM') && myResult && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-800/50 shadow-sm">
-          <h2 className="text-lg font-bold text-blue-900 dark:text-blue-300 mb-4">나의 평가 요약</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold text-blue-900 dark:text-blue-300">나의 평가 요약</h2>
+            <button
+              onClick={() => {
+                const reason = window.prompt("이의신청 사유를 입력하세요 (예: 특정 QC 이슈 감점 과다)");
+                if (reason) {
+                  useEvaluationStore.getState().addAppeal({
+                    evaluationPeriodId: 'default_period',
+                    userId: currentUser.id,
+                    evaluationResultId: myResult.id,
+                    reason,
+                    requestedBy: currentUser.id
+                  });
+                  alert('이의신청이 접수되었습니다.');
+                }
+              }}
+              className="px-3 py-1.5 text-sm font-bold bg-white text-blue-700 border border-blue-200 rounded-lg shadow-sm hover:bg-blue-50"
+            >
+              이의신청 제기
+            </button>
+          </div>
           <div className="grid grid-cols-4 gap-4">
             <div className="bg-[var(--color-surface)] p-4 rounded-lg shadow-sm">
               <div className="text-xs text-[var(--color-text-sub)] mb-1">인정 작업량</div>

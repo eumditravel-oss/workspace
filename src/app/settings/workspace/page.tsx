@@ -57,7 +57,7 @@ export default function WorkspaceSettingsPage() {
         const json = JSON.parse(event.target?.result as string);
         if (validateImportData(json)) {
           applyImportData(json);
-          setSuccessMsg('데이터 구조 확인 완료 (반영 로직은 미구현)');
+          setSuccessMsg('데이터 구조 확인 및 스토어 반영 완료');
         } else {
           alert('잘못된 형태의 JSON 파일입니다.');
         }

@@ -25,13 +25,15 @@ const importJsonData = () => {
 
     // Write to TypeScript file to be bundled by Next.js
     const tsContent = `// Auto-generated from workspace-export.json
-import { Project, TaskCard, PersonnelCard } from '@/types/models';
+import { Project, TaskCard, PersonnelCard, WorkspaceSetting } from '@/types/models';
 
 export const operationData = {
-  projects: ${JSON.stringify(data.data.projects, null, 2)} as unknown as Project[],
-  tasks: ${JSON.stringify(data.data.tasks, null, 2)} as unknown as TaskCard[],
-  personnel: ${JSON.stringify(data.data.personnel, null, 2)} as unknown as PersonnelCard[],
-  settings: ${JSON.stringify(data.data.settings, null, 2)},
+  data: {
+    projects: ${JSON.stringify(data.data.projects, null, 2)} as unknown as Project[],
+    tasks: ${JSON.stringify(data.data.tasks, null, 2)} as unknown as TaskCard[],
+    personnel: ${JSON.stringify(data.data.personnel, null, 2)} as unknown as PersonnelCard[],
+    settings: ${JSON.stringify(data.data.settings, null, 2)} as unknown as WorkspaceSetting[],
+  }
 };
 `;
 

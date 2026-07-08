@@ -1,12 +1,15 @@
 import { create } from 'zustand';
 import { Project, ProjectStatus, PostDeliveryWorkRequest, RevisionRequest } from '@/types/models';
 import { fullProjects } from '@/data/fullScheduleSeed';
+import { useAuthStore } from '@/store/authStore';
 
 interface ProjectState {
   projects: Project[];
   postDeliveryWorkRequests: PostDeliveryWorkRequest[];
   revisionRequests: RevisionRequest[];
   loadDummyProjects: () => void;
+  addRevisionRequest: (request: Omit<RevisionRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => void;
+  updateRevisionRequestStatus: (requestId: string, status: RevisionRequest['status']) => void;
   addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'progress'>) => void;
   assignPM: (projectId: string, pmId: string) => void;
   updateProjectStatus: (projectId: string, status: ProjectStatus) => void;
@@ -15,14 +18,46 @@ interface ProjectState {
   approvePostDeliveryWorkRequest: (requestId: string, approvedBy: string) => void;
   rejectPostDeliveryWorkRequest: (requestId: string, rejectedBy: string) => void;
   batchCloseOverdueProjects: (closedBy: string) => { totalClosed: number; projectIds: string[] };
+  replaceProjects: (projects: Project[]) => void;
+  resetProjects: () => void;
 }
+
+const initialRevisionRequests: RevisionRequest[] = [
+  {
+    id: 'rev_1',
+    projectId: 'proj_sangincheon',
+    title: '내부 도면 수정 요청',
+    description: '구조 상세도 표기 누락 수정 필요',
+    requestedByClient: 'Internal QA',
+    status: 'PENDING',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+];
 
 export const useProjectStore = create<ProjectState>((set, get) => ({
   projects: [],
   postDeliveryWorkRequests: [],
-  revisionRequests: [],
+  revisionRequests: initialRevisionRequests,
   
   loadDummyProjects: () => set({ projects: fullProjects }),
+
+  addRevisionRequest: (requestData) => set((state) => {
+    const newReq: RevisionRequest = {
+      ...requestData,
+      id: `rev${Date.now()}`,
+      status: 'PENDING',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    return { revisionRequests: [...state.revisionRequests, newReq] };
+  }),
+
+  updateRevisionRequestStatus: (requestId, status) => set((state) => ({
+    revisionRequests: state.revisionRequests.map(r => 
+      r.id === requestId ? { ...r, status, updatedAt: new Date().toISOString() } : r
+    )
+  })),
 
   addProject: (projectData) => set((state) => {
     const newProject: Project = {
@@ -36,13 +71,21 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     return { projects: [...state.projects, newProject] };
   }),
 
-  assignPM: (projectId, pmId) => set((state) => ({
-    projects: state.projects.map(p => 
-      p.id === projectId 
-        ? { ...p, pmId, status: 'PM_ASSIGNED', updatedAt: new Date().toISOString() } 
-        : p
-    )
-  })),
+  assignPM: (projectId, pmId) => set((state) => {
+    const { users } = useAuthStore.getState();
+    const pm = users.find(u => u.id === pmId);
+    if (!pm) {
+      console.warn(`Cannot assign PM: User ${pmId} does not exist.`);
+      return state;
+    }
+    return {
+      projects: state.projects.map(p => 
+        p.id === projectId 
+          ? { ...p, pmId, status: 'PM_ASSIGNED', updatedAt: new Date().toISOString() } 
+          : p
+      )
+    };
+  }),
 
   updateProjectStatus: (projectId, status) => set((state) => ({
     projects: state.projects.map(p =>
@@ -189,5 +232,8 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     }));
 
     return { totalClosed: targetIds.length, projectIds: targetIds };
-  }
+  },
+
+  replaceProjects: (projects) => set({ projects }),
+  resetProjects: () => set({ projects: [], postDeliveryWorkRequests: [], revisionRequests: [] })
 }));

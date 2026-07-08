@@ -3,15 +3,17 @@ import { useTaskStore } from '@/store/taskStore';
 import { useAuthStore } from '@/store/authStore';
 import { useSettingStore } from '@/store/settingStore';
 
+import { Project, TaskCard, PersonnelCard, WorkspaceSetting } from '@/types/models';
+
 export interface WorkspaceExportData {
   schemaVersion: string;
   exportedAt: string;
   exportedBy: string;
   data: {
-    projects: any[];
-    tasks: any[];
-    personnel: any[];
-    settings: any;
+    projects: Project[];
+    tasks: TaskCard[];
+    personnel: PersonnelCard[];
+    settings: WorkspaceSetting[];
   };
 }
 
@@ -34,7 +36,7 @@ export const exportWorkspaceData = (): WorkspaceExportData => {
   };
 };
 
-export const downloadJson = (data: any, filename: string) => {
+export const downloadJson = (data: unknown, filename: string) => {
   const jsonStr = JSON.stringify(data, null, 2);
   const blob = new Blob([jsonStr], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -66,17 +68,34 @@ export const loadDraftFromLocalStorage = (): WorkspaceExportData | null => {
   }
 };
 
-export const validateImportData = (data: any): boolean => {
+export const validateImportData = (data: unknown): data is WorkspaceExportData => {
   if (!data || typeof data !== 'object') return false;
-  if (data.schemaVersion !== "1.0.0") return false;
-  if (!data.data || !Array.isArray(data.data.projects)) return false;
+  const d = data as Record<string, unknown>;
+  if (d.schemaVersion !== "1.0.0") return false;
+  if (!d.data || typeof d.data !== 'object' || !Array.isArray((d.data as Record<string, unknown>).projects)) return false;
   return true;
 };
 
+import { useScheduleStore } from '@/store/scheduleStore';
+
 export const applyImportData = (data: WorkspaceExportData) => {
-  // To strictly apply imported data, we would need setter functions in stores.
-  // For MVP, we will assume stores have a method to reset or we just alert for now.
-  // We can add reset methods to stores if needed.
-  console.log("Applying data:", data);
-  alert("데이터 구조가 유효합니다. (실제 덮어쓰기 구현은 스토어 확장 필요)");
+  if (!validateImportData(data)) {
+    alert("데이터 구조가 유효하지 않습니다.");
+    return false;
+  }
+  
+  useProjectStore.getState().replaceProjects(data.data.projects || []);
+  useTaskStore.getState().replaceTasks(data.data.tasks || []);
+  
+  if (data.data.personnel && data.data.personnel.length > 0) {
+    useAuthStore.getState().replaceUsers(data.data.personnel);
+  }
+  
+  if (data.data.settings && data.data.settings.length > 0) {
+    useSettingStore.getState().replaceSettings(data.data.settings);
+  }
+  
+  useAuthStore.getState().setDataSourceMode('EXCEL_IMPORT_DATA');
+  alert("데이터가 성공적으로 반영되었습니다.");
+  return true;
 };

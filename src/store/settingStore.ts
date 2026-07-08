@@ -4,6 +4,8 @@ import { WorkspaceSetting } from '@/types/models';
 interface SettingState {
   settings: WorkspaceSetting[];
   updateSetting: (key: string, value: string | number | boolean | Record<string, string>, updatedBy: string) => void;
+  replaceSettings: (settings: WorkspaceSetting[]) => void;
+  resetSettings: () => void;
 }
 
 const defaultSettings: WorkspaceSetting[] = [
@@ -86,4 +88,6 @@ export const useSettingStore = create<SettingState>((set) => ({
       s.key === key ? { ...s, value, updatedBy, updatedAt: new Date().toISOString() } : s
     )
   })),
+  replaceSettings: (settings) => set({ settings }),
+  resetSettings: () => set({ settings: [] })
 }));

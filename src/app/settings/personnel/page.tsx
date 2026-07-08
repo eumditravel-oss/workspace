@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
-import { Users, Save, Download, Upload } from 'lucide-react';
+import { Users, Save, Download } from 'lucide-react';
 import { PersonnelCard } from '@/types/models';
 
 export default function PersonnelManagementPage() {
@@ -127,7 +127,7 @@ export default function PersonnelManagementPage() {
                 <label className="block text-xs font-bold text-[var(--color-text-main)] mb-1">회사</label>
                 <select 
                   value={editingUser.companyId || ''} 
-                  onChange={e => setEditingUser({...editingUser, companyId: e.target.value as any})}
+                  onChange={e => setEditingUser({...editingUser, companyId: e.target.value as PersonnelCard['companyId']})}
                   className="w-full border border-[var(--color-border-strong)] rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                 >
                   <option value="">선택 안함</option>
@@ -182,7 +182,7 @@ export default function PersonnelManagementPage() {
                 <label className="block text-xs font-bold text-[var(--color-text-main)] mb-1">조직 직급</label>
                 <select 
                   value={editingUser.organizationRank || ''} 
-                  onChange={e => setEditingUser({...editingUser, organizationRank: e.target.value as any})}
+                  onChange={e => setEditingUser({...editingUser, organizationRank: e.target.value as PersonnelCard['organizationRank']})}
                   className="w-full border border-[var(--color-border-strong)] rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                 >
                   <option value="">선택 안함</option>
@@ -200,7 +200,7 @@ export default function PersonnelManagementPage() {
                 <label className="block text-xs font-bold text-[var(--color-text-main)] mb-1">시스템 권한</label>
                 <select 
                   value={editingUser.systemRole || editingUser.role} 
-                  onChange={e => setEditingUser({...editingUser, systemRole: e.target.value as any, role: e.target.value as any})}
+                  onChange={e => setEditingUser({...editingUser, systemRole: e.target.value as PersonnelCard['systemRole'], role: e.target.value as PersonnelCard['role']})}
                   className="w-full border border-[var(--color-border-strong)] rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                 >
                   <option value="SUPER_ADMIN">SUPER_ADMIN</option>
@@ -234,6 +234,20 @@ export default function PersonnelManagementPage() {
               </button>
               <button 
                 onClick={() => {
+                  if (!editingUser.departmentId) {
+                    alert("공통 부서를 선택해주세요.");
+                    return;
+                  }
+                  if (editingUser.companyId === 'CON_COST') {
+                    editingUser.subDepartmentId = undefined; // CON_COST shouldn't have sub dept
+                  }
+                  if (
+                    (editingUser.systemRole === 'SUPER_ADMIN' || editingUser.role === 'SUPER_ADMIN') && 
+                    currentUser.role !== 'SUPER_ADMIN'
+                  ) {
+                    alert("SUPER_ADMIN 권한은 SUPER_ADMIN 만이 부여할 수 있습니다.");
+                    return;
+                  }
                   updateUser(editingUser.id, editingUser);
                   setEditingUser(null);
                 }} 

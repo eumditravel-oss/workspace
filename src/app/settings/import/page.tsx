@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useImportStore } from '@/store/importStore';
 import { AlertCircle, FileUp, Info, Play, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { applyImportData } from '@/lib/jsonHandoff';
 
 export default function ImportPreviewPage() {
   const { currentUser } = useAuthStore();
@@ -30,8 +31,16 @@ export default function ImportPreviewPage() {
     }
     const confirm = window.confirm('미리보기 검증이 완료되었습니다. 이 데이터를 시스템에 반영하시겠습니까? (이 작업은 되돌릴 수 없습니다)');
     if (confirm && session) {
+      // In a real scenario, pendingData would be set when a file is uploaded.
+      // Since it's mock for now, we only apply if pendingData exists.
+      const { pendingData } = useImportStore.getState();
+      if (pendingData) {
+        applyImportData(pendingData);
+      } else {
+        // Fallback for mock demo: just set status without applying data
+        alert('실제 파싱된 데이터(pendingData)가 없으므로 상태만 완료로 변경합니다.');
+      }
       updateSessionStatus(session.id, 'APPLIED');
-      alert('성공적으로 데이터가 적용되었습니다.');
     }
   };
 

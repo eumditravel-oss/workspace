@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { PersonnelCard, DataSourceMode } from '@/types/models';
 import { mockUsers } from '@/data/mockData';
 
@@ -14,10 +15,14 @@ interface AuthState {
   loginAs: (userId: string) => void;
   logout: () => void;
   updateUser: (userId: string, updates: Partial<PersonnelCard>) => void;
+  replaceUsers: (users: PersonnelCard[]) => void;
+  resetUsers: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  currentUser: mockUsers[0], // Default to Super Admin
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      currentUser: mockUsers[0], // Default to Super Admin
   users: mockUsers,
   appMode: 'DAILY_WORK',
   dataSourceMode: 'JSON_OPERATION_DATA',
@@ -53,4 +58,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     users: state.users.map(u => u.id === userId ? { ...u, ...updates } : u),
     currentUser: state.currentUser?.id === userId ? { ...state.currentUser, ...updates } : state.currentUser
   })),
-}));
+      replaceUsers: (users) => set({ users }),
+      resetUsers: () => set({ users: [], currentUser: null })
+    }),
+    {
+      name: 'auth-storage',
+      partialize: (state) => ({
+        currentUser: state.currentUser,
+        appMode: state.appMode,
+        dataSourceMode: state.dataSourceMode
+      }),
+    }
+  )
+);

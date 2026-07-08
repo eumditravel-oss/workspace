@@ -6,6 +6,8 @@ interface NotificationState {
   markAsRead: (id: string) => void;
   markAllAsRead: (userId: string) => void;
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt' | 'isRead'>) => void;
+  replaceNotifications: (notifications: Notification[]) => void;
+  resetNotifications: () => void;
 }
 
 const mockNotifications: Notification[] = [
@@ -50,5 +52,7 @@ export const useNotificationStore = create<NotificationState>((set) => ({
         createdAt: new Date().toISOString()
       }, ...state.notifications]
     };
-  })
+  }),
+  replaceNotifications: (notifications) => set({ notifications }),
+  resetNotifications: () => set({ notifications: [] })
 }));

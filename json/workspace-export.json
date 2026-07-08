@@ -1,8 +1,11 @@
 {
   "schemaVersion": "1.0.0",
+  "exportedAt": "2026-07-08T05:33:56.625Z",
+  "exportedBy": "System Script",
   "data": {
     "projects": [],
     "tasks": [],
-    "personnel": []
+    "personnel": [],
+    "settings": []
   }
 }

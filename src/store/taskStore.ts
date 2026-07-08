@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { TaskCard, TaskStatus, CompletionStatus, ProgressUpdate, TaskChecklistItem, TaskArtifact, TaskBlocker, UserId, TaskWorkSegment } from '@/types/models';
 import { DetailedLineStage } from '@/lib/selectors';
 import { fullTasks } from '@/data/fullScheduleSeed';
+import { useAuthStore } from '@/store/authStore';
 
 interface TaskState {
   tasks: TaskCard[];
@@ -21,11 +22,14 @@ interface TaskState {
   addChecklistItem: (item: Omit<TaskChecklistItem, 'id'>) => void;
   toggleChecklistItem: (itemId: string, completedBy: UserId) => void;
   addArtifact: (artifact: Omit<TaskArtifact, 'id' | 'createdAt'>) => void;
+  deleteArtifact: (artifactId: string) => void;
   addBlocker: (blocker: Omit<TaskBlocker, 'id' | 'status' | 'createdAt'>) => void;
   resolveBlocker: (blockerId: string, resolvedBy: UserId) => void;
   addWorkSegment: (segment: Omit<TaskWorkSegment, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateWorkSegment: (id: string, updates: Partial<TaskWorkSegment>) => void;
   deleteWorkSegment: (id: string) => void;
+  replaceTasks: (tasks: TaskCard[]) => void;
+  resetTasks: () => void;
 }
 
 export const useTaskStore = create<TaskState>((set) => ({
@@ -89,13 +93,23 @@ export const useTaskStore = create<TaskState>((set) => ({
       })
     };
   }),
-  updateTaskAssignee: (taskId, newAssigneeId) => set((state) => ({
-    tasks: state.tasks.map(t => 
-      t.id === taskId 
-        ? { ...t, assigneeId: newAssigneeId, updatedAt: new Date().toISOString() } 
-        : t
-    )
-  })),
+  updateTaskAssignee: (taskId, newAssigneeId) => set((state) => {
+    if (newAssigneeId) {
+      const { users } = useAuthStore.getState();
+      const assignee = users.find(u => u.id === newAssigneeId);
+      if (!assignee) {
+        console.warn(`Cannot assign task: User ${newAssigneeId} does not exist.`);
+        return state;
+      }
+    }
+    return {
+      tasks: state.tasks.map(t => 
+        t.id === taskId 
+          ? { ...t, assigneeId: newAssigneeId, updatedAt: new Date().toISOString() } 
+          : t
+      )
+    };
+  }),
   updateTaskPriority: (taskId, newPriority) => set((state) => ({
     tasks: state.tasks.map(t => 
       t.id === taskId 
@@ -168,6 +182,9 @@ export const useTaskStore = create<TaskState>((set) => ({
   addArtifact: (artifact) => set((state) => ({
     artifacts: [...state.artifacts, { ...artifact, id: `art_${Date.now()}`, createdAt: new Date().toISOString() }]
   })),
+  deleteArtifact: (artifactId) => set((state) => ({
+    artifacts: state.artifacts.filter(a => a.id !== artifactId)
+  })),
   addBlocker: (blocker) => set((state) => ({
     blockers: [...state.blockers, { ...blocker, id: `blk_${Date.now()}`, status: 'OPEN', createdAt: new Date().toISOString() }]
   })),
@@ -193,5 +210,7 @@ export const useTaskStore = create<TaskState>((set) => ({
   })),
   deleteWorkSegment: (id) => set((state) => ({
     workSegments: state.workSegments.filter(ws => ws.id !== id)
-  }))
+  })),
+  replaceTasks: (tasks) => set({ tasks }),
+  resetTasks: () => set({ tasks: [], progressUpdates: [], checklists: [], artifacts: [], blockers: [], workSegments: [] })
 }));

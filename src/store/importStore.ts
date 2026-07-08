@@ -4,10 +4,12 @@ import { ImportPreviewSession, ImportValidationIssue } from '@/types/models';
 interface ImportState {
   sessions: ImportPreviewSession[];
   issues: ImportValidationIssue[];
+  pendingData: any | null;
   addSession: (session: ImportPreviewSession) => void;
   updateSessionStatus: (sessionId: string, status: ImportPreviewSession['status']) => void;
   resolveIssue: (issueId: string, resolvedBy: string) => void;
   ignoreIssue: (issueId: string, resolvedBy: string) => void;
+  setPendingData: (data: any) => void;
 }
 
 // Dummy data for Phase 81 preview
@@ -72,6 +74,7 @@ const mockIssues: ImportValidationIssue[] = [
 export const useImportStore = create<ImportState>((set) => ({
   sessions: mockSessions,
   issues: mockIssues,
+  pendingData: null,
   
   addSession: (session) => set((state) => ({
     sessions: [session, ...state.sessions]
@@ -94,4 +97,5 @@ export const useImportStore = create<ImportState>((set) => ({
       i.id === issueId ? { ...i, status: 'IGNORED', resolvedBy, resolvedAt: new Date().toISOString() } : i
     )
   })),
+  setPendingData: (data) => set({ pendingData: data }),
 }));
