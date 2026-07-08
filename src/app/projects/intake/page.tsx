@@ -91,16 +91,6 @@ export default function IntakePage() {
       {/* Tabs */}
       <div className="flex gap-4 mb-4 mt-8">
         <button
-          onClick={() => { setActiveTab('CLIENT_ORDER'); setShowForm(false); }}
-          className={`px-4 py-2 font-medium rounded-md transition-colors ${
-            activeTab === 'CLIENT_ORDER'
-              ? 'bg-[var(--color-primary)] text-[var(--color-surface)] shadow-md'
-              : 'bg-[var(--color-bg-sub)] text-[var(--color-text-sub)] hover:bg-gray-200'
-          }`}
-        >
-          {t('orderProjectManagement')}
-        </button>
-        <button
           onClick={() => { setActiveTab('INTERNAL_DEVELOPMENT'); setShowForm(false); }}
           className={`px-4 py-2 font-medium rounded-md transition-colors ${
             activeTab === 'INTERNAL_DEVELOPMENT'
@@ -109,6 +99,16 @@ export default function IntakePage() {
           }`}
         >
           {t('devTaskListManagement')}
+        </button>
+        <button
+          onClick={() => { setActiveTab('CLIENT_ORDER'); setShowForm(false); }}
+          className={`px-4 py-2 font-medium rounded-md transition-colors ${
+            activeTab === 'CLIENT_ORDER'
+              ? 'bg-[var(--color-primary)] text-[var(--color-surface)] shadow-md'
+              : 'bg-[var(--color-bg-sub)] text-[var(--color-text-sub)] hover:bg-gray-200'
+          }`}
+        >
+          {t('orderProjectManagement')}
         </button>
       </div>
 
