@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { ApprovalRequest, ApprovalWorkflowTemplate, ApprovalRequestType } from '@/types/models';
 import { mockApprovalRequests } from '@/data/mockData';
 import { useNotificationStore } from '@/store/notificationStore';
+import { useTaskStore } from '@/store/taskStore';
+import { useScheduleStore } from '@/store/scheduleStore';
+import { useConflictStore } from '@/store/conflictStore';
 
 interface ApprovalState {
   requests: ApprovalRequest[];
@@ -80,6 +83,102 @@ export const useApprovalStore = create<ApprovalState>((set) => ({
         priority: status === 'REJECTED' ? 'HIGH' : 'NORMAL',
         relatedApprovalId: request.id
       });
+
+      if (status === 'APPROVED' && request.taskId) {
+        const taskStore = useTaskStore.getState();
+        const task = taskStore.tasks.find(t => t.id === request.taskId);
+        if (task) {
+          if (request.type === 'DEADLINE_EXTENSION') {
+            taskStore.updateTask(task.id, { dueDate: request.requestedDueDate || task.dueDate });
+          } else if (request.type === 'OVERTIME_REQUEST') {
+            const start = request.requestedStartDate || new Date().toISOString().split('T')[0];
+            const end = request.requestedDueDate || new Date().toISOString().split('T')[0];
+            taskStore.addWorkSegment({
+              taskId: task.id,
+              workerId: request.requestedBy,
+              description: `[야근/초과근무 승인] ${request.title}`,
+              startDate: start,
+              endDate: end,
+              progress: 0,
+              status: 'APPROVED',
+              isOvertime: true
+            });
+            
+            // Check conflicts
+            const overlapping = useScheduleStore.getState().schedules.filter(s => 
+              s.userId === request.requestedBy && s.scheduleType === 'OFF' &&
+              s.startDateTime.split('T')[0] <= end && s.endDateTime.split('T')[0] >= start
+            );
+            if (overlapping.length > 0) {
+              useConflictStore.getState().addConflicts(overlapping.map(s => ({
+                id: `c_${Date.now()}_${Math.random()}`,
+                userId: request.requestedBy,
+                startDate: s.startDateTime,
+                endDate: s.endDateTime,
+                conflictType: 'LEAVE_OVERLAP',
+                relatedTaskIds: [task.id],
+                relatedScheduleIds: [s.id],
+                description: `휴가 일정과 야근/초과근무 일정이 겹칩니다.`,
+                status: 'PENDING',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              })));
+            }
+          } else if (request.type === 'SCHEDULE_REPLAN') {
+            const start = request.requestedStartDate || new Date().toISOString().split('T')[0];
+            const end = request.requestedDueDate || new Date().toISOString().split('T')[0];
+            taskStore.addWorkSegment({
+              taskId: task.id,
+              workerId: request.requestedBy,
+              description: `[세부일정 변경 승인] ${request.title}`,
+              startDate: start,
+              endDate: end,
+              progress: 0,
+              status: 'APPROVED',
+              isOvertime: false
+            });
+            // If the replan exceeds original bounds, adjust them
+            const newStart = request.requestedStartDate || task.startDate;
+            const newEnd = request.requestedDueDate || task.dueDate;
+            taskStore.updateTask(task.id, { startDate: newStart, dueDate: newEnd });
+            
+            // Check conflicts
+            const overlapping = useScheduleStore.getState().schedules.filter(s => 
+              s.userId === request.requestedBy && s.scheduleType === 'OFF' &&
+              s.startDateTime.split('T')[0] <= end && s.endDateTime.split('T')[0] >= start
+            );
+            if (overlapping.length > 0) {
+              useConflictStore.getState().addConflicts(overlapping.map(s => ({
+                id: `c_${Date.now()}_${Math.random()}`,
+                userId: request.requestedBy,
+                startDate: s.startDateTime,
+                endDate: s.endDateTime,
+                conflictType: 'LEAVE_OVERLAP',
+                relatedTaskIds: [task.id],
+                relatedScheduleIds: [s.id],
+                description: `휴가 일정과 세부 조정된 업무 일정이 겹칩니다.`,
+                status: 'PENDING',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              })));
+            }
+          } else if (request.type === 'MANPOWER_SUPPORT') {
+            taskStore.addTask({
+              projectId: task.projectId,
+              title: `[지원] ${task.title}`,
+              description: `[인력 지원 요청 승인] ${request.reason}`,
+              status: 'TODO',
+              priority: task.priority,
+              departmentId: task.departmentId,
+              assigneeId: '', // Unassigned, PM to assign later
+              startDate: request.requestedStartDate || task.startDate,
+              dueDate: request.requestedDueDate || task.dueDate,
+              orderIndex: task.orderIndex + 1,
+              approvalStatus: 'APPROVED'
+            });
+          }
+        }
+      }
     }
 
     return {

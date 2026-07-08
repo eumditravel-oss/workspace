@@ -25,14 +25,20 @@ const importJsonData = () => {
 
     // Write to TypeScript file to be bundled by Next.js
     const tsContent = `// Auto-generated from workspace-export.json
-import { Project, TaskCard, PersonnelCard, WorkspaceSetting } from '@/types/models';
+import { Project, TaskCard, PersonnelCard, WorkspaceSetting, TaskWorkSegment, ApprovalRequest, RevisionRequest, PostDeliveryWorkRequest, Notification, PersonalSchedule } from '@/types/models';
 
 export const operationData = {
   data: {
     projects: ${JSON.stringify(data.data.projects, null, 2)} as unknown as Project[],
     tasks: ${JSON.stringify(data.data.tasks, null, 2)} as unknown as TaskCard[],
+    taskWorkSegments: ${JSON.stringify(data.data.taskWorkSegments || [], null, 2)} as unknown as TaskWorkSegment[],
     personnel: ${JSON.stringify(data.data.personnel, null, 2)} as unknown as PersonnelCard[],
     settings: ${JSON.stringify(data.data.settings, null, 2)} as unknown as WorkspaceSetting[],
+    approvalRequests: ${JSON.stringify(data.data.approvalRequests || [], null, 2)} as unknown as ApprovalRequest[],
+    revisionRequests: ${JSON.stringify(data.data.revisionRequests || [], null, 2)} as unknown as RevisionRequest[],
+    postDeliveryWorkRequests: ${JSON.stringify(data.data.postDeliveryWorkRequests || [], null, 2)} as unknown as PostDeliveryWorkRequest[],
+    notifications: ${JSON.stringify(data.data.notifications || [], null, 2)} as unknown as Notification[],
+    personalSchedules: ${JSON.stringify(data.data.personalSchedules || [], null, 2)} as unknown as PersonalSchedule[],
   }
 };
 `;

@@ -16,8 +16,14 @@ const exportCurrentState = () => {
     data: {
       projects: [],
       tasks: [],
+      taskWorkSegments: [],
       personnel: [],
-      settings: []
+      settings: [],
+      approvalRequests: [],
+      revisionRequests: [],
+      postDeliveryWorkRequests: [],
+      notifications: [],
+      personalSchedules: []
     }
   };
 

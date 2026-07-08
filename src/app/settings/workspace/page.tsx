@@ -203,7 +203,7 @@ export default function WorkspaceSettingsPage() {
         <h2 className="text-lg font-bold text-[var(--color-text-main)] mb-4">데이터 관리 (Handoff)</h2>
         <p className="text-sm text-[var(--color-text-sub)] mb-6">
           정적 웹 호스팅 환경(GitHub Pages 등)에서는 시스템 데이터를 저장소에 직접 쓸 수 없습니다.<br/>
-          브라우저에서 작업한 데이터를 파일로 다운로드(Export)하여 프로젝트 내 <code>/json</code> 폴더에 넣고, 코드로 반영을 요청하세요.
+          브라우저에서 작업한 데이터(보드, 업무, 일정, 승인/수정/추가업무 요청 등)를 파일로 다운로드(Export)하여 프로젝트 내 <code>/json</code> 폴더에 넣고, 코드로 반영을 요청하세요.
         </p>
 
         <div className="space-y-4">

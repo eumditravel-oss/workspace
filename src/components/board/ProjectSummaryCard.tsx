@@ -10,11 +10,13 @@ interface Props {
   project: Project;
   tasks: TaskCard[];
   onClick: (projectId: string) => void;
+  draggable?: boolean;
+  onDragStart?: (e: React.DragEvent<HTMLDivElement>, projectId: string) => void;
 }
 
-export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick }) => {
+export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick, draggable, onDragStart }) => {
   const { users } = useAuthStore();
-  const { postDeliveryWorkRequests } = useProjectStore();
+  const { postDeliveryWorkRequests, revisionRequests } = useProjectStore();
 
   const progress = getProjectOverallProgress(project, tasks);
   const lifecycle = getProjectDeliveryLifecycle(project);
@@ -23,6 +25,7 @@ export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick })
   
   const pendingTasks = tasks.filter(t => t.projectId === project.id && t.status !== 'DONE').length;
   const pendingRequestsCount = postDeliveryWorkRequests.filter(r => r.projectId === project.id && (r.status === 'PENDING_PM' || r.status === 'PENDING_MANAGER' || r.status === 'PENDING_SUPER_ADMIN')).length;
+  const activeRevisionsCount = revisionRequests.filter(r => r.projectId === project.id && (r.status === 'PENDING' || r.status === 'ACCEPTED')).length;
   
   const getLifecycleBadgeVariant = () => {
     switch (lifecycle) {
@@ -42,6 +45,8 @@ export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick })
 
   return (
     <div 
+      draggable={draggable}
+      onDragStart={(e) => onDragStart && onDragStart(e, project.id)}
       onClick={() => onClick(project.id)}
       className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)] shadow-sm border border-[var(--color-border)] hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 hover:-translate-y-1 transition-all duration-200 cursor-pointer space-y-3 group"
     >
@@ -90,6 +95,12 @@ export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick })
           <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400">
             <AlertCircle className="w-3.5 h-3.5" />
             <span>추가업무 {pendingRequestsCount}건</span>
+          </div>
+        )}
+        {activeRevisionsCount > 0 && (
+          <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+            <AlertCircle className="w-3.5 h-3.5" />
+            <span>수정요청 {activeRevisionsCount}건</span>
           </div>
         )}
       </div>

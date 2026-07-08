@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useImportStore } from '@/store/importStore';
 import { AlertCircle, FileUp, Info, Play, AlertTriangle, ShieldAlert } from 'lucide-react';
-import { applyImportData } from '@/lib/jsonHandoff';
+import { applyImportData, WorkspaceExportData } from '@/lib/jsonHandoff';
 
 export default function ImportPreviewPage() {
   const { currentUser } = useAuthStore();
@@ -35,7 +35,7 @@ export default function ImportPreviewPage() {
       // Since it's mock for now, we only apply if pendingData exists.
       const { pendingData } = useImportStore.getState();
       if (pendingData) {
-        applyImportData(pendingData);
+        applyImportData(pendingData as WorkspaceExportData);
       } else {
         // Fallback for mock demo: just set status without applying data
         alert('실제 파싱된 데이터(pendingData)가 없으므로 상태만 완료로 변경합니다.');

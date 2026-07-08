@@ -238,17 +238,18 @@ export default function PersonnelManagementPage() {
                     alert("공통 부서를 선택해주세요.");
                     return;
                   }
-                  if (editingUser.companyId === 'CON_COST') {
-                    editingUser.subDepartmentId = undefined; // CON_COST shouldn't have sub dept
+                  const updatedUser = { ...editingUser };
+                  if (updatedUser.companyId === 'CON_COST') {
+                    updatedUser.subDepartmentId = undefined; // CON_COST shouldn't have sub dept
                   }
                   if (
-                    (editingUser.systemRole === 'SUPER_ADMIN' || editingUser.role === 'SUPER_ADMIN') && 
+                    (updatedUser.systemRole === 'SUPER_ADMIN' || updatedUser.role === 'SUPER_ADMIN') && 
                     currentUser.role !== 'SUPER_ADMIN'
                   ) {
                     alert("SUPER_ADMIN 권한은 SUPER_ADMIN 만이 부여할 수 있습니다.");
                     return;
                   }
-                  updateUser(editingUser.id, editingUser);
+                  updateUser(updatedUser.id, updatedUser);
                   setEditingUser(null);
                 }} 
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 flex items-center gap-1 shadow-sm transition-colors"

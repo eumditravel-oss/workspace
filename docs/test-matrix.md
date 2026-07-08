@@ -56,3 +56,13 @@
 | GHP-001 | 정적 라우팅 접근 | URL `/workspace/` 접근 시 메인 대시보드 로딩 |
 | GHP-002 | 하위 경로 새로고침 | `/workspace/projects` 페이지 새로고침 시 404가 발생하지 않고 페이지 유지 (또는 404.html 경유 정상 랜딩) |
 | GHP-003 | 존재하지 않는 URL 접근 | 404.html 커스텀 에러 페이지가 화면에 출력되고 홈 버튼 제공 |
+
+## 9. Plan 17 Workflow Tests
+| Test Case ID | Scenario | Expected Result |
+|---|---|---|
+| P17-001 | 수주 프로젝트 및 개발팀 업무 생성 (Intake) | 각 탭에서 생성 시 `CLIENT_ORDER`, `INTERNAL_DEVELOPMENT`로 타입이 분리 생성되며 첫 번째 컬럼(착수 전)에 노출 |
+| P17-002 | PM 하달 모달 로직 | PM이 `착수 전` 항목을 `진행 중`으로 이동 시 하달 워크플로우(PmDispatchModal)가 활성화됨 |
+| P17-003 | 하달 후 프로젝트 상태 전이 | 작업자 및 세부업무 지정이 완료되어야 프로젝트가 `IN_PROGRESS`로 확정 |
+| P17-004 | 작업자 추가 일정 연장 요청 | 작업자가 Task에서 연장 요청 시 상태가 PENDING 승인대기상태가 되며 원본 데이터는 변하지 않음 |
+| P17-005 | 추가 일정 연장 요청 승인 | 승인 권한자가 결재 승인 시 원본 TaskCard 및 일정표(TaskWorkSegment)에 목표 기한(dueDate)이 즉시 반영 |
+| P17-006 | 사후 수정 (Revision) 워크플로우 | 완료된 업무에 수정 요청 발생 시, 프로젝트가 보드의 맨 우측 `수정(Revision)` 컬럼으로 즉시 이동 |

@@ -65,6 +65,71 @@ export const useDataQualityStore = create<DataQualityState>((set) => ({
           });
         }
       }
+      if (p.status === 'IN_PROGRESS' && !p.pmId) {
+        newChecks.push({
+          id: `dq-proj-inprog-nopm-${p.id}`,
+          category: 'PROJECT',
+          severity: 'BLOCKER',
+          title: '진행 중인 프로젝트 PM 누락',
+          description: `프로젝트 "${p.title}"가 진행 중이나 PM이 없습니다.`,
+          relatedEntityType: 'Project',
+          relatedEntityId: p.id,
+          detectedAt: new Date().toISOString(),
+          status: 'OPEN',
+          suggestedFix: '진행 중인 프로젝트에 반드시 PM을 배정하세요.'
+        });
+      }
+
+      if (p.status === 'IN_PROGRESS') {
+        const hasTasks = tasks.some(t => t.projectId === p.id);
+        if (!hasTasks) {
+          newChecks.push({
+            id: `dq-proj-inprog-notasks-${p.id}`,
+            category: 'PROJECT',
+            severity: 'ERROR',
+            title: '진행 중인 프로젝트 Task 누락',
+            description: `프로젝트 "${p.title}"가 진행 중이나 생성된 업무(TaskCard)가 0개입니다.`,
+            relatedEntityType: 'Project',
+            relatedEntityId: p.id,
+            detectedAt: new Date().toISOString(),
+            status: 'OPEN',
+            suggestedFix: 'PM Dispatch를 통해 세부 업무를 하달하세요.'
+          });
+        }
+      }
+
+      if (p.projectSourceType === 'INTERNAL_DEVELOPMENT' && p.deliveryDate) {
+        newChecks.push({
+          id: `dq-proj-internal-delivery-${p.id}`,
+          category: 'PROJECT',
+          severity: 'WARNING',
+          title: '개발팀 업무가 수주 실적 지표(납품일) 포함',
+          description: `내부 개발 프로젝트 "${p.title}"에 수주 프로젝트용 납품일(deliveryDate)이 존재합니다.`,
+          relatedEntityType: 'Project',
+          relatedEntityId: p.id,
+          detectedAt: new Date().toISOString(),
+          status: 'OPEN',
+          suggestedFix: '내부 개발 업무는 targetDate만 사용해야 합니다.'
+        });
+      }
+
+      const { revisionRequests } = useProjectStore.getState();
+      const activeRevision = revisionRequests.find(r => r.projectId === p.id && (r.status === 'PENDING' || r.status === 'ACCEPTED'));
+      if (activeRevision && p.status !== 'COMPLETED' && p.status !== 'ARCHIVED') {
+        newChecks.push({
+          id: `dq-proj-revision-status-${p.id}`,
+          category: 'PROJECT',
+          severity: 'ERROR',
+          title: '수정 컬럼 진입 조건 위반',
+          description: `프로젝트 "${p.title}"는 완료 상태가 아닌데 활성 수정(Revision) 요청이 존재합니다.`,
+          relatedEntityType: 'Project',
+          relatedEntityId: p.id,
+          detectedAt: new Date().toISOString(),
+          status: 'OPEN',
+          suggestedFix: '수정 요청은 완료된 프로젝트에만 생성 가능합니다. 상태를 확인하세요.'
+        });
+      }
+
     });
 
     // 2. Tasks
@@ -99,6 +164,37 @@ export const useDataQualityStore = create<DataQualityState>((set) => ({
             detectedAt: new Date().toISOString(),
             status: 'OPEN',
             suggestedFix: '작업자를 배정하세요.'
+          });
+        }
+      }
+
+      if (t.status !== 'DONE' && t.status !== 'REJECTED') {
+        if (!t.assigneeId) {
+          newChecks.push({
+            id: `dq-task-noassignee2-${t.id}`,
+            category: 'SCHEDULE',
+            severity: 'WARNING',
+            title: 'TaskCard 작업자 누락',
+            description: `진행 예정/중인 업무 "${t.title}"에 작업자가 배정되지 않았습니다.`,
+            relatedEntityType: 'Task',
+            relatedEntityId: t.id,
+            detectedAt: new Date().toISOString(),
+            status: 'OPEN',
+            suggestedFix: '작업자를 배정하세요.'
+          });
+        }
+        if (!t.startDate || !t.dueDate) {
+          newChecks.push({
+            id: `dq-task-nodates-${t.id}`,
+            category: 'SCHEDULE',
+            severity: 'ERROR',
+            title: 'TaskCard 일정(시작일/마감일) 누락',
+            description: `업무 "${t.title}"의 시작일 또는 마감일이 누락되었습니다.`,
+            relatedEntityType: 'Task',
+            relatedEntityId: t.id,
+            detectedAt: new Date().toISOString(),
+            status: 'OPEN',
+            suggestedFix: '일정표나 보드에서 날짜를 지정하세요.'
           });
         }
       }

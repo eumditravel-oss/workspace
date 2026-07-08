@@ -59,3 +59,14 @@
 | QA-P14-2| UI | 납품일 경과 배지 표시 | 과거 날짜 프로젝트에 "납품일 경과" 배지 표시됨 | (TBD) | PENDING | (TBD) | Plan 14 | - | - |
 | QA-P14-3| Workflow | 사후 추가업무 요청 | 완료 프로젝트에서 작업자가 추가업무 요청 제출 시 결재 상태로 생성됨 | (TBD) | PENDING | (TBD) | Plan 14 | - | - |
 | QA-P14-4| Data Quality | 미결 요청 Warning | 완료 컬럼 프로젝트에 미결 요청이 있으면 Warning 데이터 품질 검사 생성 | (TBD) | PENDING | (TBD) | Plan 14 | - | - |
+
+## 8. 수주/개발 분리 및 PM 하달 워크플로우 (Plan 17)
+
+| Test ID | Test Category | Scenario | Expected Result | Actual Result | Status | Evidence | Notes | Verified At | Verified By |
+|---------|---------------|----------|-----------------|---------------|--------|----------|-------|-------------|-------------|
+| QA-P17-1| UI/UX | Intake 화면 탭 분리 | 수주 프로젝트 관리, 개발팀 업무 탭 분리 확인 | **성공** (탭 렌더링 및 SourceType 조건부 필터링 동작) | PASS | `IntakeForm` UI 및 SourceType 맵핑 로직 | | 2026-07-08 | Antigravity |
+| QA-P17-2| Workflow | 신규 항목 생성 후 렌더링 | 신규 생성 항목이 `착수 전` 컬럼에 즉시 노출됨 | **성공** (생성 후 INTAKE_RECEIVED 상태 정상 필터링) | PASS | Zustand ProjectStore update 반영됨 | | 2026-07-08 | Antigravity |
+| QA-P17-3| Workflow | PM 업무 하달 (Dispatch) | 착수 전 -> 진행 중 이동 시 PM 하달 모달 호출 후 세부 업무(TaskCard) 배정 성공 | **성공** (`PmDispatchModal` 호출 및 Task 분할 생성 성공) | PASS | `handleProjectMove` 함수내 모달 트리거 | | 2026-07-08 | Antigravity |
+| QA-P17-4| Workflow | 작업자 일정 요청/조정 | 하달된 Task에 대해 일정 연장 요청 생성 및 PM 승인 워크플로우 정상 구동 | **성공** (`ScheduleRequestModal` 통해 ApprovalRequest 생성 -> 결재 처리 시 원본 수정됨) | PASS | `ApprovalStore` 와의 연동 | | 2026-07-08 | Antigravity |
+| QA-P17-5| Board | 수정(Revision) 컬럼 배치 및 이동 | 완료 카드 우측에 수정 컬럼 배치, 수정 요청 시 자동 이동 | **성공** (RevisionRequest 상태에 따른 Board 렌더러 분기 처리됨) | PASS | `getProjectBoardColumn` 로직 | | 2026-07-08 | Antigravity |
+| QA-P17-6| Data Sync | JSON Export/Import 정합성 | Plan 17 관련 6개 신규 엔티티를 포함하여 JSON 직렬화/역직렬화 및 무결성 복원 성공 | **성공** (`jsonHandoff.ts`에서 신규 엔티티 파싱 및 스토어 갱신 검증 완료) | PASS | Import 스크립트 실행 후 데이터 로드 확인 | | 2026-07-08 | Antigravity |

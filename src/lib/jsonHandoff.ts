@@ -2,8 +2,11 @@ import { useProjectStore } from '@/store/projectStore';
 import { useTaskStore } from '@/store/taskStore';
 import { useAuthStore } from '@/store/authStore';
 import { useSettingStore } from '@/store/settingStore';
+import { useApprovalStore } from '@/store/approvalStore';
+import { useNotificationStore } from '@/store/notificationStore';
+import { useScheduleStore } from '@/store/scheduleStore';
 
-import { Project, TaskCard, PersonnelCard, WorkspaceSetting } from '@/types/models';
+import { Project, TaskCard, PersonnelCard, WorkspaceSetting, TaskWorkSegment, ApprovalRequest, RevisionRequest, PostDeliveryWorkRequest, Notification, PersonalSchedule } from '@/types/models';
 
 export interface WorkspaceExportData {
   schemaVersion: string;
@@ -12,16 +15,25 @@ export interface WorkspaceExportData {
   data: {
     projects: Project[];
     tasks: TaskCard[];
+    taskWorkSegments: TaskWorkSegment[];
     personnel: PersonnelCard[];
     settings: WorkspaceSetting[];
+    approvalRequests: ApprovalRequest[];
+    revisionRequests: RevisionRequest[];
+    postDeliveryWorkRequests: PostDeliveryWorkRequest[];
+    notifications: Notification[];
+    personalSchedules: PersonalSchedule[];
   };
 }
 
 export const exportWorkspaceData = (): WorkspaceExportData => {
-  const { projects } = useProjectStore.getState();
-  const { tasks } = useTaskStore.getState();
+  const { projects, revisionRequests, postDeliveryWorkRequests } = useProjectStore.getState();
+  const { tasks, workSegments } = useTaskStore.getState();
   const { users, currentUser } = useAuthStore.getState();
   const settings = useSettingStore.getState().settings;
+  const { requests: approvalRequests } = useApprovalStore.getState();
+  const { notifications } = useNotificationStore.getState();
+  const { schedules: personalSchedules } = useScheduleStore.getState();
 
   return {
     schemaVersion: "1.0.0",
@@ -30,8 +42,14 @@ export const exportWorkspaceData = (): WorkspaceExportData => {
     data: {
       projects,
       tasks,
+      taskWorkSegments: workSegments,
       personnel: users,
-      settings
+      settings,
+      approvalRequests,
+      revisionRequests,
+      postDeliveryWorkRequests,
+      notifications,
+      personalSchedules
     }
   };
 };
@@ -73,11 +91,32 @@ export const validateImportData = (data: unknown): data is WorkspaceExportData =
   const d = data as Record<string, unknown>;
   if (d.schemaVersion !== "1.0.0") return false;
   if (!d.data || typeof d.data !== 'object' || !Array.isArray((d.data as Record<string, unknown>).projects)) return false;
+  
+  const typedData = d.data as WorkspaceExportData['data'];
+  
+  // Validation: projectSourceType and dates
+  const isValidProjects = typedData.projects.every(p => {
+    if (p.projectSourceType === 'INTERNAL_DEVELOPMENT' && !p.targetDate) return false;
+    if (p.projectSourceType === 'CLIENT_ORDER' && !p.deliveryDate) return false;
+    return true;
+  });
+  if (!isValidProjects) return false;
+
+  // Validation: Task References
+  const projectIds = new Set(typedData.projects.map(p => p.id));
+  const userIds = new Set((typedData.personnel || []).map(u => u.id));
+  
+  if (typedData.tasks) {
+    const isValidTasks = typedData.tasks.every(t => {
+      if (!projectIds.has(t.projectId)) return false;
+      if (t.assigneeId && !userIds.has(t.assigneeId)) return false;
+      return true;
+    });
+    if (!isValidTasks) return false;
+  }
+  
   return true;
 };
-
-import { useScheduleStore } from '@/store/scheduleStore';
-
 export const applyImportData = (data: WorkspaceExportData) => {
   if (!validateImportData(data)) {
     alert("데이터 구조가 유효하지 않습니다.");
@@ -85,7 +124,26 @@ export const applyImportData = (data: WorkspaceExportData) => {
   }
   
   useProjectStore.getState().replaceProjects(data.data.projects || []);
+  if (data.data.revisionRequests) useProjectStore.setState({ revisionRequests: data.data.revisionRequests });
+  if (data.data.postDeliveryWorkRequests) useProjectStore.setState({ postDeliveryWorkRequests: data.data.postDeliveryWorkRequests });
+  
   useTaskStore.getState().replaceTasks(data.data.tasks || []);
+  if (data.data.taskWorkSegments) {
+    // Custom replace function would go here, fallback to internal reset/replace if available
+    useTaskStore.setState({ workSegments: data.data.taskWorkSegments });
+  }
+
+  if (data.data.approvalRequests) {
+    useApprovalStore.getState().replaceRequests(data.data.approvalRequests);
+  }
+
+  if (data.data.notifications) {
+    useNotificationStore.setState({ notifications: data.data.notifications });
+  }
+
+  if (data.data.personalSchedules) {
+    useScheduleStore.getState().replaceSchedules(data.data.personalSchedules);
+  }
   
   if (data.data.personnel && data.data.personnel.length > 0) {
     useAuthStore.getState().replaceUsers(data.data.personnel);

@@ -7,6 +7,7 @@ import { useApprovalStore } from '@/store/approvalStore';
 import { X, CheckSquare, Clock, FileText, History, ListTodo, AlertCircle, CheckCircle2, ShieldAlert, Plus, CalendarClock, Zap, CalendarDays } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { QcIssueModal } from '@/components/evaluation/QcIssueModal';
+import { ScheduleRequestModal } from '@/components/board/ScheduleRequestModal';
 import { calculateTaskHealthScore } from '@/lib/selectors';
 
 interface TaskDetailModalProps {
@@ -21,6 +22,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
   const [newBlocker, setNewBlocker] = useState('');
   const [error, setError] = useState('');
   const [showQcModal, setShowQcModal] = useState(false);
+  const [requestModalType, setRequestModalType] = useState<'OVERTIME_REQUEST' | 'DEADLINE_EXTENSION' | 'MANPOWER_SUPPORT' | 'SCHEDULE_REPLAN' | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   
   const currentUser = useAuthStore(state => state.currentUser);
@@ -105,22 +107,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
     setNewSegmentEnd('');
   };
 
-  const handleRequest = (type: 'OVERTIME_REQUEST' | 'DEADLINE_EXTENSION' | 'MANPOWER_SUPPORT') => {
-    if (!currentUser) return;
-    const reason = window.prompt(`신청 사유를 입력하세요.`);
-    if (!reason) return;
-
-    addRequest({
-      type,
-      taskId: task.id,
-      projectId: task.projectId,
-      requestedBy: currentUser.id,
-      pmId: task.pmId,
-      managerId: task.managerId,
-      title: `[${type}] ${task.title} 관련 신청`,
-      reason,
-    });
-    alert('신청이 완료되었습니다.');
+  const handleRequest = (type: 'OVERTIME_REQUEST' | 'DEADLINE_EXTENSION' | 'MANPOWER_SUPPORT' | 'SCHEDULE_REPLAN') => {
+    setRequestModalType(type);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -457,13 +445,13 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
 
           {activeTab === 'APPROVALS' && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <button 
                   onClick={() => handleRequest('OVERTIME_REQUEST')}
                   className="p-4 bg-orange-50 border border-orange-200 rounded-xl hover:bg-orange-100 transition flex flex-col items-center text-orange-700"
                 >
                   <Clock className="w-8 h-8 mb-2" />
-                  <span className="font-bold">야근 / 연장근무 신청</span>
+                  <span className="font-bold text-center">추가 작업시간(야근)<br/>신청</span>
                 </button>
                 
                 <button 
@@ -471,15 +459,23 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                   className="p-4 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition flex flex-col items-center text-red-700"
                 >
                   <CalendarDays className="w-8 h-8 mb-2" />
-                  <span className="font-bold">일정 연장 신청</span>
+                  <span className="font-bold text-center">마감일 연장<br/>신청</span>
                 </button>
                 
+                <button 
+                  onClick={() => handleRequest('SCHEDULE_REPLAN')}
+                  className="p-4 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 transition flex flex-col items-center text-blue-700"
+                >
+                  <CalendarClock className="w-8 h-8 mb-2" />
+                  <span className="font-bold text-center">세부 작업일정<br/>조정 요청</span>
+                </button>
+
                 <button 
                   onClick={() => handleRequest('MANPOWER_SUPPORT')}
                   className="p-4 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 transition flex flex-col items-center text-purple-700"
                 >
                   <Zap className="w-8 h-8 mb-2" />
-                  <span className="font-bold">인력 지원 요청</span>
+                  <span className="font-bold text-center">인력 지원<br/>요청</span>
                 </button>
               </div>
               
@@ -602,6 +598,13 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
         </div>
       </div>
       {showQcModal && <QcIssueModal task={task} onClose={() => setShowQcModal(false)} />}
+      {requestModalType && (
+        <ScheduleRequestModal 
+          task={task} 
+          type={requestModalType} 
+          onClose={() => setRequestModalType(null)} 
+        />
+      )}
     </div>
   );
 };

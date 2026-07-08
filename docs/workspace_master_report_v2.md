@@ -47,3 +47,26 @@ Plan 1~15 스펙 중, 아직 UI 단에서 Mock 수준이거나 미구현된 **�
    - 성과 평가(QC 오류 및 가중치) 결과에 대해 작업자가 이의를 제기하고 중간관리자가 재검토하는 흐름.
 6. **Excel Import Apply 기능**
    - Import Preview(미리보기) 화면은 있으나, 최종 검증된 데이터를 실제 Store에 들이붓는(Apply) 과정 고도화.
+
+---
+
+## 7. Plan 17 (Phase 136) 갱신 내역
+
+Plan 17을 통해 실제 운영 가능한 업무 흐름이 다음과 같이 구현되었습니다:
+
+1. **수주/개발 분리 (Intake)**
+   - `수주 프로젝트 관리`(CLIENT_ORDER)와 `개발팀 업무 리스트 관리`(INTERNAL_DEVELOPMENT)가 두 개의 독립된 탭으로 완벽히 분리되었습니다.
+2. **보드 탭 및 컬럼 순서**
+   - 탭 순서: `개발팀 작업` ➡️ `외부 수주 프로젝트`
+   - 컬럼 순서: `착수 전` ➡️ `진행 중` ➡️ `완료` ➡️ `수정(Revision)`
+3. **신규 항목 착수 전 자동 진입**
+   - 프로젝트 생성 직후, 수주/내부개발 여부와 관계없이 첫 번째 컬럼인 `착수 전`에 즉시 자동 진입합니다.
+4. **PM 업무 하달 Workflow**
+   - `착수 전` -> `진행 중` 드래그 시, 단순 상태 변경이 불가하며 강제로 `PmDispatchModal`이 트리거되어 작업자 지정 및 Task 일정 분할이 요구됩니다.
+5. **작업자 일정 조정 Workflow**
+   - 작업자는 할당받은 Task에 대해 `ScheduleRequestModal`을 통해 일정 변경을 요구할 수 있으며, 이 요청은 승인 전까지 원본 데이터를 오염시키지 않습니다. 부서장/PM이 결재하면 원본 데이터가 안전하게 수정됩니다.
+6. **JSON Handoff 완벽 연동**
+   - 추가된 엔티티(TaskWorkSegment, ApprovalRequest, RevisionRequest, PostDeliveryWorkRequest, Notification, PersonalSchedule) 전체가 JSON Export/Import 및 Validation 과정에 통합되었습니다.
+7. **남은 제약 (Risks & Limitations)**
+   - `Notification`과 `AuditLog` 기록은 브라우저 런타임 메모리(Console 및 Zustand)에 한정되며, 영구적인 보존을 위해서는 외부 백엔드 연동이 추후 필수적입니다.
+   - Excel Import/Export는 기존 Plan 데이터까지만 지원되며 신규 Plan 17 엔티티의 Excel 포맷 규격은 추가 정의가 필요합니다.

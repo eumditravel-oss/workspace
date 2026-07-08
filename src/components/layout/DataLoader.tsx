@@ -52,6 +52,7 @@ export function DataLoader() {
           replaceTasks(operationData.data.tasks || []);
           replaceUsers(operationData.data.personnel || []);
           // Operation data might not have all types yet, fallback if needed
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           replaceSettings(operationData.data.settings ? [operationData.data.settings as any] : []);
         } else {
           // EMPTY fallback as per requirements: "JSON 운영 데이터가 없으면 ... 조용히 demo fallback되지 않고 empty state가 되게 한다."

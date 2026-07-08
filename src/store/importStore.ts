@@ -4,12 +4,12 @@ import { ImportPreviewSession, ImportValidationIssue } from '@/types/models';
 interface ImportState {
   sessions: ImportPreviewSession[];
   issues: ImportValidationIssue[];
-  pendingData: any | null;
+  pendingData: unknown | null;
   addSession: (session: ImportPreviewSession) => void;
   updateSessionStatus: (sessionId: string, status: ImportPreviewSession['status']) => void;
   resolveIssue: (issueId: string, resolvedBy: string) => void;
   ignoreIssue: (issueId: string, resolvedBy: string) => void;
-  setPendingData: (data: any) => void;
+  setPendingData: (data: unknown) => void;
 }
 
 // Dummy data for Phase 81 preview

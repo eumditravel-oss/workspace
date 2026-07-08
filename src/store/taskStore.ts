@@ -12,6 +12,8 @@ interface TaskState {
   blockers: TaskBlocker[];
   workSegments: TaskWorkSegment[];
   loadDummyTasks: () => void;
+  addTask: (task: Omit<TaskCard, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateTask: (taskId: string, updates: Partial<TaskCard>) => void;
   updateTaskStatus: (taskId: string, newStatus: TaskStatus) => void;
   updateDetailedLineStage: (taskId: string, stage: DetailedLineStage) => void;
   updateTaskAssignee: (taskId: string, newAssigneeId: UserId | undefined) => void;
@@ -43,6 +45,22 @@ export const useTaskStore = create<TaskState>((set) => ({
   blockers: [],
   workSegments: [],
   loadDummyTasks: () => set({ tasks: fullTasks }),
+  addTask: (taskData) => set((state) => {
+    const newTask: TaskCard = {
+      ...taskData,
+      id: `t_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    return { tasks: [...state.tasks, newTask] };
+  }),
+  updateTask: (taskId, updates) => set((state) => ({
+    tasks: state.tasks.map(t => 
+      t.id === taskId 
+        ? { ...t, ...updates, updatedAt: new Date().toISOString() } 
+        : t
+    )
+  })),
   updateTaskStatus: (taskId, newStatus) => set((state) => ({
     tasks: state.tasks.map(t => 
       t.id === taskId 

@@ -9,16 +9,20 @@ import { ProjectBoard } from '@/components/board/ProjectBoard';
 import { ProjectPartBoard } from '@/components/board/ProjectPartBoard';
 import { ProjectEvaluationModal } from '@/components/evaluation/ProjectEvaluationModal';
 import { PostDeliveryWorkModal } from '@/components/delivery/PostDeliveryWorkModal';
-import { TaskStatus, ProjectSourceType } from '@/types/models';
+import { PmDispatchModal } from '@/components/board/PmDispatchModal';
+import { RevisionRequestModal } from '@/components/board/RevisionRequestModal';
+import { TaskStatus, ProjectSourceType, Project } from '@/types/models';
 import { DetailedLineStage, getProjectBoardColumn } from '@/lib/selectors';
-import { canViewProject, canViewTask } from '@/lib/permissions';
-import { FileText, ArrowLeft, ChevronRight, History } from 'lucide-react';
+import { canViewProject, canViewTask, canEditProject } from '@/lib/permissions';
+import { FileText, ArrowLeft, ChevronRight, History, Wrench } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 
 export type ExtendedViewType = BoardViewType | 'PART' | 'HISTORY';
 
 export default function ProjectBoardPage() {
-  const { projects, postDeliveryWorkRequests, revisionRequests } = useProjectStore();
+  const projects = useProjectStore(state => state.projects);
+  const revisionRequests = useProjectStore(state => state.revisionRequests);
+  const postDeliveryWorkRequests = useProjectStore(state => state.postDeliveryWorkRequests);
   const { tasks, updateTaskStatus, updateDetailedLineStage, updateTaskAssignee, updateTaskPriority } = useTaskStore();
   const { currentUser, users } = useAuthStore();
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
@@ -27,8 +31,10 @@ export default function ProjectBoardPage() {
   const [showPersonalSchedules, setShowPersonalSchedules] = useState(false);
   const [showEvaluationModal, setShowEvaluationModal] = useState(false);
   const [showPostDeliveryModal, setShowPostDeliveryModal] = useState(false);
+  const [showRevisionModal, setShowRevisionModal] = useState(false);
+  const [dispatchProject, setDispatchProject] = useState<Project | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number | 'ALL'>('ALL');
-  const [activeTab, setActiveTab] = useState<ProjectSourceType>('CLIENT_ORDER');
+  const [activeTab, setActiveTab] = useState<ProjectSourceType>('INTERNAL_DEVELOPMENT');
 
   const applyPreset = (preset: string) => {
     if (preset === 'ASSIGNEE_VIEW') {
@@ -90,6 +96,36 @@ export default function ProjectBoardPage() {
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
 
+  const handleProjectMove = (projectId: string, sourceColId: string, targetColId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    if (sourceColId === 'PRE_WORK' && targetColId === 'IN_PROGRESS') {
+      const isAuthorized = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'DEPARTMENT_MANAGER' || (currentUser.role === 'PM' && project.pmId === currentUser.id);
+      if (!isAuthorized) {
+        alert("진행 중으로 전환할 권한이 없습니다. (담당 PM, 부서장, 최고 관리자만 가능)");
+        return;
+      }
+      if (!project.pmId) {
+        alert("PM이 먼저 배정되어야 업무를 하달할 수 있습니다.");
+        return;
+      }
+      setDispatchProject(project);
+    } else {
+      if (!canEditProject(currentUser, project)) {
+        alert("프로젝트 상태를 변경할 권한이 없습니다.");
+        return;
+      }
+      
+      // 일반 상태 변경
+      const store = useProjectStore.getState();
+      if (targetColId === 'IN_PROGRESS') store.updateProjectStatus(project.id, 'IN_PROGRESS');
+      else if (targetColId === 'COMPLETED') store.updateProjectStatus(project.id, 'COMPLETED');
+      else if (targetColId === 'PRE_WORK') store.updateProjectStatus(project.id, 'INTAKE_RECEIVED');
+      else if (targetColId === 'REVISION') store.updateProjectStatus(project.id, 'REVISION_REQUESTED');
+    }
+  };
+
   return (
     <div className="w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       {/* Unified Header matching Dashboard */}
@@ -125,28 +161,37 @@ export default function ProjectBoardPage() {
         {!selectedProjectId && (
           <div className="flex bg-gray-100/80 p-1 rounded-md border border-[var(--color-border)]">
             <button
-              onClick={() => setActiveTab('CLIENT_ORDER')}
-              className={`px-4 py-1.5 text-sm font-semibold rounded-[4px] transition-colors ${activeTab === 'CLIENT_ORDER' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm border border-[var(--color-border)]/50' : 'text-[var(--color-text-sub)] hover:text-[var(--color-text-main)]'}`}
-            >
-              외부 수주 프로젝트
-            </button>
-            <button
               onClick={() => setActiveTab('INTERNAL_DEVELOPMENT')}
               className={`px-4 py-1.5 text-sm font-semibold rounded-[4px] transition-colors ${activeTab === 'INTERNAL_DEVELOPMENT' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm border border-[var(--color-border)]/50' : 'text-[var(--color-text-sub)] hover:text-[var(--color-text-main)]'}`}
             >
               개발팀 작업
             </button>
+            <button
+              onClick={() => setActiveTab('CLIENT_ORDER')}
+              className={`px-4 py-1.5 text-sm font-semibold rounded-[4px] transition-colors ${activeTab === 'CLIENT_ORDER' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm border border-[var(--color-border)]/50' : 'text-[var(--color-text-sub)] hover:text-[var(--color-text-main)]'}`}
+            >
+              외부 수주 프로젝트
+            </button>
           </div>
         )}
 
         <div className="flex gap-2 flex-wrap items-center">
-          {selectedProject && getProjectBoardColumn(selectedProject) === 'COMPLETED' && currentUser.role !== 'SUPER_ADMIN' && (
+          {selectedProject && getProjectBoardColumn(selectedProject, new Date(), revisionRequests.some(r => r.projectId === selectedProject.id && (r.status === 'PENDING' || r.status === 'ACCEPTED'))) === 'COMPLETED' && currentUser.role !== 'SUPER_ADMIN' && (
             <button
               onClick={() => setShowPostDeliveryModal(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 font-semibold text-sm rounded-md border border-purple-200 hover:bg-purple-100 transition-colors"
             >
               <FileText className="w-4 h-4" />
               추가업무 요청
+            </button>
+          )}
+          {selectedProject && getProjectBoardColumn(selectedProject, new Date(), revisionRequests.some(r => r.projectId === selectedProject.id && (r.status === 'PENDING' || r.status === 'ACCEPTED'))) === 'COMPLETED' && (
+            <button
+              onClick={() => setShowRevisionModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-700 font-semibold text-sm rounded-md border border-orange-200 hover:bg-orange-100 transition-colors"
+            >
+              <Wrench className="w-4 h-4" />
+              수정(Revision) 요청
             </button>
           )}
           {currentUser.role === 'PM' && selectedProjectId && (
@@ -229,6 +274,41 @@ export default function ProjectBoardPage() {
             <p className="text-sm text-[var(--color-text-sub)] mb-6">납품일 변경 이력, 추가업무 요청 이력 및 결재 AuditLog가 여기에 표시됩니다.</p>
             <div className="space-y-4">
               <div className="border border-[var(--color-border)] rounded-lg p-4 bg-[var(--color-bg)]">
+                <h3 className="font-bold text-sm text-[var(--color-text-main)] mb-2">수정(Revision) 요청 이력</h3>
+                {revisionRequests.filter(r => r.projectId === selectedProjectId).length === 0 ? (
+                  <div className="text-xs text-[var(--color-text-sub)]">조회된 수정 내역이 없습니다.</div>
+                ) : (
+                  <ul className="space-y-2">
+                    {revisionRequests.filter(r => r.projectId === selectedProjectId).map(req => (
+                      <li key={req.id} className="bg-[var(--color-surface)] p-3 border rounded shadow-sm flex flex-col gap-1">
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-sm text-[var(--color-text-main)]">{req.title}</span>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={req.status === 'RESOLVED' ? 'SUCCESS' : req.status === 'PENDING' ? 'WARNING' : 'DEFAULT'}>
+                              {req.status}
+                            </Badge>
+                            {(req.status === 'PENDING' || req.status === 'ACCEPTED') && (
+                              <button 
+                                onClick={() => {
+                                  useProjectStore.getState().updateRevisionRequestStatus(req.id, 'RESOLVED');
+                                  alert('수정이 완료 처리되었습니다.');
+                                }}
+                                className="text-xs px-2 py-1 bg-green-50 text-green-700 font-bold rounded border border-green-200 hover:bg-green-100 transition-colors"
+                              >
+                                완료 처리
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-xs text-[var(--color-text-sub)]">{req.description}</p>
+                        <div className="text-xs text-gray-400 mt-1">요청자: {req.requestedByClient} | {new Date(req.createdAt).toLocaleString()}</div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="border border-[var(--color-border)] rounded-lg p-4 bg-[var(--color-bg)]">
                 <h3 className="font-bold text-sm text-[var(--color-text-main)] mb-2">추가업무 요청 이력</h3>
                 {postDeliveryWorkRequests.filter(r => r.projectId === selectedProjectId).length === 0 ? (
                   <div className="text-xs text-[var(--color-text-sub)]">조회된 이력이 없습니다.</div>
@@ -271,6 +351,15 @@ export default function ProjectBoardPage() {
           revisionRequests={revisionRequests}
           groupBy={groupBy}
           onProjectClick={setSelectedProjectId}
+          onProjectMove={handleProjectMove}
+        />
+      )}
+
+      {dispatchProject && (
+        <PmDispatchModal
+          project={dispatchProject}
+          onClose={() => setDispatchProject(null)}
+          onSuccess={() => setDispatchProject(null)}
         />
       )}
 
@@ -285,6 +374,12 @@ export default function ProjectBoardPage() {
         <PostDeliveryWorkModal 
           projectId={selectedProjectId}
           onClose={() => setShowPostDeliveryModal(false)}
+        />
+      )}
+      {showRevisionModal && selectedProjectId && (
+        <RevisionRequestModal
+          project={projects.find(p => p.id === selectedProjectId)!}
+          onClose={() => setShowRevisionModal(false)}
         />
       )}
     </div>
