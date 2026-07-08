@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "json:export": "npx tsx scripts/export-current-state.ts",
+    "json:import": "npx tsx scripts/import-json-data.ts",
+    "json:validate": "npx tsx scripts/validate-json-data.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
