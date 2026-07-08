@@ -76,6 +76,8 @@ export type ProjectStatus = 'INTAKE_RECEIVED' | 'MANAGER_REVIEW' | 'PM_ASSIGNED'
 
 export type ProjectSourceType = 'CLIENT_ORDER' | 'INTERNAL_DEVELOPMENT';
 
+export type DataSourceMode = 'JSON_OPERATION_DATA' | 'EXCEL_IMPORT_DATA' | 'DEMO_SEED_DATA' | 'EMPTY';
+
 export type DeliveryLifecycle =
   | "UNSCHEDULED"
   | "UPCOMING"

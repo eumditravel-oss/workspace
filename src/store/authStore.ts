@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { PersonnelCard } from '@/types/models';
+import { PersonnelCard, DataSourceMode } from '@/types/models';
 import { mockUsers } from '@/data/mockData';
 
 interface AuthState {
@@ -7,6 +7,8 @@ interface AuthState {
   users: PersonnelCard[];
   appMode: 'DAILY_WORK' | 'ADMIN_VALIDATION';
   setAppMode: (mode: 'DAILY_WORK' | 'ADMIN_VALIDATION') => void;
+  dataSourceMode: DataSourceMode;
+  setDataSourceMode: (mode: DataSourceMode) => void;
   lastActivity: number;
   updateLastActivity: () => void;
   loginAs: (userId: string) => void;
@@ -18,8 +20,22 @@ export const useAuthStore = create<AuthState>((set) => ({
   currentUser: mockUsers[0], // Default to Super Admin
   users: mockUsers,
   appMode: 'DAILY_WORK',
+  dataSourceMode: 'JSON_OPERATION_DATA',
   lastActivity: Date.now(),
-  setAppMode: (mode) => set({ appMode: mode }),
+  setAppMode: (mode) => set((state) => {
+    // If switching to DAILY_WORK, ensure DEMO_SEED_DATA is deactivated
+    if (mode === 'DAILY_WORK' && state.dataSourceMode === 'DEMO_SEED_DATA') {
+      return { appMode: mode, dataSourceMode: 'JSON_OPERATION_DATA' };
+    }
+    return { appMode: mode };
+  }),
+  setDataSourceMode: (mode) => set((state) => {
+    if (state.appMode === 'DAILY_WORK' && mode === 'DEMO_SEED_DATA') {
+      console.warn("DEMO_SEED_DATA cannot be used in DAILY_WORK mode.");
+      return state;
+    }
+    return { dataSourceMode: mode };
+  }),
   updateLastActivity: () => set({ lastActivity: Date.now() }),
   loginAs: (userId: string) => {
     const user = mockUsers.find(u => u.id === userId);

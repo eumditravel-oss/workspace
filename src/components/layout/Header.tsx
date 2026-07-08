@@ -40,6 +40,11 @@ export const Header = () => {
             </button>
           </div>
         )}
+        <div className="ml-2 px-2 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded border border-blue-200">
+          데이터: {useAuthStore.getState().dataSourceMode === 'JSON_OPERATION_DATA' ? 'JSON 운영' : 
+                  useAuthStore.getState().dataSourceMode === 'DEMO_SEED_DATA' ? 'DEMO 시드' :
+                  useAuthStore.getState().dataSourceMode === 'EXCEL_IMPORT_DATA' ? 'EXCEL 임포트' : 'EMPTY'}
+        </div>
       </div>
       <div className="flex items-center space-x-4">
         {/* Mock Login Switcher */}

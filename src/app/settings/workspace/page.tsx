@@ -9,7 +9,7 @@ import { Settings, Save, Edit2 } from 'lucide-react';
 import { exportWorkspaceData, downloadJson, saveDraftToLocalStorage, validateImportData, applyImportData } from '@/lib/jsonHandoff';
 
 export default function WorkspaceSettingsPage() {
-  const { currentUser } = useAuthStore();
+  const { currentUser, appMode, setDataSourceMode } = useAuthStore();
   const { settings, updateSetting } = useSettingStore();
   const { projects, batchCloseOverdueProjects, loadDummyProjects } = useProjectStore();
   const { loadDummyTasks } = useTaskStore();
@@ -180,14 +180,19 @@ export default function WorkspaceSettingsPage() {
           <p className="text-sm text-gray-600">빈 화면(Empty State)을 채우기 위해, UI 시연을 위한 대량의 더미 프로젝트와 일정 데이터를 임시 주입합니다.</p>
           <button 
             onClick={() => {
+              if (appMode !== 'ADMIN_VALIDATION') {
+                alert('운영 검증 모드에서만 더미 데이터를 주입할 수 있습니다.\n상단 헤더에서 [운영 검증 모드]로 전환해주세요.');
+                return;
+              }
               if (confirm('현재 편집 중인 데이터가 있을 경우 더미데이터와 혼합될 수 있습니다. 진행하시겠습니까?')) {
                 loadDummyProjects();
                 loadDummyTasks();
+                setDataSourceMode('DEMO_SEED_DATA');
                 setSuccessMsg('테스트 데이터 주입이 완료되었습니다.');
                 setTimeout(() => setSuccessMsg(''), 3000);
               }
             }}
-            className="px-4 py-2 bg-indigo-600 text-white rounded text-sm font-bold hover:bg-indigo-700 transition"
+            className={`px-4 py-2 rounded text-sm font-bold transition ${appMode === 'ADMIN_VALIDATION' ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
           >
             더미데이터 주입
           </button>
