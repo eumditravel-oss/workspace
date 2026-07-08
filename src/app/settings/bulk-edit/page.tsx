@@ -40,7 +40,7 @@ export default function BulkEditPage() {
     const confirm = window.confirm('대량 수정을 실제 데이터에 반영하시겠습니까?\n평가 Lock이 걸린 데이터는 자동으로 제외됩니다.');
     if (confirm) {
       updateSessionStatus(activePreview.id, 'APPLIED', new Date().toISOString());
-      alert('성공적으로 일괄 변경되었습니다. (AuditLog 저장 완료)');
+      alert('성공적으로 일괄 변경되었습니다. (AuditLog 기능은 콘솔에서만 확인 가능합니다)');
       setNewValue('');
     }
   };

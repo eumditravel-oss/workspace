@@ -89,7 +89,7 @@ export default function WorkspaceSettingsPage() {
         </div>
         <div>
           <h1 className="text-xl font-bold text-[var(--color-text-main)]">운영 설정</h1>
-          <p className="text-sm text-[var(--color-text-sub)] mt-1">시스템의 주요 정책 및 기준값을 변경합니다. (AuditLog 자동 기록)</p>
+          <p className="text-sm text-[var(--color-text-sub)] mt-1">시스템의 주요 정책 및 기준값을 변경합니다. (AuditLog 준비 중)</p>
         </div>
       </div>
 

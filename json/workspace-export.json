@@ -1,11 +1,17 @@
 {
   "schemaVersion": "1.0.0",
-  "exportedAt": "2026-07-08T05:33:56.625Z",
+  "exportedAt": "2026-07-08T08:52:42.516Z",
   "exportedBy": "System Script",
   "data": {
     "projects": [],
     "tasks": [],
+    "taskWorkSegments": [],
     "personnel": [],
-    "settings": []
+    "settings": [],
+    "approvalRequests": [],
+    "revisionRequests": [],
+    "postDeliveryWorkRequests": [],
+    "notifications": [],
+    "personalSchedules": []
   }
 }

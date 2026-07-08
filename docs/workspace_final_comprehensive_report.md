@@ -10,7 +10,7 @@
 - **프레임워크**: Next.js 14+ (App Router)
 - **스타일링**: Tailwind CSS, Lucide Icons
 - **상태 관리**: Zustand (클라이언트 사이드 전역 상태 및 `localStorage` 기반 Persist). `authStore`, `projectStore`, `taskStore`, `uiStore` 등 기능별 스토어 모듈화.
-- **운영 환경**: 서버리스/정적 웹 호스팅(GitHub Pages) 대응을 위한 100% 클라이언트 런타임 아키텍처 구현.
+- **운영 환경**: 서버리스/정적 웹 호스팅(GitHub Pages) 대응을 위한 클라이언트 런타임 아키텍처 구현 (일부 백엔드 종속 기능 제한적).
 - **반응형 UI 체계**: 접기/펴기(Compact/Expanded)가 가능한 유연한 좌측 사이드바 및 화면 크기에 맞춘 Grid/List 반응형 레이아웃 구현.
 
 ### 1.2. 조직 및 계정 체계 (Personnel & Organization)
@@ -23,9 +23,9 @@
   - `WORKER`: 개인 할당 업무 처리, 일정 변경 요청.
 
 ### 1.3. JSON Handoff 아키텍처 (운영 대비)
-- 백엔드 DB 부재를 극복하기 위해 **JSON Export/Import** 모듈 완비.
-- `WorkspaceExportData` 규격을 통해 프로젝트, 업무, 결재, 알림, 설정 등 모든 Zustand 스토어 데이터를 단일 JSON 파일로 직렬화 및 역직렬화.
-- 데이터 정합성 검사(Validation) 기능과 미리보기(Preview) 후 덮어쓰기(Apply) 기능 지원.
+- 백엔드 DB 부재를 극복하기 위해 **JSON Export/Import** 스크립트 모듈 지원.
+- `WorkspaceExportData` 규격을 통해 프로젝트, 업무, 결재, 알림, 설정 등 모든 Zustand 스토어 데이터를 단일 JSON 파일로 직렬화.
+- 데이터 정합성 검사(Validation) 스크립트는 존재하나, 현재 Zod 레벨의 엄격한 스키마 검증 및 UI 단의 완벽한 미리보기(Preview) 덮어쓰기 로직은 추가 구현이 필요합니다.
 
 ---
 
@@ -53,7 +53,7 @@
 ### 3.1. PM 업무 하달 (Dispatch Workflow)
 - **단순 상태 변경 금지**: `착수 전`에서 `진행 중`으로 드래그 시, 프로젝트의 상태만 바뀌는 것을 차단.
 - **PmDispatchModal 트리거**: 드래그 즉시 하달 모달이 강제 호출되며, PM이 세부 업무(TaskCard)를 분할하고 실제 작업자(Worker)와 일정을 지정해야만 `진행 중`으로 확정.
-- 이 과정에서 작업자에게 **알림(Notification)** 발송 및 **AuditLog** 기록.
+- 이 과정에서 작업자에게 **알림(Notification)**이 발송됩니다. (단, **AuditLog**는 브라우저 콘솔 출력 레벨로만 지원되며 영구 저장소는 미구현 상태입니다.)
 
 ### 3.2. 작업자 일정 조정 및 결재 (Schedule Request)
 - 작업자는 할당받은 업무에 대해 `ScheduleRequestModal`을 통해 일정 연장 또는 추가 조정을 요청.
@@ -113,11 +113,12 @@
 현재 시스템은 100% 클라이언트 사이드(Frontend-only) 상태로 완벽히 동작하도록 최적화되어 있으나, 실서버 운영을 위해 향후 다음 항목들이 요구됩니다.
 
 1. **Backend Database 연동**: Zustand Store 및 JSON Handoff를 RDBMS(PostgreSQL 등) 및 REST API 기반으로 마이그레이션.
-2. **알림(Notification) 영구화**: 현재 런타임 메모리에 의존하는 알림/Audit 로그를 서버 통신을 통해 이메일, 메신저(Slack/Teams)와 연동.
+2. **알림(Notification) 및 AuditLog 영구화**: 현재 런타임/콘솔에 의존하는 알림 및 Audit 로그를 서버 통신을 통해 영구 저장하고 이메일, 메신저(Slack/Teams)와 연동.
 3. **보안 및 세션 만료**: 장기 미접속 시 자동 로그아웃을 처리하는 JWT/Session 매니지먼트.
-4. **산출물 (File Attachment)**: 모의(Mock)로 존재하는 파일 첨부 UI에 실제 S3 클라우드 스토리지 업로드 연동.
+4. **산출물 (File Attachment)**: 파일 첨부 기능은 데이터 모델(Design) 수준으로만 설계되어 있으며, 실제 S3 클라우드 스토리지 연동 및 파일 업로드 UI는 미구현 상태입니다.
 
 ---
 
 **[결론]**
-Plan 17 업데이트를 통해 EUMDI OS Workspace는 단순한 프로젝트 조회용 대시보드를 넘어, 실제 기업의 **결재 체계, 역할 분담, 일정 통제, 데이터 무결성 검증**을 브라우저 상에서 완벽히 수행할 수 있는 수준 높은 프로토타입/운영툴로 완성되었습니다.
+현재 Workspace는 GitHub Pages 기반의 프론트엔드 프로토타입으로, 수주/개발 업무 분리, 프로젝트 보드, JSON 운영 모드, 일정표, 결재/충돌/평가 화면 등 핵심 UI와 일부 workflow를 제공합니다. 
+다만 실제 운영 전에는 JSON handoff E2E, 권한 selector 무결성, 알림/AuditLog 영구화, Data Quality, 백엔드 DB, 파일 스토리지 연동에 대한 추가 검증 또는 구현이 반드시 필요합니다.
