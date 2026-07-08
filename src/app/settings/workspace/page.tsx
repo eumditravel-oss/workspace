@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useSettingStore } from '@/store/settingStore';
+import { useProjectStore } from '@/store/projectStore';
 import { Settings, Save, Edit2 } from 'lucide-react';
 
 export default function WorkspaceSettingsPage() {
@@ -109,6 +110,41 @@ export default function WorkspaceSettingsPage() {
             </div>
           );
         })}
+      </div>
+
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-red-200 mt-8">
+        <h2 className="text-lg font-bold text-red-700 mb-2">위험 작업 (Danger Zone)</h2>
+        <p className="text-sm text-gray-600 mb-4">납품일이 경과한 진행 중 프로젝트를 일괄적으로 완료(COMPLETED) 처리합니다. 이 작업은 Project.status를 강제로 변경하며 AuditLog가 남습니다.</p>
+        <button 
+          onClick={() => {
+            const { projects, batchCloseOverdueProjects } = useProjectStore.getState();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const overdueCount = projects.filter(p => {
+              if (['COMPLETED', 'ARCHIVED'].includes(p.status)) return false;
+              if (!p.deliveryDate) return false;
+              const delivery = new Date(p.deliveryDate);
+              delivery.setHours(0, 0, 0, 0);
+              const diffTime = delivery.getTime() - today.getTime();
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              return diffDays < 0;
+            }).length;
+
+            if (overdueCount === 0) {
+              alert('현재 납품일이 경과하여 마감 처리가 필요한 프로젝트가 없습니다.');
+              return;
+            }
+
+            if (confirm(`납품일이 경과한 프로젝트 ${overdueCount}건 중, 미결 요청이 없는 프로젝트를 찾아 일괄 완료 처리하시겠습니까?`)) {
+              const result = batchCloseOverdueProjects(currentUser.id);
+              alert(`${result.totalClosed}건의 프로젝트가 일괄 마감 처리되었습니다.`);
+            }
+          }}
+          className="px-4 py-2 bg-red-50 text-red-700 border border-red-200 font-bold rounded shadow-sm hover:bg-red-100 transition-colors"
+        >
+          일괄 마감 미리보기 및 실행
+        </button>
       </div>
     </div>
   );

@@ -46,6 +46,36 @@ const defaultSettings: WorkspaceSetting[] = [
     editableByRoles: ['SUPER_ADMIN', 'SYSTEM_ADMIN', 'PM', 'DEPARTMENT_MANAGER'],
     updatedBy: 'system',
     updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'setting-delivery-001',
+    category: 'DELIVERY',
+    key: 'DELIVERY_AUTO_CLOSE_OVERDUE_PROJECTS',
+    value: true,
+    description: '납품일 경과 시 자동 완료 컬럼 분류 여부',
+    editableByRoles: ['SUPER_ADMIN'],
+    updatedBy: 'system',
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'setting-delivery-002',
+    category: 'DELIVERY',
+    key: 'DELIVERY_SHOW_COMPLETED_WITH_PENDING_WARNINGS',
+    value: true,
+    description: '완료 컬럼 프로젝트에 미결 요청 경고 표시 여부',
+    editableByRoles: ['SUPER_ADMIN'],
+    updatedBy: 'system',
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'setting-delivery-003',
+    category: 'DELIVERY',
+    key: 'DELIVERY_ALLOW_POST_DELIVERY_WORK_REQUEST',
+    value: true,
+    description: '납품일 경과 후 추가업무 요청 허용 여부',
+    editableByRoles: ['SUPER_ADMIN'],
+    updatedBy: 'system',
+    updatedAt: new Date().toISOString()
   }
 ];
 

@@ -42,6 +42,28 @@ const mockChecks: DataQualityCheck[] = [
     relatedEntityId: 'user-lthanhphong',
     detectedAt: new Date().toISOString(),
     status: 'OPEN',
+  },
+  {
+    id: 'dq-004',
+    category: 'BOARD',
+    severity: 'ERROR',
+    title: '납품일 경과 배지 오류 감지',
+    description: '과거 납품일 프로젝트에 "납품 1주일 전" 배지가 표시되고 있습니다.',
+    relatedEntityType: 'Project',
+    detectedAt: new Date().toISOString(),
+    status: 'OPEN',
+    suggestedFix: '최신 배지 산정 로직을 적용하세요.'
+  },
+  {
+    id: 'dq-005',
+    category: 'BOARD',
+    severity: 'WARNING',
+    title: '미결 요청이 있는 완료 프로젝트',
+    description: '완료 컬럼에 위치한 프로젝트에 처리되지 않은 사후 추가업무 요청이 있습니다.',
+    relatedEntityType: 'Project',
+    detectedAt: new Date().toISOString(),
+    status: 'OPEN',
+    suggestedFix: '요청을 결재하여 사후 추가업무를 승인하거나 반려하세요.'
   }
 ];
 

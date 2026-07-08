@@ -8,15 +8,16 @@ import { Board, GroupByOption, BoardViewType } from '@/components/board/Board';
 import { ProjectBoard } from '@/components/board/ProjectBoard';
 import { ProjectPartBoard } from '@/components/board/ProjectPartBoard';
 import { ProjectEvaluationModal } from '@/components/evaluation/ProjectEvaluationModal';
+import { PostDeliveryWorkModal } from '@/components/delivery/PostDeliveryWorkModal';
 import { TaskStatus } from '@/types/models';
-import { DetailedLineStage } from '@/lib/selectors';
+import { DetailedLineStage, getProjectBoardColumn } from '@/lib/selectors';
 import { canViewProject, canViewTask } from '@/lib/permissions';
-import { FileText, ArrowLeft, ChevronRight } from 'lucide-react';
+import { FileText, ArrowLeft, ChevronRight, History } from 'lucide-react';
 
-export type ExtendedViewType = BoardViewType | 'PART';
+export type ExtendedViewType = BoardViewType | 'PART' | 'HISTORY';
 
 export default function ProjectBoardPage() {
-  const { projects } = useProjectStore();
+  const { projects, postDeliveryWorkRequests } = useProjectStore();
   const { tasks, updateTaskStatus, updateDetailedLineStage, updateTaskAssignee, updateTaskPriority } = useTaskStore();
   const { currentUser, users } = useAuthStore();
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
@@ -24,6 +25,7 @@ export default function ProjectBoardPage() {
   const [viewType, setViewType] = useState<ExtendedViewType>('PART');
   const [showPersonalSchedules, setShowPersonalSchedules] = useState(false);
   const [showEvaluationModal, setShowEvaluationModal] = useState(false);
+  const [showPostDeliveryModal, setShowPostDeliveryModal] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<number | 'ALL'>('ALL');
 
   const applyPreset = (preset: string) => {
@@ -111,6 +113,15 @@ export default function ProjectBoardPage() {
         </div>
         
         <div className="flex gap-2 flex-wrap items-center">
+          {selectedProject && getProjectBoardColumn(selectedProject) === 'COMPLETED' && currentUser.role !== 'SUPER_ADMIN' && (
+            <button
+              onClick={() => setShowPostDeliveryModal(true)}
+              className="flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 font-semibold text-xs rounded border border-purple-200 hover:bg-purple-100 transition-colors mr-1"
+            >
+              <FileText className="w-3 h-3" />
+              추가업무 요청
+            </button>
+          )}
           {currentUser.role === 'PM' && selectedProjectId && (
             <button
               onClick={() => setShowEvaluationModal(true)}
@@ -158,8 +169,9 @@ export default function ProjectBoardPage() {
                 <option value="PART">파트별 보드 View</option>
                 <option value="DETAILED">세부 공정 View</option>
                 <option value="COLLAB">협업 보드 View</option>
+                <option value="HISTORY">이력/결재 View</option>
               </select>
-              {viewType !== 'PART' && (
+              {viewType !== 'PART' && viewType !== 'HISTORY' && (
                 <select className="border rounded px-2 py-1 bg-gray-50 text-xs font-medium" value={groupBy} onChange={(e) => setGroupBy(e.target.value as GroupByOption)}>
                   <option value="STATUS">상태별 보기</option>
                   <option value="ASSIGNEE">담당자별 보기</option>
@@ -185,6 +197,35 @@ export default function ProjectBoardPage() {
             tasks={projectTasks}
             users={users}
           />
+        ) : viewType === 'HISTORY' ? (
+          <div className="bg-white rounded-xl shadow-sm border p-6 min-h-[400px]">
+            <h2 className="text-lg font-bold text-gray-800 mb-4">프로젝트 상세 이력</h2>
+            <p className="text-sm text-gray-500 mb-6">납품일 변경 이력, 추가업무 요청 이력 및 결재 AuditLog가 여기에 표시됩니다.</p>
+            <div className="space-y-4">
+              <div className="border border-gray-100 rounded-lg p-4 bg-gray-50">
+                <h3 className="font-bold text-sm text-gray-700 mb-2">추가업무 요청 이력</h3>
+                {postDeliveryWorkRequests.filter(r => r.projectId === selectedProjectId).length === 0 ? (
+                  <div className="text-xs text-gray-500">조회된 이력이 없습니다.</div>
+                ) : (
+                  <ul className="space-y-2">
+                    {postDeliveryWorkRequests.filter(r => r.projectId === selectedProjectId).map(req => (
+                      <li key={req.id} className="bg-white p-3 border rounded shadow-sm flex flex-col gap-1">
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-sm text-gray-800">{req.title}</span>
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded ${req.status === 'APPROVED' ? 'bg-green-100 text-green-700' : req.status === 'REJECTED' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>{req.status}</span>
+                        </div>
+                        <div className="text-xs text-gray-600">{req.reason} | {new Date(req.createdAt).toLocaleString()}</div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className="border border-gray-100 rounded-lg p-4 bg-gray-50">
+                <h3 className="font-bold text-sm text-gray-700 mb-2">납품일 변경 및 결재 이력</h3>
+                <div className="text-xs text-gray-500">조회된 이력이 없습니다.</div>
+              </div>
+            </div>
+          </div>
         ) : (
           <Board 
             tasks={projectTasks} 
@@ -208,6 +249,13 @@ export default function ProjectBoardPage() {
         <ProjectEvaluationModal 
           projectId={selectedProjectId} 
           onClose={() => setShowEvaluationModal(false)} 
+        />
+      )}
+      
+      {showPostDeliveryModal && selectedProjectId && (
+        <PostDeliveryWorkModal 
+          projectId={selectedProjectId}
+          onClose={() => setShowPostDeliveryModal(false)}
         />
       )}
     </div>

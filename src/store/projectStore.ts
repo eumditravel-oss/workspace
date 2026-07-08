@@ -1,17 +1,23 @@
 import { create } from 'zustand';
-import { Project, ProjectStatus } from '@/types/models';
+import { Project, ProjectStatus, PostDeliveryWorkRequest } from '@/types/models';
 import { fullProjects } from '@/data/fullScheduleSeed';
 
 interface ProjectState {
   projects: Project[];
+  postDeliveryWorkRequests: PostDeliveryWorkRequest[];
   addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'progress'>) => void;
   assignPM: (projectId: string, pmId: string) => void;
   updateProjectStatus: (projectId: string, status: ProjectStatus) => void;
   updateProjectField: <K extends keyof Project>(projectId: string, field: K, value: Project[K]) => void;
+  addPostDeliveryWorkRequest: (request: Omit<PostDeliveryWorkRequest, 'id' | 'status' | 'createdAt' | 'updatedAt'>) => void;
+  approvePostDeliveryWorkRequest: (requestId: string, approvedBy: string) => void;
+  rejectPostDeliveryWorkRequest: (requestId: string, rejectedBy: string) => void;
+  batchCloseOverdueProjects: (closedBy: string) => { totalClosed: number; projectIds: string[] };
 }
 
-export const useProjectStore = create<ProjectState>((set) => ({
+export const useProjectStore = create<ProjectState>((set, get) => ({
   projects: fullProjects,
+  postDeliveryWorkRequests: [],
   
   addProject: (projectData) => set((state) => {
     const newProject: Project = {
@@ -47,5 +53,136 @@ export const useProjectStore = create<ProjectState>((set) => ({
         ? { ...p, [field]: value, updatedAt: new Date().toISOString() }
         : p
     )
-  }))
+  })),
+
+  addPostDeliveryWorkRequest: (requestData) => set((state) => {
+    const newRequest: PostDeliveryWorkRequest = {
+      ...requestData,
+      id: `pdw${Date.now()}`,
+      status: 'PENDING_PM',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    
+    // Also mark project's delivery lifecycle temporarily if needed, but usually we just add request.
+    const updatedProjects = state.projects.map(p => 
+      p.id === requestData.projectId 
+        ? { ...p, deliveryLifecycle: 'POST_DELIVERY_WORK_REQUESTED' as const }
+        : p
+    );
+
+    return { 
+      postDeliveryWorkRequests: [...state.postDeliveryWorkRequests, newRequest],
+      projects: updatedProjects
+    };
+  }),
+
+  approvePostDeliveryWorkRequest: (requestId, approvedBy) => set((state) => {
+    const request = state.postDeliveryWorkRequests.find(r => r.id === requestId);
+    if (!request) return state;
+
+    const updatedRequests = state.postDeliveryWorkRequests.map(r =>
+      r.id === requestId ? { ...r, status: 'APPROVED' as const, updatedAt: new Date().toISOString() } : r
+    );
+
+    const updatedProjects = state.projects.map(p => {
+      if (p.id === request.projectId) {
+        return {
+          ...p,
+          status: 'IN_PROGRESS' as const, // Force status to IN_PROGRESS to move out of COMPLETED column
+          deliveryLifecycle: 'POST_DELIVERY_WORK_IN_PROGRESS' as const, // Or REOPENED
+          deliveryDate: request.impactDeliveryDate && request.newSuggestedDeliveryDate ? request.newSuggestedDeliveryDate : p.deliveryDate,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return p;
+    });
+
+    return {
+      postDeliveryWorkRequests: updatedRequests,
+      projects: updatedProjects
+    };
+  }),
+
+  rejectPostDeliveryWorkRequest: (requestId, rejectedBy) => set((state) => {
+    const request = state.postDeliveryWorkRequests.find(r => r.id === requestId);
+    if (!request) return state;
+
+    const updatedRequests = state.postDeliveryWorkRequests.map(r =>
+      r.id === requestId ? { ...r, status: 'REJECTED' as const, updatedAt: new Date().toISOString() } : r
+    );
+
+    // If no other pending requests exist, we might want to revert deliveryLifecycle to whatever it was.
+    // For simplicity, we just delete the specific flag.
+    const hasOtherPending = updatedRequests.some(r => r.projectId === request.projectId && r.status === 'PENDING_PM');
+    
+    const updatedProjects = state.projects.map(p => {
+      if (p.id === request.projectId) {
+        return {
+          ...p,
+          deliveryLifecycle: hasOtherPending ? 'POST_DELIVERY_WORK_REQUESTED' as const : undefined,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return p;
+    });
+
+    return {
+      postDeliveryWorkRequests: updatedRequests,
+      projects: updatedProjects
+    };
+  }),
+
+  batchCloseOverdueProjects: (closedBy) => {
+    const state = get();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const overdueProjects = state.projects.filter(p => {
+      // Must not be already completed/archived
+      if (['COMPLETED', 'ARCHIVED'].includes(p.status)) return false;
+      
+      // Must have delivery date
+      if (!p.deliveryDate) return false;
+      
+      const delivery = new Date(p.deliveryDate);
+      delivery.setHours(0, 0, 0, 0);
+      const diffTime = delivery.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Must be overdue
+      if (diffDays >= 0) return false;
+
+      // Must NOT have pending post-delivery work requests
+      const hasPendingRequests = state.postDeliveryWorkRequests.some(
+        r => r.projectId === p.id && ['PENDING_PM', 'PENDING_MANAGER', 'PENDING_SUPER_ADMIN'].includes(r.status)
+      );
+      if (hasPendingRequests) return false;
+
+      return true;
+    });
+
+    if (overdueProjects.length === 0) {
+      return { totalClosed: 0, projectIds: [] };
+    }
+
+    const targetIds = overdueProjects.map(p => p.id);
+
+    set((state) => ({
+      projects: state.projects.map(p => 
+        targetIds.includes(p.id) 
+          ? { 
+              ...p, 
+              status: 'COMPLETED' as const, 
+              deliveryLifecycle: 'DELIVERY_CLOSED_MANUAL' as const,
+              deliveryClosedAt: new Date().toISOString(),
+              deliveryClosedBy: closedBy,
+              updatedAt: new Date().toISOString()
+            }
+          : p
+      )
+    }));
+
+    return { totalClosed: targetIds.length, projectIds: targetIds };
+  }
 }));

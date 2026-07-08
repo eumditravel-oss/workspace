@@ -39,6 +39,20 @@ export interface PersonnelCard {
 
 export type ProjectStatus = 'INTAKE_RECEIVED' | 'MANAGER_REVIEW' | 'PM_ASSIGNED' | 'SCHEDULE_DRAFTING' | 'SCHEDULE_PENDING_APPROVAL' | 'SCHEDULE_REJECTED' | 'SCHEDULE_APPROVED' | 'IN_PROGRESS' | 'QA_REVIEW' | 'COMPLETED' | 'ON_HOLD' | 'ARCHIVED';
 
+export type DeliveryLifecycle =
+  | "UNSCHEDULED"
+  | "UPCOMING"
+  | "DUE_WITHIN_1_MONTH"
+  | "DUE_WITHIN_2_WEEKS"
+  | "DUE_WITHIN_1_WEEK"
+  | "DUE_TODAY"
+  | "OVERDUE"
+  | "DELIVERY_CLOSED_AUTO"
+  | "DELIVERY_CLOSED_MANUAL"
+  | "POST_DELIVERY_WORK_REQUESTED"
+  | "POST_DELIVERY_WORK_IN_PROGRESS"
+  | "REOPENED";
+
 export interface Project {
   id: string;
   clientId?: string;
@@ -63,6 +77,10 @@ export interface Project {
   deliveryDateUpdatedAt?: string;
   deliveryDateUpdatedBy?: string;
   deliveryDateChangeReason?: string;
+  deliveryLifecycle?: DeliveryLifecycle;
+  deliveryClosedAt?: string;
+  deliveryClosedBy?: string;
+  deliveryCloseReason?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -193,6 +211,25 @@ export interface ApprovalRequest {
   reviewComment?: string;
   alternativeType?: ApprovalRequestType;
   isDeleted?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PostDeliveryWorkRequest {
+  id: string;
+  projectId: string;
+  taskId?: string;
+  requestedBy: string;
+  title: string;
+  description: string;
+  reason: string;
+  requestedStartDate?: string;
+  requestedEndDate?: string;
+  estimatedHours?: number;
+  impactDeliveryDate?: boolean;
+  newSuggestedDeliveryDate?: string;
+  status: "DRAFT" | "PENDING_PM" | "PENDING_MANAGER" | "PENDING_SUPER_ADMIN" | "APPROVED" | "REJECTED" | "APPLIED" | "CANCELLED";
+  approvalRequestId?: string;
   createdAt: string;
   updatedAt: string;
 }

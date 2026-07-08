@@ -1,4 +1,4 @@
-import { TaskCard, Project, PersonnelCard, TaskBlocker, ProgressUpdate, PersonalSchedule, ScheduleConflict, ProjectWorkPart } from '@/types/models';
+import { TaskCard, Project, PersonnelCard, TaskBlocker, ProgressUpdate, PersonalSchedule, ScheduleConflict, ProjectWorkPart, DeliveryLifecycle } from '@/types/models';
 
 export type DetailedLineStage = 'WAITING' | 'QC_PM_START' | 'IN_PROGRESS' | 'PM_REVIEW' | 'QC_REVIEW' | 'DONE';
 
@@ -116,7 +116,7 @@ export const normalizeScopeName = (rawName: string): string => {
   return rawName.replace(/[\n\r]+/g, ' ').trim();
 };
 
-export type DeliveryPresetBucket = 'WITHIN_1_WEEK' | 'WITHIN_2_WEEKS' | 'WITHIN_1_MONTH' | 'UNSET';
+export type DeliveryPresetBucket = 'OVERDUE' | 'WITHIN_1_WEEK' | 'WITHIN_2_WEEKS' | 'WITHIN_1_MONTH' | 'UNSET';
 
 export const getDeliveryUrgencyBucket = (project: Project, today: Date = new Date()): DeliveryPresetBucket => {
   if (!project.deliveryDate) return 'UNSET';
@@ -129,10 +129,73 @@ export const getDeliveryUrgencyBucket = (project: Project, today: Date = new Dat
   const diffTime = delivery.getTime() - current.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   
+  if (diffDays < 0) return 'OVERDUE';
   if (diffDays <= 7) return 'WITHIN_1_WEEK';
   if (diffDays <= 14) return 'WITHIN_2_WEEKS';
   if (diffDays <= 30) return 'WITHIN_1_MONTH';
   return 'UNSET';
+};
+
+export type ProjectBoardColumn =
+  | "INTAKE_WAITING"
+  | "IN_PROGRESS"
+  | "COMPLETED";
+
+export const getProjectDeliveryLifecycle = (project: Project, today: Date = new Date()): DeliveryLifecycle => {
+  if (project.deliveryLifecycle) return project.deliveryLifecycle;
+  if (!project.deliveryDate) return 'UNSCHEDULED';
+
+  const delivery = new Date(project.deliveryDate);
+  delivery.setHours(0, 0, 0, 0);
+  const current = new Date(today);
+  current.setHours(0, 0, 0, 0);
+
+  const diffTime = delivery.getTime() - current.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return 'OVERDUE';
+  if (diffDays === 0) return 'DUE_TODAY';
+  if (diffDays <= 7) return 'DUE_WITHIN_1_WEEK';
+  if (diffDays <= 14) return 'DUE_WITHIN_2_WEEKS';
+  if (diffDays <= 30) return 'DUE_WITHIN_1_MONTH';
+  return 'UPCOMING';
+};
+
+export const getProjectBoardColumn = (project: Project, today: Date = new Date()): ProjectBoardColumn => {
+  const lifecycle = getProjectDeliveryLifecycle(project, today);
+  
+  if (['INTAKE_RECEIVED', 'MANAGER_REVIEW', 'PM_ASSIGNED', 'SCHEDULE_DRAFTING', 'SCHEDULE_PENDING_APPROVAL'].includes(project.status)) {
+    return 'INTAKE_WAITING';
+  }
+
+  if (['OVERDUE', 'DELIVERY_CLOSED_AUTO', 'DELIVERY_CLOSED_MANUAL'].includes(lifecycle)) {
+    return 'COMPLETED';
+  }
+  
+  if (project.status === 'COMPLETED' || project.status === 'ARCHIVED') {
+    return 'COMPLETED';
+  }
+
+  return 'IN_PROGRESS';
+};
+
+export const getProjectDeliveryBadge = (project: Project, today: Date = new Date()): string => {
+  const lifecycle = getProjectDeliveryLifecycle(project, today);
+  switch (lifecycle) {
+    case 'UNSCHEDULED': return '미정';
+    case 'OVERDUE': return '납품일 경과';
+    case 'DUE_TODAY': return '납품 당일';
+    case 'DUE_WITHIN_1_WEEK': return '납품 1주일 전';
+    case 'DUE_WITHIN_2_WEEKS': return '납품 2주일 전';
+    case 'DUE_WITHIN_1_MONTH': return '납품 1달 전';
+    case 'UPCOMING': return '납품 예정';
+    case 'DELIVERY_CLOSED_AUTO': return '납품일 경과 자동분류';
+    case 'DELIVERY_CLOSED_MANUAL': return '납품완료 수동분류';
+    case 'POST_DELIVERY_WORK_REQUESTED': return '사후 추가업무 요청됨';
+    case 'POST_DELIVERY_WORK_IN_PROGRESS': return '사후 추가업무 진행중';
+    case 'REOPENED': return '프로젝트 재오픈';
+    default: return '미정';
+  }
 };
 
 export const getProjectOverallProgress = (project: Project, tasks: TaskCard[]): number => {

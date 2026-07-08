@@ -50,3 +50,12 @@
 | QA-E01 | Evaluation | QC 오류 가중치 부여 등록 | 등록된 10%~100% 가중치가 반영되어 점수 삭감으로 이어짐 | (TBD) | PENDING | (TBD) | - | - | - |
 | QA-E02 | Evaluation | 0 나누기 예외 처리 (Zero Division) | 작업량(Workload)이 0인 인원에 대해 오류율 계산 시 에러 방지(NaN X) | (TBD) | PENDING | (TBD) | - | - | - |
 | QA-E03 | Evaluation | 평가 결과 확정(Lock) 작동 | Lock 이후에는 일반 작업자가 오류 신규 등록 불가 (또는 상태 반영됨) | (TBD) | PENDING | (TBD) | - | - | - |
+
+## 7. 납품 상태 및 사후 추가업무 (Delivery & Post-Work)
+
+| Test ID | Test Category | Scenario | Expected Result | Actual Result | Status | Evidence | Notes | Verified At | Verified By |
+|---------|---------------|----------|-----------------|---------------|--------|----------|-------|-------------|-------------|
+| QA-P14-1| Board | 과거 납품일 프로젝트 표시 | 납품일이 경과한 프로젝트가 완료 컬럼에 표시됨 | (TBD) | PENDING | (TBD) | Plan 14 | - | - |
+| QA-P14-2| UI | 납품일 경과 배지 표시 | 과거 날짜 프로젝트에 "납품일 경과" 배지 표시됨 | (TBD) | PENDING | (TBD) | Plan 14 | - | - |
+| QA-P14-3| Workflow | 사후 추가업무 요청 | 완료 프로젝트에서 작업자가 추가업무 요청 제출 시 결재 상태로 생성됨 | (TBD) | PENDING | (TBD) | Plan 14 | - | - |
+| QA-P14-4| Data Quality | 미결 요청 Warning | 완료 컬럼 프로젝트에 미결 요청이 있으면 Warning 데이터 품질 검사 생성 | (TBD) | PENDING | (TBD) | Plan 14 | - | - |

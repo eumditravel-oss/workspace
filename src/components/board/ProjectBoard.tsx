@@ -2,7 +2,7 @@ import React from 'react';
 import { Project, TaskCard } from '@/types/models';
 import { ProjectSummaryCard } from './ProjectSummaryCard';
 import { GroupByOption } from './Board';
-import { getDeliveryUrgencyBucket } from '@/lib/selectors';
+import { getDeliveryUrgencyBucket, getProjectBoardColumn } from '@/lib/selectors';
 
 interface Props {
   projects: Project[];
@@ -15,6 +15,7 @@ export const ProjectBoard: React.FC<Props> = ({ projects, tasks, groupBy, onProj
   const getColumns = () => {
     if (groupBy === 'PRIORITY') {
       return [
+        { id: 'OVERDUE', title: '🚨 납품일 경과' },
         { id: 'WITHIN_1_WEEK', title: '🔴 납품 1주일 전' },
         { id: 'WITHIN_2_WEEKS', title: '🟠 납품 2주일 전' },
         { id: 'WITHIN_1_MONTH', title: '🔵 납품 1달 전' },
@@ -38,10 +39,11 @@ export const ProjectBoard: React.FC<Props> = ({ projects, tasks, groupBy, onProj
           if (groupBy === 'PRIORITY') {
             return getDeliveryUrgencyBucket(p) === col.id;
           }
-          // Simple status grouping logic
-          if (col.id === 'INTAKE') return ['INTAKE_RECEIVED', 'MANAGER_REVIEW', 'PM_ASSIGNED', 'SCHEDULE_DRAFTING', 'SCHEDULE_PENDING_APPROVAL'].includes(p.status);
-          if (col.id === 'COMPLETED') return ['COMPLETED', 'ARCHIVED'].includes(p.status);
-          return ['IN_PROGRESS', 'SCHEDULE_APPROVED', 'QA_REVIEW'].includes(p.status);
+          
+          const columnId = getProjectBoardColumn(p);
+          if (col.id === 'INTAKE') return columnId === 'INTAKE_WAITING';
+          if (col.id === 'COMPLETED') return columnId === 'COMPLETED';
+          return columnId === 'IN_PROGRESS';
         });
 
         return (
