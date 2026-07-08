@@ -8,7 +8,6 @@ import { useScheduleStore } from '@/store/scheduleStore';
 import { useSettingStore } from '@/store/settingStore';
 import { useApprovalStore } from '@/store/approvalStore';
 import { useNotificationStore } from '@/store/notificationStore';
-import { useEvaluationStore } from '@/store/evaluationStore';
 import { operationData } from '@/data/operationData';
 import { mockUsers } from '@/data/mockData';
 import { fullProjects, fullTasks, fullSchedules } from '@/data/fullScheduleSeed';
@@ -51,9 +50,10 @@ export function DataLoader() {
           replaceProjects(operationData.data.projects || []);
           replaceTasks(operationData.data.tasks || []);
           replaceUsers(operationData.data.personnel || []);
-          // Operation data might not have all types yet, fallback if needed
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          replaceSettings(operationData.data.settings ? [operationData.data.settings as any] : []);
+          replaceSchedules(operationData.data.personalSchedules || []);
+          replaceRequests(operationData.data.approvalRequests || []);
+          replaceNotifications(operationData.data.notifications || []);
+          replaceSettings(operationData.data.settings || []);
         } else {
           // EMPTY fallback as per requirements: "JSON 운영 데이터가 없으면 ... 조용히 demo fallback되지 않고 empty state가 되게 한다."
           resetProjects();

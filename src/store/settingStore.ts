@@ -4,11 +4,11 @@ import { WorkspaceSetting } from '@/types/models';
 interface SettingState {
   settings: WorkspaceSetting[];
   updateSetting: (key: string, value: string | number | boolean | Record<string, string>, updatedBy: string) => void;
-  replaceSettings: (settings: WorkspaceSetting[]) => void;
+  replaceSettings: (settings: unknown) => void;
   resetSettings: () => void;
 }
 
-const defaultSettings: WorkspaceSetting[] = [
+export const defaultSettings: WorkspaceSetting[] = [
   {
     id: 'setting-001',
     category: 'POLICY',
@@ -81,13 +81,76 @@ const defaultSettings: WorkspaceSetting[] = [
   }
 ];
 
+const cloneSettingValue = (value: WorkspaceSetting['value']) => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return { ...value };
+  }
+  return value;
+};
+
+const getDefaultSettings = () =>
+  defaultSettings.map(setting => ({
+    ...setting,
+    value: cloneSettingValue(setting.value)
+  }));
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const normalizeSettingValue = (value: unknown): WorkspaceSetting['value'] => {
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return value;
+  }
+
+  if (isRecord(value)) {
+    const entries = Object.entries(value);
+    if (entries.every(([, entryValue]) => typeof entryValue === 'string')) {
+      return Object.fromEntries(entries) as Record<string, string>;
+    }
+  }
+
+  return '';
+};
+
+const normalizeSetting = (value: unknown): WorkspaceSetting | null => {
+  if (!isRecord(value) || typeof value.key !== 'string') return null;
+
+  return {
+    id: typeof value.id === 'string' ? value.id : `setting-${value.key}`,
+    category: typeof value.category === 'string' ? value.category : 'SYSTEM',
+    key: value.key,
+    value: normalizeSettingValue(value.value),
+    description: typeof value.description === 'string' ? value.description : undefined,
+    editableByRoles:
+      Array.isArray(value.editableByRoles) && value.editableByRoles.every(role => typeof role === 'string')
+        ? value.editableByRoles
+        : ['SUPER_ADMIN', 'SYSTEM_ADMIN'],
+    updatedBy: typeof value.updatedBy === 'string' ? value.updatedBy : 'system',
+    updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : new Date().toISOString()
+  };
+};
+
+const normalizeSettings = (settings: unknown): WorkspaceSetting[] => {
+  if (!Array.isArray(settings)) return getDefaultSettings();
+
+  const normalizedSettings = settings
+    .map(normalizeSetting)
+    .filter((setting): setting is WorkspaceSetting => setting !== null);
+
+  return normalizedSettings.length > 0 ? normalizedSettings : getDefaultSettings();
+};
+
 export const useSettingStore = create<SettingState>((set) => ({
-  settings: defaultSettings,
+  settings: getDefaultSettings(),
   updateSetting: (key, value, updatedBy) => set((state) => ({
     settings: state.settings.map(s => 
       s.key === key ? { ...s, value, updatedBy, updatedAt: new Date().toISOString() } : s
     )
   })),
-  replaceSettings: (settings) => set({ settings }),
-  resetSettings: () => set({ settings: [] })
+  replaceSettings: (settings) => set({ settings: normalizeSettings(settings) }),
+  resetSettings: () => set({ settings: getDefaultSettings() })
 }));
