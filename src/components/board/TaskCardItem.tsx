@@ -8,6 +8,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { calculateTaskProgress, calculateTaskHealthScore } from '@/lib/selectors';
 import { useTaskStore } from '@/store/taskStore';
 import { getUserDisplayName } from '@/lib/localization';
+import { useTranslationStore } from '@/store/translationStore';
 
 interface TaskCardItemProps {
   task: TaskCard;
@@ -27,6 +28,34 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
   const assignee = users.find(u => u.id === task.assigneeId);
   const pm = users.find(u => u.id === task.pmId);
   const project = projects.find(p => p.id === task.projectId);
+  const { settings } = useTranslationStore();
+  const uiLang = settings.uiLanguage;
+
+  let primaryTitle = task.title;
+  let secondaryTitle = '';
+  let transStatus = null;
+
+  if (task.titleI18n) {
+    const targetLang = uiLang === 'ko' ? 'vi' : 'ko';
+    if (uiLang === task.titleI18n.originalLanguage) {
+      primaryTitle = task.titleI18n.originalText;
+      const trans = task.titleI18n.translations?.[targetLang];
+      if (trans) {
+        secondaryTitle = `[${targetLang.toUpperCase()} 자동번역] ${trans.text}`;
+        transStatus = trans.status;
+      }
+    } else {
+      const trans = task.titleI18n.translations?.[uiLang];
+      if (trans && trans.status !== 'TRANSLATION_FAILED') {
+        primaryTitle = trans.text;
+        secondaryTitle = `[${task.titleI18n.originalLanguage.toUpperCase()} 원문] ${task.titleI18n.originalText}`;
+        transStatus = trans.status;
+      } else {
+        primaryTitle = task.titleI18n.originalText;
+        secondaryTitle = `(${uiLang.toUpperCase()} 번역 불가)`;
+      }
+    }
+  }
 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
@@ -78,6 +107,21 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
               승인 대기
             </span>
           )}
+          {transStatus === 'AUTO_TRANSLATED' && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded border font-bold bg-blue-50 text-blue-600 border-blue-200">
+              Auto
+            </span>
+          )}
+          {transStatus === 'HUMAN_REVIEW_REQUIRED' && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded border font-bold bg-yellow-50 text-yellow-600 border-yellow-200">
+              검토필요
+            </span>
+          )}
+          {transStatus === 'HUMAN_APPROVED' && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded border font-bold bg-green-50 text-green-600 border-green-200">
+              승인번역
+            </span>
+          )}
         </div>
         {task.sourceSheet && (
           <span className="text-[9px] text-[var(--color-text-sub)] bg-[var(--color-bg)] px-1.5 py-0.5 rounded border border-[var(--color-border)] flex items-center whitespace-nowrap">
@@ -92,8 +136,13 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
           {project?.title || 'Unknown Project'}
         </span>
         <h4 className="font-semibold text-[var(--color-text-main)] text-sm leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
-          {task.title}
+          {primaryTitle}
         </h4>
+        {secondaryTitle && (
+          <p className="text-[10px] text-[var(--color-text-sub)] mt-1 truncate">
+            {secondaryTitle}
+          </p>
+        )}
       </div>
 
       <div className="my-3">

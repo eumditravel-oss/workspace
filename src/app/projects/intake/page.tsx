@@ -3,13 +3,16 @@
 import React, { useState } from 'react';
 import { Project, PersonnelCard, ProjectSourceType } from '@/types/models';
 import { useAuthStore } from '@/store/authStore';
-import { getUserDisplayName } from '@/lib/localization';
+import { getUserDisplayName, useTranslation } from '@/lib/localization';
 import { useProjectStore } from '@/store/projectStore';
 import { useNotificationStore } from '@/store/notificationStore';
+import { useTranslationStore } from '@/store/translationStore';
 import { mockUsers } from '@/data/mockData';
 
 export default function IntakePage() {
   const { currentUser } = useAuthStore();
+  const { settings } = useTranslationStore();
+  const t = useTranslation(settings.uiLanguage);
   const { projects, addProject, assignPM, updateProjectField } = useProjectStore();
   const { addNotification } = useNotificationStore();
   
@@ -86,18 +89,26 @@ export default function IntakePage() {
     <div className="max-w-5xl w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       
       {/* Tabs */}
-      <div className="flex border-b border-[var(--color-border)]">
+      <div className="flex gap-4 mb-4 mt-8">
         <button
-          className={`px-6 py-3 font-bold text-sm transition-colors border-b-2 ${isClient ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50' : 'border-transparent text-[var(--color-text-sub)] hover:text-[var(--color-text-main)] hover:bg-gray-50'}`}
           onClick={() => { setActiveTab('CLIENT_ORDER'); setShowForm(false); }}
+          className={`px-4 py-2 font-medium rounded-md transition-colors ${
+            activeTab === 'CLIENT_ORDER'
+              ? 'bg-[var(--color-primary)] text-[var(--color-surface)] shadow-md'
+              : 'bg-[var(--color-bg-sub)] text-[var(--color-text-sub)] hover:bg-gray-200'
+          }`}
         >
-          수주 프로젝트 관리
+          {t('orderProjectManagement')}
         </button>
         <button
-          className={`px-6 py-3 font-bold text-sm transition-colors border-b-2 ${!isClient ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50' : 'border-transparent text-[var(--color-text-sub)] hover:text-[var(--color-text-main)] hover:bg-gray-50'}`}
           onClick={() => { setActiveTab('INTERNAL_DEVELOPMENT'); setShowForm(false); }}
+          className={`px-4 py-2 font-medium rounded-md transition-colors ${
+            activeTab === 'INTERNAL_DEVELOPMENT'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'bg-[var(--color-bg-sub)] text-[var(--color-text-sub)] hover:bg-gray-200'
+          }`}
         >
-          개발팀 업무 리스트 관리
+          {t('devTaskListManagement')}
         </button>
       </div>
 

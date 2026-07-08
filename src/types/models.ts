@@ -124,6 +124,9 @@ export interface Project {
   deliveryCloseReason?: string;
   createdAt?: string;
   updatedAt?: string;
+  projectNameI18n?: MultiLangText;
+  clientRequestI18n?: MultiLangText;
+  internalMemoI18n?: MultiLangText;
 }
 
 export interface ProjectWorkPart {
@@ -175,6 +178,11 @@ export interface TaskCard {
   createdAt?: string;
   updatedAt?: string;
   completedAt?: string;
+  titleI18n?: MultiLangText;
+  descriptionI18n?: MultiLangText;
+  workScopeI18n?: MultiLangText;
+  memoI18n?: MultiLangText;
+  translationReviewStatus?: TranslationStatus;
 }
 
 export interface TaskWorkSegment {
@@ -475,3 +483,64 @@ export interface BulkEditSession {
   appliedAt?: string;
 }
 
+export type LanguageCode = 'ko' | 'vi' | 'en';
+
+export type WorkspaceLanguage = 'ko' | 'vi';
+
+export type TranslationStatus =
+  | 'NONE'
+  | 'NEEDS_TRANSLATION'
+  | 'AUTO_TRANSLATED'
+  | 'HUMAN_REVIEW_REQUIRED'
+  | 'HUMAN_APPROVED'
+  | 'TRANSLATION_FAILED'
+  | 'SKIPPED_BY_USER'
+  | 'PROVIDER_LIMIT_EXCEEDED';
+
+export type TranslationProvider =
+  | 'DISABLED'
+  | 'MANUAL_ONLY'
+  | 'MYMEMORY_PUBLIC_NO_KEY'
+  | 'LIBRETRANSLATE_PUBLIC_NO_KEY'
+  | 'LIBRETRANSLATE_SELF_HOSTED'
+  | 'LOCAL_PROXY'
+  | 'GOOGLE_CLOUD_TRANSLATION';
+
+export type MultiLangText = {
+  originalLanguage: LanguageCode;
+  originalText: string;
+  translations: Partial<Record<LanguageCode, {
+    text: string;
+    status: TranslationStatus;
+    provider?: TranslationProvider;
+    translatedAt?: string;
+    reviewedBy?: string;
+    reviewedAt?: string;
+    sourceHash?: string;
+    errorMessage?: string;
+  }>>;
+};
+
+export type TranslationProviderHealth = {
+  provider: TranslationProvider;
+  endpoint?: string;
+  requiresApiKey: boolean;
+  corsOk: boolean;
+  koToViOk: boolean;
+  viToKoOk: boolean;
+  quotaWarning?: string;
+  lastCheckedAt: string;
+  status: 'AVAILABLE' | 'UNAVAILABLE' | 'LIMITED' | 'UNKNOWN';
+};
+
+export type TranslationCacheItem = {
+  sourceHash: string;
+  sourceLanguage: LanguageCode;
+  targetLanguage: LanguageCode;
+  sourceText: string;
+  translatedText: string;
+  provider: TranslationProvider;
+  status: TranslationStatus;
+  createdAt: string;
+  expiresAt?: string;
+};

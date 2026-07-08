@@ -2,13 +2,16 @@
 import React from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
+import { useTranslationStore } from '@/store/translationStore';
 import { mockUsers } from '@/data/mockData';
-import { Bell, User, ListTodo, TrendingUp } from 'lucide-react';
-import { getUserDisplayName } from '@/lib/localization';
+import { User, ListTodo, TrendingUp } from 'lucide-react';
+import { getUserDisplayName, useTranslation } from '@/lib/localization';
 import { NotificationPopover } from './NotificationPopover';
 
 export const Header = () => {
   const { currentUser, loginAs, appMode, dataSourceMode, setAppMode } = useAuthStore();
+  const { settings, updateSettings } = useTranslationStore();
+  const t = useTranslation(settings.uiLanguage);
 
   const getRoleName = (role: string) => {
     const roleMap: Record<string, string> = {
@@ -68,6 +71,22 @@ export const Header = () => {
         </div>
       </div>
       <div className="flex items-center gap-5">
+        {/* Language Toggle */}
+        <div className="flex items-center bg-[var(--color-bg-sub)] rounded px-0.5 py-0.5 text-[10px] font-bold border border-[var(--color-border)]">
+          <button
+            onClick={() => updateSettings({ uiLanguage: 'ko' })}
+            className={`px-2 py-1 rounded transition-colors ${settings.uiLanguage === 'ko' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-sub)]'}`}
+          >
+            KOR
+          </button>
+          <button
+            onClick={() => updateSettings({ uiLanguage: 'vi' })}
+            className={`px-2 py-1 rounded transition-colors ${settings.uiLanguage === 'vi' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-sub)]'}`}
+          >
+            VIET
+          </button>
+        </div>
+
         {/* Mock Login Switcher */}
         <select
           className="border border-[var(--color-border)] rounded-md px-2 py-1 text-xs bg-[var(--color-bg)] text-[var(--color-text-sub)] outline-none focus:border-indigo-500"

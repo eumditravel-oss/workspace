@@ -9,6 +9,8 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { QcIssueModal } from '@/components/evaluation/QcIssueModal';
 import { ScheduleRequestModal } from '@/components/board/ScheduleRequestModal';
 import { calculateTaskHealthScore } from '@/lib/selectors';
+import { useTranslationStore } from '@/store/translationStore';
+import { useTranslation } from '@/lib/localization';
 
 interface TaskDetailModalProps {
   task: TaskCard;
@@ -28,6 +30,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
   const currentUser = useAuthStore(state => state.currentUser);
   const { updateTaskProgress, progressUpdates, checklists, artifacts, blockers, addBlocker, resolveBlocker, workSegments, addWorkSegment, deleteWorkSegment } = useTaskStore();
   const { qcIssues, appeals, addAppeal } = useEvaluationStore();
+  const { settings } = useTranslationStore();
+  const t = useTranslation(settings.uiLanguage);
   const { addRequest } = useApprovalStore();
 
   const taskUpdates = progressUpdates.filter(u => u.taskId === task.id);
@@ -173,7 +177,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
   };
 
   const tabs = [
-    { id: 'OVERVIEW', label: '개요', icon: <FileText className="w-4 h-4" /> },
+    { id: 'OVERVIEW', label: t('overview') || '개요', icon: <FileText className="w-4 h-4" /> },
     { id: 'WORK_SEGMENTS', label: '세부 작업내역', icon: <ListTodo className="w-4 h-4" /> },
     { id: 'PROGRESS', label: '진행 내용', icon: <Clock className="w-4 h-4" /> },
     { id: 'CHECKLIST', label: '체크리스트', icon: <CheckSquare className="w-4 h-4" /> },
@@ -182,6 +186,25 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
     { id: 'EVALUATION', label: 'QC/평가', icon: <ShieldAlert className="w-4 h-4" /> },
     { id: 'HISTORY', label: '이력', icon: <History className="w-4 h-4" /> },
   ];
+
+  const uiLang = settings.uiLanguage;
+  let primaryTitle = task.title;
+  let secondaryTitle = '';
+  if (task.titleI18n) {
+    if (uiLang === task.titleI18n.originalLanguage) {
+      primaryTitle = task.titleI18n.originalText;
+      const trans = task.titleI18n.translations?.[uiLang === 'ko' ? 'vi' : 'ko'];
+      if (trans && trans.status !== 'TRANSLATION_FAILED') secondaryTitle = trans.text;
+    } else {
+      const trans = task.titleI18n.translations?.[uiLang];
+      if (trans && trans.status !== 'TRANSLATION_FAILED') {
+        primaryTitle = trans.text;
+        secondaryTitle = task.titleI18n.originalText;
+      } else {
+        primaryTitle = task.titleI18n.originalText;
+      }
+    }
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
@@ -196,7 +219,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                 ♥ Health: {healthScore}
               </span>
             </div>
-            <h2 className="text-xl font-bold text-[var(--color-text-main)]">{task.title}</h2>
+            <h2 className="text-xl font-bold text-[var(--color-text-main)]">{primaryTitle}</h2>
+            {secondaryTitle && (
+              <h3 className="text-sm font-medium text-[var(--color-text-sub)] mt-1 opacity-80">{secondaryTitle}</h3>
+            )}
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-[var(--color-text-sub)]">
             <X className="w-5 h-5" />

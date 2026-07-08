@@ -3,6 +3,8 @@ import { Project, TaskCard, RevisionRequest } from '@/types/models';
 import { ProjectSummaryCard } from './ProjectSummaryCard';
 import { GroupByOption } from './Board';
 import { getDeliveryUrgencyBucket, getProjectBoardColumn } from '@/lib/selectors';
+import { useTranslation } from '@/lib/localization';
+import { useTranslationStore } from '@/store/translationStore';
 
 interface Props {
   projects: Project[];
@@ -14,24 +16,27 @@ interface Props {
 }
 
 export const ProjectBoard: React.FC<Props> = ({ projects, tasks, revisionRequests, groupBy, onProjectClick, onProjectMove }) => {
+  const { settings } = useTranslationStore();
+  const t = useTranslation(settings.uiLanguage);
+
   const getColumns = () => {
     if (groupBy === 'PRIORITY') {
       const isInternal = projects.length > 0 && projects[0].projectSourceType === 'INTERNAL_DEVELOPMENT';
-      const label = isInternal ? '목표' : '납품';
+      const label = isInternal ? t('goal') : t('delivery');
       return [
-        { id: 'OVERDUE', title: `🚨 ${label}일 경과` },
-        { id: 'WITHIN_1_WEEK', title: `🔴 ${label} 1주일 전` },
-        { id: 'WITHIN_2_WEEKS', title: `🟠 ${label} 2주일 전` },
-        { id: 'WITHIN_1_MONTH', title: `🔵 ${label} 1달 전` },
-        { id: 'UNSET', title: '⚪ 미정' },
+        { id: 'OVERDUE', title: `🚨 ${t('overdue', { label })}` },
+        { id: 'WITHIN_1_WEEK', title: `🔴 ${t('dueIn', { label, time: '1w' })}` },
+        { id: 'WITHIN_2_WEEKS', title: `🟠 ${t('dueIn', { label, time: '2w' })}` },
+        { id: 'WITHIN_1_MONTH', title: `🔵 ${t('dueIn', { label, time: '1m' })}` },
+        { id: 'UNSET', title: `⚪ ${t('unset')}` },
       ];
     }
     // Default to Status groups
     return [
-      { id: 'PRE_WORK', title: '착수 전' },
-      { id: 'IN_PROGRESS', title: '진행 중' },
-      { id: 'COMPLETED', title: '완료' },
-      { id: 'REVISION', title: '수정(Revision)' },
+      { id: 'PRE_WORK', title: t('preWork') },
+      { id: 'IN_PROGRESS', title: t('inProgress') },
+      { id: 'COMPLETED', title: t('completed') },
+      { id: 'REVISION', title: t('revision') },
     ];
   };
 

@@ -14,8 +14,10 @@ import { RevisionRequestModal } from '@/components/board/RevisionRequestModal';
 import { TaskStatus, ProjectSourceType, Project } from '@/types/models';
 import { DetailedLineStage, getProjectBoardColumn } from '@/lib/selectors';
 import { canViewProject, canViewTask, canEditProject } from '@/lib/permissions';
-import { FileText, ArrowLeft, ChevronRight, History, Wrench } from 'lucide-react';
+import { FileText, ArrowLeft, ChevronRight, History, Wrench, Code2, Briefcase } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
+import { useTranslationStore } from '@/store/translationStore';
+import { useTranslation } from '@/lib/localization';
 
 export type ExtendedViewType = BoardViewType | 'PART' | 'HISTORY';
 
@@ -35,6 +37,9 @@ export default function ProjectBoardPage() {
   const [dispatchProject, setDispatchProject] = useState<Project | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number | 'ALL'>('ALL');
   const [activeTab, setActiveTab] = useState<ProjectSourceType>('INTERNAL_DEVELOPMENT');
+  
+  const { settings } = useTranslationStore();
+  const t = useTranslation(settings.uiLanguage);
 
   const applyPreset = (preset: string) => {
     if (preset === 'ASSIGNEE_VIEW') {
@@ -162,15 +167,17 @@ export default function ProjectBoardPage() {
           <div className="flex bg-gray-100/80 p-1 rounded-md border border-[var(--color-border)]">
             <button
               onClick={() => setActiveTab('INTERNAL_DEVELOPMENT')}
-              className={`px-4 py-1.5 text-sm font-semibold rounded-[4px] transition-colors ${activeTab === 'INTERNAL_DEVELOPMENT' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm border border-[var(--color-border)]/50' : 'text-[var(--color-text-sub)] hover:text-[var(--color-text-main)]'}`}
+              className={`flex items-center gap-2 px-4 py-1.5 text-sm font-semibold rounded-[4px] transition-colors ${activeTab === 'INTERNAL_DEVELOPMENT' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm border border-[var(--color-border)]/50' : 'text-[var(--color-text-sub)] hover:text-[var(--color-text-main)]'}`}
             >
-              개발팀 작업
+              <Code2 className="w-4 h-4" />
+              {t('devTeamWork')}
             </button>
             <button
               onClick={() => setActiveTab('CLIENT_ORDER')}
-              className={`px-4 py-1.5 text-sm font-semibold rounded-[4px] transition-colors ${activeTab === 'CLIENT_ORDER' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm border border-[var(--color-border)]/50' : 'text-[var(--color-text-sub)] hover:text-[var(--color-text-main)]'}`}
+              className={`flex items-center gap-2 px-4 py-1.5 text-sm font-semibold rounded-[4px] transition-colors ${activeTab === 'CLIENT_ORDER' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm border border-[var(--color-border)]/50' : 'text-[var(--color-text-sub)] hover:text-[var(--color-text-main)]'}`}
             >
-              외부 수주 프로젝트
+              <Briefcase className="w-4 h-4" />
+              {t('externalProject')}
             </button>
           </div>
         )}

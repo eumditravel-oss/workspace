@@ -4,7 +4,10 @@ import { useAuthStore } from '@/store/authStore';
 import { useTaskStore } from '@/store/taskStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useNotificationStore } from '@/store/notificationStore';
-import { X, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { X, Plus, Trash2, AlertCircle, Languages, RefreshCw } from 'lucide-react';
+import { detectLanguage } from '@/lib/translation/detector';
+import { executeTranslation } from '@/lib/translation/providers';
+import { LanguageCode } from '@/types/models';
 
 interface Props {
   project: Project;
@@ -53,7 +56,56 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
   const handleUpdateTask = (index: number, field: keyof TaskCard, value: any) => {
     const newTasks = [...tasks];
     newTasks[index] = { ...newTasks[index], [field]: value };
+    
+    // Auto detect language on title change
+    if (field === 'title') {
+      const detected = detectLanguage(value as string);
+      if (detected === 'ko' || detected === 'vi') {
+        const i18n = newTasks[index].titleI18n || { originalLanguage: detected, originalText: value, translations: {} };
+        i18n.originalLanguage = detected;
+        i18n.originalText = value;
+        newTasks[index].titleI18n = i18n;
+      }
+    }
+    
     setTasks(newTasks);
+  };
+
+  const handleTranslate = async (index: number) => {
+    const task = tasks[index];
+    if (!task.title) return;
+    
+    const detected = detectLanguage(task.title);
+    if (detected === 'UNKNOWN') {
+      alert('언어를 감지할 수 없습니다. 한국어 또는 베트남어로 명확히 입력해주세요.');
+      return;
+    }
+
+    const sourceLang = detected as LanguageCode;
+    const targetLang: LanguageCode = sourceLang === 'ko' ? 'vi' : 'ko';
+
+    const newTasks = [...tasks];
+    if (!newTasks[index].titleI18n) {
+      newTasks[index].titleI18n = { originalLanguage: sourceLang, originalText: task.title, translations: {} };
+    }
+    
+    newTasks[index].titleI18n!.translations![targetLang] = {
+      text: '번역 중...',
+      status: 'NEEDS_TRANSLATION'
+    };
+    setTasks([...newTasks]);
+
+    const result = await executeTranslation({ text: task.title, sourceLang, targetLang });
+    
+    const updatedTasks = [...tasks];
+    updatedTasks[index].titleI18n!.translations![targetLang] = {
+      text: result.text || '',
+      status: result.status,
+      provider: result.provider,
+      errorMessage: result.errorMessage,
+      translatedAt: new Date().toISOString()
+    };
+    setTasks(updatedTasks);
   };
 
   const validate = () => {
@@ -98,7 +150,8 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
         dueDate: t.dueDate,
         orderIndex: i,
         approvalStatus: 'APPROVED',
-        sourceType: project.projectSourceType === 'INTERNAL_DEVELOPMENT' ? 'INTERNAL_DEVELOPMENT_DISPATCH' : 'PM_DISPATCH'
+        sourceType: project.projectSourceType === 'INTERNAL_DEVELOPMENT' ? 'INTERNAL_DEVELOPMENT_DISPATCH' : 'PM_DISPATCH',
+        titleI18n: t.titleI18n
       });
 
       // 알림 생성
@@ -161,13 +214,42 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="col-span-2 md:col-span-3">
                     <label className="block text-xs font-bold text-[var(--color-text-sub)] mb-1">업무명 *</label>
-                    <input 
-                      type="text" 
-                      value={task.title} 
-                      onChange={(e) => handleUpdateTask(idx, 'title', e.target.value)}
-                      className="w-full border rounded p-2 text-sm"
-                      placeholder="업무명 입력"
-                    />
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        value={task.title} 
+                        onChange={(e) => handleUpdateTask(idx, 'title', e.target.value)}
+                        className="w-full border rounded p-2 text-sm"
+                        placeholder="업무명 입력"
+                      />
+                      <button
+                        onClick={() => handleTranslate(idx)}
+                        className="px-3 py-1 bg-[var(--color-bg-sub)] border border-[var(--color-border)] rounded hover:bg-gray-100 flex items-center gap-1 text-xs shrink-0"
+                      >
+                        <Languages className="w-4 h-4" /> 자동번역
+                      </button>
+                    </div>
+                    {task.titleI18n && (
+                      <div className="mt-2 text-xs p-2 bg-blue-50/50 rounded border border-blue-100/50">
+                        <div className="text-gray-500 mb-1">
+                          입력 언어: {task.titleI18n.originalLanguage === 'ko' ? '한국어 감지됨 · VI 번역 예정' : (task.titleI18n.originalLanguage === 'vi' ? '베트남어 감지됨 · KO 번역 예정' : '감지 불가')}
+                        </div>
+                        {Object.entries(task.titleI18n.translations || {}).map(([lang, trans]) => (
+                          <div key={lang} className="flex items-center gap-2 mt-1">
+                            <span className="font-bold text-blue-800">{lang.toUpperCase()}:</span>
+                            <span className={trans.status === 'TRANSLATION_FAILED' || trans.status === 'PROVIDER_LIMIT_EXCEEDED' ? 'text-red-500' : 'text-gray-700'}>
+                              {trans.text || trans.errorMessage || '(번역 실패)'}
+                            </span>
+                            {trans.status === 'PROVIDER_LIMIT_EXCEEDED' && <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px]">한도 초과</span>}
+                            {(trans.status === 'TRANSLATION_FAILED' || trans.status === 'PROVIDER_LIMIT_EXCEEDED') && (
+                              <button onClick={() => handleTranslate(idx)} className="text-blue-500 hover:text-blue-700 ml-2">
+                                <RefreshCw className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[var(--color-text-sub)] mb-1">우선순위</label>

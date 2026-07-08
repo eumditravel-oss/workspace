@@ -5,8 +5,10 @@ import { useSettingStore } from '@/store/settingStore';
 import { useApprovalStore } from '@/store/approvalStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useScheduleStore } from '@/store/scheduleStore';
+import { useTranslationStore } from '@/store/translationStore';
 
-import { Project, TaskCard, PersonnelCard, WorkspaceSetting, TaskWorkSegment, ApprovalRequest, RevisionRequest, PostDeliveryWorkRequest, Notification, PersonalSchedule } from '@/types/models';
+import { Project, TaskCard, PersonnelCard, WorkspaceSetting, TaskWorkSegment, ApprovalRequest, RevisionRequest, PostDeliveryWorkRequest, Notification, PersonalSchedule, WorkspaceLanguage, TranslationProviderHealth, TranslationCacheItem } from '@/types/models';
+import { TranslationSettings } from '@/store/translationStore';
 
 export interface WorkspaceExportData {
   schemaVersion: string;
@@ -23,6 +25,10 @@ export interface WorkspaceExportData {
     postDeliveryWorkRequests: PostDeliveryWorkRequest[];
     notifications: Notification[];
     personalSchedules: PersonalSchedule[];
+    workspaceLanguage?: WorkspaceLanguage;
+    translationSettings?: TranslationSettings;
+    translationProviderHealths?: Record<string, TranslationProviderHealth>;
+    translationCache?: TranslationCacheItem[];
   };
 }
 
@@ -34,7 +40,13 @@ export const exportWorkspaceData = (): WorkspaceExportData => {
   const { requests: approvalRequests } = useApprovalStore.getState();
   const { notifications } = useNotificationStore.getState();
   const { schedules: personalSchedules } = useScheduleStore.getState();
+  const { settings: translationSettings, providerHealths, translationCache } = useTranslationStore.getState();
 
+  // Sanitize secrets before export
+  const sanitizedTranslationSettings = { ...translationSettings };
+  delete sanitizedTranslationSettings.myMemoryContactEmail;
+  delete sanitizedTranslationSettings.libreTranslateEndpoint; // Optional: keep or remove depending on security, prompt says "endpoint URL은 포함 가능하지만, Secret은 포함 금지." We'll keep endpoint but remove email.
+  
   return {
     schemaVersion: "1.0.0",
     exportedAt: new Date().toISOString(),
@@ -49,7 +61,11 @@ export const exportWorkspaceData = (): WorkspaceExportData => {
       revisionRequests,
       postDeliveryWorkRequests,
       notifications,
-      personalSchedules
+      personalSchedules,
+      workspaceLanguage: translationSettings.uiLanguage,
+      translationSettings: sanitizedTranslationSettings,
+      translationProviderHealths: providerHealths,
+      translationCache
     }
   };
 };
