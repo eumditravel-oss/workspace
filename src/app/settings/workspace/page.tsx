@@ -11,7 +11,7 @@ import { exportWorkspaceData, downloadJson, saveDraftToLocalStorage, validateImp
 export default function WorkspaceSettingsPage() {
   const { currentUser, appMode, setDataSourceMode } = useAuthStore();
   const { settings, updateSetting } = useSettingStore();
-  const { projects, batchCloseOverdueProjects, loadDummyProjects } = useProjectStore();
+  const { batchCloseOverdueProjects, loadDummyProjects } = useProjectStore();
   const { loadDummyTasks } = useTaskStore();
   
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -61,7 +61,7 @@ export default function WorkspaceSettingsPage() {
         } else {
           alert('잘못된 형태의 JSON 파일입니다.');
         }
-      } catch (err) {
+      } catch {
         alert('JSON 파싱 실패');
       }
     };
@@ -88,7 +88,7 @@ export default function WorkspaceSettingsPage() {
           <Settings className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-[var(--color-text-main)]">운영 설정을 볼 권한이 없습니다.</h1>
+          <h1 className="text-xl font-bold text-[var(--color-text-main)]">운영 설정</h1>
           <p className="text-sm text-[var(--color-text-sub)] mt-1">시스템의 주요 정책 및 기준값을 변경합니다. (AuditLog 자동 기록)</p>
         </div>
       </div>
@@ -143,7 +143,7 @@ export default function WorkspaceSettingsPage() {
                     <pre className="text-sm font-mono text-[var(--color-text-main)] whitespace-pre-wrap">
                       {typeof setting.value === 'object' ? JSON.stringify(setting.value, null, 2) : String(setting.value)}
                     </pre>
-                    <div className="text-[10px] text-[var(--color-text-sub)] font-mono text-right shrink-0">
+                    <div className="text-[10px] text-[var(--color-text-sub)] font-mono text-right shrink-0" suppressHydrationWarning>
                       Last Updated: {new Date(setting.updatedAt).toLocaleString()}<br/>
                       By: {setting.updatedBy}
                     </div>
