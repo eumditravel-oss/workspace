@@ -74,19 +74,6 @@ export const SuperAdminDashboard = ({ selectedMonth }: { selectedMonth: string |
             <EmptyState 
               title="아직 표시할 프로젝트가 없습니다."
               description="JSON 데이터를 불러오거나 새 프로젝트를 등록해 주세요."
-              actions={
-                <>
-                  <button className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-md text-sm font-semibold hover:bg-indigo-100 transition-colors">
-                    JSON 불러오기
-                  </button>
-                  <button className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-semibold hover:bg-indigo-700 transition-colors">
-                    수주 프로젝트 등록
-                  </button>
-                  <button className="px-4 py-2 bg-[var(--color-surface)] border border-[var(--color-border-strong)] text-[var(--color-text-main)] rounded-md text-sm font-semibold hover:bg-[var(--color-bg)] transition-colors">
-                    개발팀 작업 등록
-                  </button>
-                </>
-              }
             />
           </div>
         ) : (
