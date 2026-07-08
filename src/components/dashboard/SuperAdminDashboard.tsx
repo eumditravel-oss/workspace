@@ -5,7 +5,7 @@ import { useProjectStore } from '@/store/projectStore';
 import { useTaskStore } from '@/store/taskStore';
 import { getDeliveryUrgencyBucket, getProjectOverallProgress } from '@/lib/selectors';
 
-export const SuperAdminDashboard = ({ selectedMonth }: { selectedMonth: number | 'ALL' }) => {
+export const SuperAdminDashboard = ({ selectedMonth }: { selectedMonth: string | 'ALL' }) => {
   const { projects } = useProjectStore();
   const { tasks } = useTaskStore();
 
@@ -14,8 +14,7 @@ export const SuperAdminDashboard = ({ selectedMonth }: { selectedMonth: number |
     if (selectedMonth === 'ALL') return true;
     const dateStr = p.projectSourceType === 'INTERNAL_DEVELOPMENT' ? p.targetDate : p.deliveryDate;
     if (!dateStr) return false;
-    const pMonth = new Date(dateStr).getMonth() + 1;
-    return pMonth === selectedMonth;
+    return dateStr.startsWith(selectedMonth);
   });
   
   // 지표 계산

@@ -3,18 +3,21 @@ import { SummaryCard } from './SummaryCard';
 import { CheckCircle, AlertTriangle, Clock, List } from 'lucide-react';
 import { useTaskStore } from '@/store/taskStore';
 import { useAuthStore } from '@/store/authStore';
+import { useProjectStore } from '@/store/projectStore';
 
-export const WorkerDashboard = ({ selectedMonth }: { selectedMonth: number | 'ALL' }) => {
+export const WorkerDashboard = ({ selectedMonth }: { selectedMonth: string | 'ALL' }) => {
   const { currentUser } = useAuthStore();
   const { tasks } = useTaskStore();
+  const { projects } = useProjectStore();
 
   const myTasks = tasks.filter(t => {
     if (t.isDeleted || t.assigneeId !== currentUser?.id) return false;
     if (selectedMonth === 'ALL') return true;
-    const dateStr = t.dueDate || t.startDate;
+    const p = projects.find(p => p.id === t.projectId);
+    if (!p) return false;
+    const dateStr = p.projectSourceType === 'INTERNAL_DEVELOPMENT' ? p.targetDate : p.deliveryDate;
     if (!dateStr) return false;
-    const tMonth = new Date(dateStr).getMonth() + 1;
-    return tMonth === selectedMonth;
+    return dateStr.startsWith(selectedMonth);
   });
   const inProgressCount = myTasks.filter(t => t.status === 'IN_PROGRESS' || t.status === 'READY').length;
   const reviewCount = myTasks.filter(t => t.status === 'REVIEW').length;

@@ -6,7 +6,7 @@ import { useTaskStore } from '@/store/taskStore';
 import { useAuthStore } from '@/store/authStore';
 import { getDeliveryUrgencyBucket, getProjectOverallProgress } from '@/lib/selectors';
 
-export const DepartmentManagerDashboard = ({ selectedMonth }: { selectedMonth: number | 'ALL' }) => {
+export const DepartmentManagerDashboard = ({ selectedMonth }: { selectedMonth: string | 'ALL' }) => {
   const { currentUser } = useAuthStore();
   const { projects } = useProjectStore();
   const { tasks } = useTaskStore();
@@ -16,8 +16,7 @@ export const DepartmentManagerDashboard = ({ selectedMonth }: { selectedMonth: n
     if (selectedMonth === 'ALL') return true;
     const dateStr = p.projectSourceType === 'INTERNAL_DEVELOPMENT' ? p.targetDate : p.deliveryDate;
     if (!dateStr) return false;
-    const pMonth = new Date(dateStr).getMonth() + 1;
-    return pMonth === selectedMonth;
+    return dateStr.startsWith(selectedMonth);
   });
   const deptTasks = tasks.filter(t => deptProjects.some(p => p.id === t.projectId));
 

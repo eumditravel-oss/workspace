@@ -38,8 +38,7 @@ export const ProjectBoard: React.FC<Props> = ({ projects, tasks, revisionRequest
 
   return (
     <div 
-      className="grid gap-6 pb-6 p-2" 
-      style={{ gridTemplateColumns: `repeat(auto-fit, minmax(240px, 1fr))` }}
+      className={`grid gap-6 pb-6 p-2 grid-cols-1 md:grid-cols-2 ${columns.length === 5 ? 'lg:grid-cols-3 xl:grid-cols-5' : 'lg:grid-cols-4'}`}
     >
       {columns.map(col => {
         const colProjects = projects.filter(p => {

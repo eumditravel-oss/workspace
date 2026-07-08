@@ -5,10 +5,24 @@ import { SuperAdminDashboard } from '@/components/dashboard/SuperAdminDashboard'
 import { DepartmentManagerDashboard } from '@/components/dashboard/DepartmentManagerDashboard';
 import { PMDashboard } from '@/components/dashboard/PMDashboard';
 import { WorkerDashboard } from '@/components/dashboard/WorkerDashboard';
+import { useProjectStore } from '@/store/projectStore';
+import { useMemo } from 'react';
 
 export default function Home() {
   const { currentUser } = useAuthStore();
-  const [selectedMonth, setSelectedMonth] = useState<number | 'ALL'>('ALL');
+  const { projects } = useProjectStore();
+  const [selectedMonth, setSelectedMonth] = useState<string | 'ALL'>('ALL');
+
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    projects.forEach(p => {
+      const dateStr = p.deliveryDate || p.targetDate;
+      if (dateStr && dateStr.length >= 7) {
+        months.add(dateStr.substring(0, 7)); // "YYYY-MM"
+      }
+    });
+    return Array.from(months).sort().reverse(); // 최신 월 순서로
+  }, [projects]);
 
   if (!currentUser) return <div className="p-6">Loading...</div>;
 
@@ -21,12 +35,15 @@ export default function Home() {
           <select 
             className="border rounded px-3 py-1.5 bg-gray-50 text-sm font-medium"
             value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
+            onChange={(e) => setSelectedMonth(e.target.value)}
           >
             <option value="ALL">전체 월</option>
-            {[6, 7, 8].map(m => (
-              <option key={m} value={m}>2026년 {m}월</option>
-            ))}
+            {availableMonths.map(m => {
+              const [year, month] = m.split('-');
+              return (
+                <option key={m} value={m}>{year}년 {parseInt(month, 10)}월</option>
+              );
+            })}
           </select>
         </div>
       </div>
