@@ -4,11 +4,18 @@ import { CheckCircle, AlertTriangle, Clock, List } from 'lucide-react';
 import { useTaskStore } from '@/store/taskStore';
 import { useAuthStore } from '@/store/authStore';
 
-export const WorkerDashboard = () => {
+export const WorkerDashboard = ({ selectedMonth }: { selectedMonth: number | 'ALL' }) => {
   const { currentUser } = useAuthStore();
   const { tasks } = useTaskStore();
 
-  const myTasks = tasks.filter(t => !t.isDeleted && t.assigneeId === currentUser?.id);
+  const myTasks = tasks.filter(t => {
+    if (t.isDeleted || t.assigneeId !== currentUser?.id) return false;
+    if (selectedMonth === 'ALL') return true;
+    const dateStr = t.dueDate || t.startDate;
+    if (!dateStr) return false;
+    const tMonth = new Date(dateStr).getMonth() + 1;
+    return tMonth === selectedMonth;
+  });
   const inProgressCount = myTasks.filter(t => t.status === 'IN_PROGRESS' || t.status === 'READY').length;
   const reviewCount = myTasks.filter(t => t.status === 'REVIEW').length;
   

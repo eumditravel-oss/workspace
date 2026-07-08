@@ -10,6 +10,7 @@ interface TaskState {
   artifacts: TaskArtifact[];
   blockers: TaskBlocker[];
   workSegments: TaskWorkSegment[];
+  loadDummyTasks: () => void;
   updateTaskStatus: (taskId: string, newStatus: TaskStatus) => void;
   updateDetailedLineStage: (taskId: string, stage: DetailedLineStage) => void;
   updateTaskAssignee: (taskId: string, newAssigneeId: UserId | undefined) => void;
@@ -28,7 +29,7 @@ interface TaskState {
 }
 
 export const useTaskStore = create<TaskState>((set) => ({
-  tasks: fullTasks,
+  tasks: [],
   progressUpdates: [],
   checklists: [
     { id: 'chk1', taskId: '1', content: 'UI 디자인 시안 확인', isCompleted: true, completedAt: new Date().toISOString() },
@@ -37,6 +38,7 @@ export const useTaskStore = create<TaskState>((set) => ({
   artifacts: [],
   blockers: [],
   workSegments: [],
+  loadDummyTasks: () => set({ tasks: fullTasks }),
   updateTaskStatus: (taskId, newStatus) => set((state) => ({
     tasks: state.tasks.map(t => 
       t.id === taskId 

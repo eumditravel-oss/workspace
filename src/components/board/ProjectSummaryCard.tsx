@@ -63,11 +63,20 @@ export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick })
           <CheckCircle className="w-3 h-3" />
           <span>남은 업무 {pendingTasks}건</span>
         </div>
-        {project.deliveryDate && (
-          <div className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            <span>{project.deliveryDate} 납품</span>
-          </div>
+        {project.projectSourceType === 'INTERNAL_DEVELOPMENT' ? (
+          project.targetDate && (
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              <span>{project.targetDate} 목표</span>
+            </div>
+          )
+        ) : (
+          project.deliveryDate && (
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              <span>{project.deliveryDate} 납품</span>
+            </div>
+          )
         )}
       </div>
       {pendingRequestsCount > 0 && (

@@ -9,7 +9,7 @@ import { ProjectBoard } from '@/components/board/ProjectBoard';
 import { ProjectPartBoard } from '@/components/board/ProjectPartBoard';
 import { ProjectEvaluationModal } from '@/components/evaluation/ProjectEvaluationModal';
 import { PostDeliveryWorkModal } from '@/components/delivery/PostDeliveryWorkModal';
-import { TaskStatus } from '@/types/models';
+import { TaskStatus, ProjectSourceType } from '@/types/models';
 import { DetailedLineStage, getProjectBoardColumn } from '@/lib/selectors';
 import { canViewProject, canViewTask } from '@/lib/permissions';
 import { FileText, ArrowLeft, ChevronRight, History } from 'lucide-react';
@@ -17,7 +17,7 @@ import { FileText, ArrowLeft, ChevronRight, History } from 'lucide-react';
 export type ExtendedViewType = BoardViewType | 'PART' | 'HISTORY';
 
 export default function ProjectBoardPage() {
-  const { projects, postDeliveryWorkRequests } = useProjectStore();
+  const { projects, postDeliveryWorkRequests, revisionRequests } = useProjectStore();
   const { tasks, updateTaskStatus, updateDetailedLineStage, updateTaskAssignee, updateTaskPriority } = useTaskStore();
   const { currentUser, users } = useAuthStore();
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
@@ -27,6 +27,7 @@ export default function ProjectBoardPage() {
   const [showEvaluationModal, setShowEvaluationModal] = useState(false);
   const [showPostDeliveryModal, setShowPostDeliveryModal] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<number | 'ALL'>('ALL');
+  const [activeTab, setActiveTab] = useState<ProjectSourceType>('CLIENT_ORDER');
 
   const applyPreset = (preset: string) => {
     if (preset === 'ASSIGNEE_VIEW') {
@@ -63,6 +64,9 @@ export default function ProjectBoardPage() {
       
       return start <= targetMonthEnd && end >= targetMonthStart;
     });
+  }).filter(p => {
+    const pSource = p.projectSourceType || 'CLIENT_ORDER';
+    return pSource === activeTab;
   });
 
   // Auto-select removed to show Project Summary Board by default
@@ -112,6 +116,23 @@ export default function ProjectBoardPage() {
           )}
         </div>
         
+        {!selectedProjectId && (
+          <div className="flex bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setActiveTab('CLIENT_ORDER')}
+              className={`px-4 py-1.5 text-sm font-bold rounded-md transition-colors ${activeTab === 'CLIENT_ORDER' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              외부 수주 프로젝트
+            </button>
+            <button
+              onClick={() => setActiveTab('INTERNAL_DEVELOPMENT')}
+              className={`px-4 py-1.5 text-sm font-bold rounded-md transition-colors ${activeTab === 'INTERNAL_DEVELOPMENT' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              개발팀 작업
+            </button>
+          </div>
+        )}
+
         <div className="flex gap-2 flex-wrap items-center">
           {selectedProject && getProjectBoardColumn(selectedProject) === 'COMPLETED' && currentUser.role !== 'SUPER_ADMIN' && (
             <button
@@ -240,6 +261,7 @@ export default function ProjectBoardPage() {
         <ProjectBoard
           projects={filteredProjects}
           tasks={tasks}
+          revisionRequests={revisionRequests}
           groupBy={groupBy}
           onProjectClick={setSelectedProjectId}
         />

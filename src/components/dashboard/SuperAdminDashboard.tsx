@@ -5,11 +5,18 @@ import { useProjectStore } from '@/store/projectStore';
 import { useTaskStore } from '@/store/taskStore';
 import { getDeliveryUrgencyBucket, getProjectOverallProgress } from '@/lib/selectors';
 
-export const SuperAdminDashboard = () => {
+export const SuperAdminDashboard = ({ selectedMonth }: { selectedMonth: number | 'ALL' }) => {
   const { projects } = useProjectStore();
   const { tasks } = useTaskStore();
 
-  const activeProjects = projects.filter(p => !p.isDeleted && p.archiveStatus !== 'ARCHIVED');
+  const activeProjects = projects.filter(p => {
+    if (p.isDeleted || p.archiveStatus === 'ARCHIVED') return false;
+    if (selectedMonth === 'ALL') return true;
+    const dateStr = p.projectSourceType === 'INTERNAL_DEVELOPMENT' ? p.targetDate : p.deliveryDate;
+    if (!dateStr) return false;
+    const pMonth = new Date(dateStr).getMonth() + 1;
+    return pMonth === selectedMonth;
+  });
   
   // 지표 계산
   const urgentProjectsCount = activeProjects.filter(p => getDeliveryUrgencyBucket(p) === 'WITHIN_1_WEEK').length;

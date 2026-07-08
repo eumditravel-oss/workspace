@@ -42,9 +42,21 @@ export default function NotificationsPage() {
                 className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${!n.isRead ? 'bg-indigo-50/30' : ''}`}
               >
                 <div className="flex justify-between items-start mb-1">
-                  <h3 className={`font-semibold ${!n.isRead ? 'text-gray-900' : 'text-gray-600'}`}>
-                    {n.title}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    {(n.priority === 'CRITICAL' || n.priority === 'HIGH') && (
+                      <span className="bg-red-100 text-red-700 text-[10px] px-1.5 py-0.5 rounded font-bold border border-red-200">
+                        긴급
+                      </span>
+                    )}
+                    <h3 className={`font-semibold ${!n.isRead ? 'text-gray-900' : 'text-gray-600'}`}>
+                      {n.title}
+                    </h3>
+                    {n.count && n.count > 1 ? (
+                      <span className="bg-indigo-100 text-indigo-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-indigo-200">
+                        {n.count}개 알림 묶임
+                      </span>
+                    ) : null}
+                  </div>
                   <span className="text-xs text-gray-400">
                     {new Date(n.createdAt).toLocaleString()}
                   </span>

@@ -5,19 +5,27 @@ import { useApprovalStore } from '@/store/approvalStore';
 import { ApprovalRequestType } from '@/types/models';
 
 export default function ApprovalsPage() {
-  const { currentUser } = useAuthStore();
+  const { currentUser, users } = useAuthStore();
   const { requests, updateApprovalStatus } = useApprovalStore();
 
   if (!currentUser) return <div className="p-6">로그인이 필요합니다.</div>;
-  if (!['SUPER_ADMIN', 'DEPARTMENT_MANAGER'].includes(currentUser.role)) {
-    return <div className="p-6 text-red-500 font-bold">권한이 없습니다. 결재 권한자만 접근 가능합니다.</div>;
+  
+  const isDeputyOf = (targetUserId?: string) => {
+    if (!targetUserId) return false;
+    const targetUser = users.find(u => u.id === targetUserId);
+    return targetUser?.deputyApproverId === currentUser?.id;
+  };
+
+  const hasApprovalRights = ['SUPER_ADMIN', 'DEPARTMENT_MANAGER', 'PM'].includes(currentUser.role) || users.some(u => u.deputyApproverId === currentUser.id);
+  if (!hasApprovalRights) {
+    return <div className="p-6 text-red-500 font-bold">권한이 없습니다. 결재 권한자(또는 대리 결재자)만 접근 가능합니다.</div>;
   }
 
   // Only show requests pending for this manager or super admin, or PM
   const pendingRequests = requests.filter(r => 
-    (r.status === 'PENDING' && r.pmId === currentUser.id && currentUser.role === 'PM') ||
-    (r.status === 'MANAGER_REVIEWING' && r.managerId === currentUser.id) ||
-    (r.status === 'PENDING' && r.managerId === currentUser.id && !r.pmId) || // No PM, goes straight to manager
+    (r.status === 'PENDING' && (r.pmId === currentUser.id || isDeputyOf(r.pmId))) ||
+    (r.status === 'MANAGER_REVIEWING' && (r.managerId === currentUser.id || isDeputyOf(r.managerId))) ||
+    (r.status === 'PENDING' && (r.managerId === currentUser.id || isDeputyOf(r.managerId)) && !r.pmId) || // No PM, goes straight to manager
     (currentUser.role === 'SUPER_ADMIN' && ['PENDING', 'MANAGER_REVIEWING'].includes(r.status))
   );
   
@@ -38,10 +46,12 @@ export default function ApprovalsPage() {
 
     let nextStatus: 'APPROVED' | 'REJECTED' | 'MANAGER_REVIEWING' = action;
     
+    const isPmApproval = req.pmId === currentUser.id || isDeputyOf(req.pmId);
+
     // If PM is approving, it goes to Manager
-    if (action === 'APPROVED' && currentUser.role === 'PM' && req.managerId) {
+    if (action === 'APPROVED' && isPmApproval && req.managerId && req.status === 'PENDING') {
       nextStatus = 'MANAGER_REVIEWING';
-      comment = 'PM 1차 승인';
+      comment = comment || 'PM (또는 대리 결재자) 1차 승인';
     }
 
     updateApprovalStatus(id, nextStatus, currentUser.id, comment, alternativeType);
@@ -76,7 +86,7 @@ export default function ApprovalsPage() {
                       <button onClick={() => handleAction(r.id, 'APPROVED')} className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">승인</button>
                       <button onClick={() => handleAction(r.id, 'REJECTED')} className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">반려</button>
                       
-                      {['DEPARTMENT_MANAGER', 'SUPER_ADMIN'].includes(currentUser.role) && (
+                      {hasApprovalRights && (
                         <>
                           {r.type === 'OVERTIME_REQUEST' && (
                             <button onClick={() => handleAction(r.id, 'APPROVED', 'DEADLINE_EXTENSION')} className="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700">

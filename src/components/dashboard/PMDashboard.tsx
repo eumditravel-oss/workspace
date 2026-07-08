@@ -6,12 +6,19 @@ import { useTaskStore } from '@/store/taskStore';
 import { useAuthStore } from '@/store/authStore';
 import { getDeliveryUrgencyBucket, getProjectOverallProgress } from '@/lib/selectors';
 
-export const PMDashboard = () => {
+export const PMDashboard = ({ selectedMonth }: { selectedMonth: number | 'ALL' }) => {
   const { currentUser } = useAuthStore();
   const { projects } = useProjectStore();
   const { tasks } = useTaskStore();
 
-  const pmProjects = projects.filter(p => !p.isDeleted && p.archiveStatus !== 'ARCHIVED' && p.pmId === currentUser?.id);
+  const pmProjects = projects.filter(p => {
+    if (p.pmId !== currentUser?.id || p.isDeleted || p.archiveStatus === 'ARCHIVED') return false;
+    if (selectedMonth === 'ALL') return true;
+    const dateStr = p.projectSourceType === 'INTERNAL_DEVELOPMENT' ? p.targetDate : p.deliveryDate;
+    if (!dateStr) return false;
+    const pMonth = new Date(dateStr).getMonth() + 1;
+    return pMonth === selectedMonth;
+  });
   const pmTasks = tasks.filter(t => pmProjects.some(p => p.id === t.projectId));
 
   const urgentProjectsCount = pmProjects.filter(p => getDeliveryUrgencyBucket(p) === 'WITHIN_1_WEEK').length;

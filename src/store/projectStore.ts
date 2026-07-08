@@ -1,10 +1,12 @@
 import { create } from 'zustand';
-import { Project, ProjectStatus, PostDeliveryWorkRequest } from '@/types/models';
+import { Project, ProjectStatus, PostDeliveryWorkRequest, RevisionRequest } from '@/types/models';
 import { fullProjects } from '@/data/fullScheduleSeed';
 
 interface ProjectState {
   projects: Project[];
   postDeliveryWorkRequests: PostDeliveryWorkRequest[];
+  revisionRequests: RevisionRequest[];
+  loadDummyProjects: () => void;
   addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'progress'>) => void;
   assignPM: (projectId: string, pmId: string) => void;
   updateProjectStatus: (projectId: string, status: ProjectStatus) => void;
@@ -16,9 +18,12 @@ interface ProjectState {
 }
 
 export const useProjectStore = create<ProjectState>((set, get) => ({
-  projects: fullProjects,
+  projects: [],
   postDeliveryWorkRequests: [],
+  revisionRequests: [],
   
+  loadDummyProjects: () => set({ projects: fullProjects }),
+
   addProject: (projectData) => set((state) => {
     const newProject: Project = {
       ...projectData,

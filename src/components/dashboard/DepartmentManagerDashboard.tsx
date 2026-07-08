@@ -6,12 +6,19 @@ import { useTaskStore } from '@/store/taskStore';
 import { useAuthStore } from '@/store/authStore';
 import { getDeliveryUrgencyBucket, getProjectOverallProgress } from '@/lib/selectors';
 
-export const DepartmentManagerDashboard = () => {
+export const DepartmentManagerDashboard = ({ selectedMonth }: { selectedMonth: number | 'ALL' }) => {
   const { currentUser } = useAuthStore();
   const { projects } = useProjectStore();
   const { tasks } = useTaskStore();
 
-  const deptProjects = projects.filter(p => !p.isDeleted && p.archiveStatus !== 'ARCHIVED' && p.departmentId === currentUser?.departmentId);
+  const deptProjects = projects.filter(p => {
+    if (p.isDeleted || p.archiveStatus === 'ARCHIVED' || p.departmentId !== currentUser?.departmentId) return false;
+    if (selectedMonth === 'ALL') return true;
+    const dateStr = p.projectSourceType === 'INTERNAL_DEVELOPMENT' ? p.targetDate : p.deliveryDate;
+    if (!dateStr) return false;
+    const pMonth = new Date(dateStr).getMonth() + 1;
+    return pMonth === selectedMonth;
+  });
   const deptTasks = tasks.filter(t => deptProjects.some(p => p.id === t.projectId));
 
   const urgentProjectsCount = deptProjects.filter(p => getDeliveryUrgencyBucket(p) === 'WITHIN_1_WEEK').length;

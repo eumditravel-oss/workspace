@@ -22,12 +22,33 @@ export const useNotificationStore = create<NotificationState>((set) => ({
   markAllAsRead: (userId) => set((state) => ({
     notifications: state.notifications.map(n => n.userId === userId ? { ...n, isRead: true } : n)
   })),
-  addNotification: (notif) => set((state) => ({
-    notifications: [{
-      ...notif,
-      id: `n${Date.now()}`,
-      isRead: false,
-      createdAt: new Date().toISOString()
-    }, ...state.notifications]
-  }))
+  addNotification: (notif) => set((state) => {
+    // Grouping logic: If groupId is provided, find existing unread notification
+    if (notif.groupId) {
+      const existingIdx = state.notifications.findIndex(n => n.userId === notif.userId && n.groupId === notif.groupId && !n.isRead);
+      if (existingIdx >= 0) {
+        const updated = [...state.notifications];
+        const existing = updated[existingIdx];
+        updated[existingIdx] = {
+          ...existing,
+          message: notif.message, // update to latest message
+          count: (existing.count || 1) + 1,
+          createdAt: new Date().toISOString()
+        };
+        // Move to top
+        const [moved] = updated.splice(existingIdx, 1);
+        return { notifications: [moved, ...updated] };
+      }
+    }
+
+    return {
+      notifications: [{
+        ...notif,
+        id: `n${Date.now()}`,
+        count: 1,
+        isRead: false,
+        createdAt: new Date().toISOString()
+      }, ...state.notifications]
+    };
+  })
 }));

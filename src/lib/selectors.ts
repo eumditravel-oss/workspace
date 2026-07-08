@@ -119,9 +119,10 @@ export const normalizeScopeName = (rawName: string): string => {
 export type DeliveryPresetBucket = 'OVERDUE' | 'WITHIN_1_WEEK' | 'WITHIN_2_WEEKS' | 'WITHIN_1_MONTH' | 'UNSET';
 
 export const getDeliveryUrgencyBucket = (project: Project, today: Date = new Date()): DeliveryPresetBucket => {
-  if (!project.deliveryDate) return 'UNSET';
+  const dateStr = project.projectSourceType === 'INTERNAL_DEVELOPMENT' ? project.targetDate : project.deliveryDate;
+  if (!dateStr) return 'UNSET';
   
-  const delivery = new Date(project.deliveryDate);
+  const delivery = new Date(dateStr);
   delivery.setHours(0, 0, 0, 0);
   const current = new Date(today);
   current.setHours(0, 0, 0, 0);
@@ -137,15 +138,18 @@ export const getDeliveryUrgencyBucket = (project: Project, today: Date = new Dat
 };
 
 export type ProjectBoardColumn =
-  | "INTAKE_WAITING"
+  | "PRE_WORK"
   | "IN_PROGRESS"
+  | "REVISION"
   | "COMPLETED";
 
 export const getProjectDeliveryLifecycle = (project: Project, today: Date = new Date()): DeliveryLifecycle => {
   if (project.deliveryLifecycle) return project.deliveryLifecycle;
-  if (!project.deliveryDate) return 'UNSCHEDULED';
+  
+  const dateStr = project.projectSourceType === 'INTERNAL_DEVELOPMENT' ? project.targetDate : project.deliveryDate;
+  if (!dateStr) return 'UNSCHEDULED';
 
-  const delivery = new Date(project.deliveryDate);
+  const delivery = new Date(dateStr);
   delivery.setHours(0, 0, 0, 0);
   const current = new Date(today);
   current.setHours(0, 0, 0, 0);
@@ -161,39 +165,55 @@ export const getProjectDeliveryLifecycle = (project: Project, today: Date = new 
   return 'UPCOMING';
 };
 
-export const getProjectBoardColumn = (project: Project, today: Date = new Date()): ProjectBoardColumn => {
+export const getProjectBoardColumn = (project: Project, today: Date = new Date(), hasActiveRevision: boolean = false): ProjectBoardColumn => {
+  if (hasActiveRevision) return 'REVISION';
+  
   const lifecycle = getProjectDeliveryLifecycle(project, today);
   
-  if (['INTAKE_RECEIVED', 'MANAGER_REVIEW', 'PM_ASSIGNED', 'SCHEDULE_DRAFTING', 'SCHEDULE_PENDING_APPROVAL'].includes(project.status)) {
-    return 'INTAKE_WAITING';
-  }
-
-  if (['OVERDUE', 'DELIVERY_CLOSED_AUTO', 'DELIVERY_CLOSED_MANUAL'].includes(lifecycle)) {
+  if (
+    lifecycle === 'DELIVERY_CLOSED_AUTO' || 
+    lifecycle === 'DELIVERY_CLOSED_MANUAL'
+  ) {
     return 'COMPLETED';
   }
   
-  if (project.status === 'COMPLETED' || project.status === 'ARCHIVED') {
+  if (
+    project.status === 'COMPLETED' || 
+    project.status === 'ARCHIVED'
+  ) {
     return 'COMPLETED';
   }
-
+  
+  if (
+    project.status === 'INTAKE_RECEIVED' ||
+    project.status === 'MANAGER_REVIEW' ||
+    project.status === 'PM_ASSIGNED' ||
+    project.status === 'SCHEDULE_DRAFTING' ||
+    project.status === 'SCHEDULE_PENDING_APPROVAL' ||
+    project.status === 'SCHEDULE_REJECTED'
+  ) {
+    return 'PRE_WORK';
+  }
+  
   return 'IN_PROGRESS';
 };
 
 export const getProjectDeliveryBadge = (project: Project, today: Date = new Date()): string => {
   const lifecycle = getProjectDeliveryLifecycle(project, today);
+  const isInternal = project.projectSourceType === 'INTERNAL_DEVELOPMENT';
+  
   switch (lifecycle) {
-    case 'UNSCHEDULED': return '미정';
-    case 'OVERDUE': return '납품일 경과';
-    case 'DUE_TODAY': return '납품 당일';
-    case 'DUE_WITHIN_1_WEEK': return '납품 1주일 전';
-    case 'DUE_WITHIN_2_WEEKS': return '납품 2주일 전';
-    case 'DUE_WITHIN_1_MONTH': return '납품 1달 전';
-    case 'UPCOMING': return '납품 예정';
-    case 'DELIVERY_CLOSED_AUTO': return '납품일 경과 자동분류';
-    case 'DELIVERY_CLOSED_MANUAL': return '납품완료 수동분류';
-    case 'POST_DELIVERY_WORK_REQUESTED': return '사후 추가업무 요청됨';
-    case 'POST_DELIVERY_WORK_IN_PROGRESS': return '사후 추가업무 진행중';
-    case 'REOPENED': return '프로젝트 재오픈';
+    case 'OVERDUE': return isInternal ? '목표일 경과' : '납품일 경과';
+    case 'DUE_TODAY': return isInternal ? '오늘 목표' : '오늘 납품';
+    case 'DUE_WITHIN_1_WEEK': return isInternal ? '목표 1주일 내' : '납품 1주일 내';
+    case 'DUE_WITHIN_2_WEEKS': return isInternal ? '목표 2주일 내' : '납품 2주일 내';
+    case 'DUE_WITHIN_1_MONTH': return isInternal ? '목표 1달 내' : '납품 1달 내';
+    case 'UPCOMING': return isInternal ? '목표일 여유' : '납품일 여유';
+    case 'POST_DELIVERY_WORK_REQUESTED': return '추가업무 요청됨';
+    case 'POST_DELIVERY_WORK_IN_PROGRESS': return '추가업무 진행중';
+    case 'REOPENED': return '재오픈됨';
+    case 'DELIVERY_CLOSED_AUTO': return '자동 마감됨';
+    case 'DELIVERY_CLOSED_MANUAL': return '수동 마감됨';
     default: return '미정';
   }
 };

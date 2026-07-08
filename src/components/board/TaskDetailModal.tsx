@@ -21,10 +21,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
   const [newBlocker, setNewBlocker] = useState('');
   const [error, setError] = useState('');
   const [showQcModal, setShowQcModal] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   
   const currentUser = useAuthStore(state => state.currentUser);
   const { updateTaskProgress, progressUpdates, checklists, artifacts, blockers, addBlocker, resolveBlocker, workSegments, addWorkSegment, deleteWorkSegment } = useTaskStore();
-  const { qcIssues } = useEvaluationStore();
+  const { qcIssues, appeals, addAppeal } = useEvaluationStore();
   const { addRequest } = useApprovalStore();
 
   const taskUpdates = progressUpdates.filter(u => u.taskId === task.id);
@@ -120,6 +121,67 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
       reason,
     });
     alert('신청이 완료되었습니다.');
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (!currentUser) return;
+    handleFiles(Array.from(e.dataTransfer.files));
+  };
+  
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!currentUser || !e.target.files) return;
+    handleFiles(Array.from(e.target.files));
+  };
+
+  const handleFiles = (files: File[]) => {
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert(`'${file.name}'의 용량이 10MB를 초과합니다.`);
+        continue;
+      }
+      const allowedExtensions = /\.(pdf|jpe?g|png|xlsx|docx)$/i;
+      if (!allowedExtensions.test(file.name)) {
+        alert(`'${file.name}'은 지원하지 않는 파일 형식입니다. (PDF, JPG, PNG, XLSX, DOCX 허용)`);
+        continue;
+      }
+      
+      const objectUrl = URL.createObjectURL(file);
+      useTaskStore.getState().addArtifact({
+        taskId: task.id,
+        title: file.name,
+        url: objectUrl,
+        type: 'FILE',
+        addedBy: currentUser!.id
+      });
+    }
+  };
+
+  const handleAppeal = (issueId: string) => {
+    if (!currentUser) return;
+    const reason = window.prompt("해당 QC 결과(가중치 등)에 대한 이의신청 사유를 구체적으로 작성해주세요.");
+    if (!reason) return;
+    
+    addAppeal({
+      evaluationPeriodId: 'current',
+      userId: currentUser.id,
+      evaluationResultId: 'dummy_result_id',
+      targetIssueId: issueId,
+      reason,
+      requestedBy: currentUser.id,
+    });
+    alert('이의신청이 접수되었습니다. 관리자가 검토 후 재조정 여부를 결정합니다.');
   };
 
   const tabs = [
@@ -429,8 +491,26 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
           )}
 
           {activeTab === 'ARTIFACTS' && (
-            <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">산출물 목록</h3>
+            <div className="space-y-4">
+              <div 
+                className={`bg-white p-8 rounded-xl border-2 border-dashed transition-colors text-center ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <div className="flex justify-center mb-3 text-gray-400">
+                  <FileText className="w-10 h-10" />
+                </div>
+                <h4 className="text-sm font-bold text-gray-700 mb-1">여기로 파일을 드래그하여 첨부하세요</h4>
+                <p className="text-xs text-gray-500 mb-4">최대 10MB, PDF/JPG/PNG/XLSX/DOCX 지원</p>
+                <label className="bg-blue-50 text-blue-700 px-4 py-2 rounded font-semibold text-sm cursor-pointer hover:bg-blue-100 transition">
+                  파일 선택
+                  <input type="file" multiple className="hidden" onChange={handleFileInput} accept=".pdf,.jpg,.jpeg,.png,.xlsx,.docx" />
+                </label>
+              </div>
+
+              <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                <h3 className="text-sm font-semibold text-gray-700 mb-4">산출물 목록</h3>
               {taskArtifacts.length === 0 ? (
                 <p className="text-sm text-gray-400">등록된 산출물이 없습니다.</p>
               ) : (
@@ -449,6 +529,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                 </div>
               )}
             </div>
+          </div>
           )}
 
           {activeTab === 'EVALUATION' && (
@@ -487,7 +568,22 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                         
                         <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
                           <span className="text-xs text-gray-500">보고자: {issue.reportedBy}</span>
-                          <span className="text-xs text-gray-400 font-mono">{new Date(issue.createdAt).toLocaleString()}</span>
+                          <div className="flex gap-2 items-center">
+                            {appeals.filter(a => a.targetIssueId === issue.id).map(appeal => (
+                              <span key={appeal.id} className={`text-xs px-2 py-0.5 rounded font-bold ${
+                                appeal.status === 'PENDING' ? 'bg-orange-100 text-orange-700' :
+                                appeal.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                              }`}>
+                                이의신청: {appeal.status}
+                              </span>
+                            ))}
+                            {issue.assigneeId === currentUser?.id && !appeals.some(a => a.targetIssueId === issue.id && a.status === 'PENDING') && (
+                              <button onClick={() => handleAppeal(issue.id)} className="text-xs text-indigo-600 font-bold hover:underline">
+                                이의신청
+                              </button>
+                            )}
+                            <span className="text-xs text-gray-400 font-mono ml-2">{new Date(issue.createdAt).toLocaleString()}</span>
+                          </div>
                         </div>
                       </div>
                     ))}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Project, TaskCard } from '@/types/models';
+import { Project, TaskCard, RevisionRequest } from '@/types/models';
 import { ProjectSummaryCard } from './ProjectSummaryCard';
 import { GroupByOption } from './Board';
 import { getDeliveryUrgencyBucket, getProjectBoardColumn } from '@/lib/selectors';
@@ -7,25 +7,29 @@ import { getDeliveryUrgencyBucket, getProjectBoardColumn } from '@/lib/selectors
 interface Props {
   projects: Project[];
   tasks: TaskCard[];
+  revisionRequests: RevisionRequest[];
   groupBy: GroupByOption;
   onProjectClick: (projectId: string) => void;
 }
 
-export const ProjectBoard: React.FC<Props> = ({ projects, tasks, groupBy, onProjectClick }) => {
+export const ProjectBoard: React.FC<Props> = ({ projects, tasks, revisionRequests, groupBy, onProjectClick }) => {
   const getColumns = () => {
     if (groupBy === 'PRIORITY') {
+      const isInternal = projects.length > 0 && projects[0].projectSourceType === 'INTERNAL_DEVELOPMENT';
+      const label = isInternal ? '목표' : '납품';
       return [
-        { id: 'OVERDUE', title: '🚨 납품일 경과' },
-        { id: 'WITHIN_1_WEEK', title: '🔴 납품 1주일 전' },
-        { id: 'WITHIN_2_WEEKS', title: '🟠 납품 2주일 전' },
-        { id: 'WITHIN_1_MONTH', title: '🔵 납품 1달 전' },
+        { id: 'OVERDUE', title: `🚨 ${label}일 경과` },
+        { id: 'WITHIN_1_WEEK', title: `🔴 ${label} 1주일 전` },
+        { id: 'WITHIN_2_WEEKS', title: `🟠 ${label} 2주일 전` },
+        { id: 'WITHIN_1_MONTH', title: `🔵 ${label} 1달 전` },
         { id: 'UNSET', title: '⚪ 미정' },
       ];
     }
     // Default to Status groups
     return [
-      { id: 'INTAKE', title: '수주/대기' },
+      { id: 'PRE_WORK', title: '작수 전' },
       { id: 'IN_PROGRESS', title: '진행 중' },
+      { id: 'REVISION', title: '수정(Revision)' },
       { id: 'COMPLETED', title: '완료' },
     ];
   };
@@ -33,21 +37,26 @@ export const ProjectBoard: React.FC<Props> = ({ projects, tasks, groupBy, onProj
   const columns = getColumns();
 
   return (
-    <div className="flex space-x-6 overflow-x-auto pb-6 p-2 custom-scrollbar">
+    <div 
+      className="grid gap-6 pb-6 p-2" 
+      style={{ gridTemplateColumns: `repeat(auto-fit, minmax(240px, 1fr))` }}
+    >
       {columns.map(col => {
         const colProjects = projects.filter(p => {
           if (groupBy === 'PRIORITY') {
             return getDeliveryUrgencyBucket(p) === col.id;
           }
           
-          const columnId = getProjectBoardColumn(p);
-          if (col.id === 'INTAKE') return columnId === 'INTAKE_WAITING';
+          const hasActiveRevision = revisionRequests.some(r => r.projectId === p.id && (r.status === 'PENDING' || r.status === 'ACCEPTED'));
+          const columnId = getProjectBoardColumn(p, new Date(), hasActiveRevision);
+          if (col.id === 'PRE_WORK') return columnId === 'PRE_WORK';
+          if (col.id === 'REVISION') return columnId === 'REVISION';
           if (col.id === 'COMPLETED') return columnId === 'COMPLETED';
           return columnId === 'IN_PROGRESS';
         });
 
         return (
-          <div key={col.id} className="flex-shrink-0 w-80 bg-gray-50/50 rounded-xl flex flex-col max-h-[calc(100vh-200px)] border border-gray-200">
+          <div key={col.id} className="bg-gray-50/50 rounded-xl flex flex-col max-h-[calc(100vh-200px)] border border-gray-200">
             <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-100/50 rounded-t-xl">
               <h2 className="font-bold text-gray-700">{col.title}</h2>
               <span className="bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full text-xs font-bold">

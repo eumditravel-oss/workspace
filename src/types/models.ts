@@ -1,43 +1,80 @@
-export type Role = 'SUPER_ADMIN' | 'DEPARTMENT_MANAGER' | 'PM' | 'WORKER';
+export type Role = 'SUPER_ADMIN' | 'DEPARTMENT_MANAGER' | 'PM' | 'WORKER' | 'EVALUATION_ADMIN' | 'SYSTEM_ADMIN';
+
+export type CompanyId = 'CON_COST' | 'VIET_QS';
+export type DepartmentKey = 'FINISH' | 'STRUCTURE' | 'CIVIL' | 'DEVELOP';
+export type OrganizationRank = 'CEO' | 'VICE_PRESIDENT' | 'MANAGER' | 'PM' | 'TEAM_LEADER' | 'DEPUTY_TEAM_LEADER' | 'STAFF' | 'TRAINEE';
+export type EmploymentStatus = 'ACTIVE' | 'INACTIVE' | 'ON_LEAVE' | 'RESIGNED';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role: Role;
+}
+
+export interface Company {
+  id: CompanyId;
+  name: string;
+  country: 'KR' | 'VN';
+  parentCompanyId?: string;
+}
+
+export interface Department {
+  id: string;
+  companyId: CompanyId;
+  key: DepartmentKey;
+  name: string;
+}
+
+export interface SubDepartment {
+  id: string;
+  companyId: CompanyId;
+  departmentKey: DepartmentKey;
+  name: string;
+}
+
 export type DepartmentId = string;
 export type UserId = string;
 
 export interface PersonnelCard {
   id: UserId;
-  employeeNumber: string;
+  employeeNumber?: string;
   name: string;
   displayName?: string;
   koreanAlias?: string;
+  vietnameseName?: string;
   email?: string;
   phone?: string;
-  departmentId: DepartmentId;
+  companyId?: CompanyId;
+  companyName?: string;
+  departmentId: string;
   departmentName?: string;
+  subDepartmentId?: string;
+  subDepartmentName?: string;
+  teamId?: string;
   teamName?: string;
-  groupName?: string;
-  position: string;
-  jobTitle: string;
-  role: Role;
+  role: Role; // keep for backward compatibility temporarily
+  systemRole?: Role;
   permissionLevel?: number;
-  managerId?: UserId;
-  pmId?: UserId;
-  employmentStatus: 'ACTIVE' | 'INACTIVE' | 'LEAVE';
-  joinedAt?: string;
-  profileImageUrl?: string;
-  availableWorkHoursPerDay: number;
-  defaultWorkStartTime?: string;
-  defaultWorkEndTime?: string;
-  canManageDepartments?: boolean;
-  canManageProjects?: boolean;
-  canApproveSchedules?: boolean;
-  canViewAllDepartments?: boolean;
-  canViewDepartmentOnly?: boolean;
-  canViewAssignedProjectsOnly?: boolean;
-  canViewOwnTasksOnly?: boolean;
+  organizationRank?: OrganizationRank;
+  jobTitle?: string;
+  position?: string;
+  managerId?: string;
+  pmId?: string;
+  deputyApproverId?: string;
+  employmentStatus: string;
+  canDoDirectProduction?: boolean;
+  defaultWorkHoursPerDay?: number;
+  availableWorkHoursPerDay?: number; // fallback for older code
+  isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
 
-export type ProjectStatus = 'INTAKE_RECEIVED' | 'MANAGER_REVIEW' | 'PM_ASSIGNED' | 'SCHEDULE_DRAFTING' | 'SCHEDULE_PENDING_APPROVAL' | 'SCHEDULE_REJECTED' | 'SCHEDULE_APPROVED' | 'IN_PROGRESS' | 'QA_REVIEW' | 'COMPLETED' | 'ON_HOLD' | 'ARCHIVED';
+export type ProjectStatus = 'INTAKE_RECEIVED' | 'MANAGER_REVIEW' | 'PM_ASSIGNED' | 'SCHEDULE_DRAFTING' | 'SCHEDULE_PENDING_APPROVAL' | 'SCHEDULE_REJECTED' | 'SCHEDULE_APPROVED' | 'IN_PROGRESS' | 'QA_REVIEW' | 'COMPLETED' | 'ON_HOLD' | 'ARCHIVED' | 'REVISION_REQUESTED';
+
+export type ProjectSourceType = 'CLIENT_ORDER' | 'INTERNAL_DEVELOPMENT';
 
 export type DeliveryLifecycle =
   | "UNSCHEDULED"
@@ -55,6 +92,7 @@ export type DeliveryLifecycle =
 
 export interface Project {
   id: string;
+  projectSourceType?: ProjectSourceType; // Default to CLIENT_ORDER if undefined
   clientId?: string;
   clientName?: string;
   title: string;
@@ -73,6 +111,7 @@ export interface Project {
   isDeleted?: boolean;
   source?: string;
   deliveryDate?: string;
+  targetDate?: string; // For INTERNAL_DEVELOPMENT
   deliveryDateStatus?: "UNSET" | "SCHEDULED" | "CHANGED" | "OVERDUE" | "DELIVERED";
   deliveryDateUpdatedAt?: string;
   deliveryDateUpdatedBy?: string;
@@ -234,6 +273,17 @@ export interface PostDeliveryWorkRequest {
   updatedAt: string;
 }
 
+export interface RevisionRequest {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string;
+  requestedByClient: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'RESOLVED';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ApprovalWorkflowStep {
   stepIndex: number;
   role: Role;
@@ -304,6 +354,8 @@ export interface Notification {
   relatedProjectId?: string;
   relatedTaskId?: string;
   relatedApprovalId?: string;
+  groupId?: string;
+  count?: number;
   isRead: boolean;
   createdAt: string;
 }

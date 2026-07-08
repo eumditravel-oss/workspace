@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
+import { SessionManager } from "@/components/auth/SessionManager";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,6 +20,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className={`${inter.className} bg-gray-50 text-gray-900`}>
+        <SessionManager />
         <div className="flex min-h-screen">
           <Sidebar />
           <div className="flex-1 flex flex-col">

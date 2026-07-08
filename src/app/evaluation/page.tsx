@@ -10,7 +10,7 @@ import { ShieldAlert, CheckCircle2, Lock, Unlock, Search, TrendingUp } from 'luc
 
 export default function EvaluationPage() {
   const { currentUser, users } = useAuthStore();
-  const { qcIssues } = useEvaluationStore();
+  const { qcIssues, appeals, updateAppealStatus, updateQcIssueWeight } = useEvaluationStore();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isLocked, setIsLocked] = useState(false);
@@ -64,6 +64,28 @@ export default function EvaluationPage() {
 
   const myResult = evalResults.find(r => r.userId === currentUser.id);
 
+  const pendingAppeals = appeals.filter(a => a.status === 'PENDING');
+  
+  const handleReviewAppeal = (appealId: string, isAccepted: boolean) => {
+    const appeal = appeals.find(a => a.id === appealId);
+    if (!appeal) return;
+
+    const comment = window.prompt(isAccepted ? '수용 사유를 입력하세요.' : '기각 사유를 입력하세요.');
+    if (comment === null) return;
+
+    if (isAccepted) {
+      const newWeightStr = window.prompt('조정할 새 가중치(%)를 입력하세요. (예: 50, 0)', '0');
+      if (newWeightStr && !isNaN(Number(newWeightStr))) {
+        if (appeal.targetIssueId) {
+          updateQcIssueWeight(appeal.targetIssueId, Number(newWeightStr));
+        }
+      }
+    }
+
+    updateAppealStatus(appealId, isAccepted ? 'ACCEPTED' : 'REJECTED', currentUser.id, comment);
+    alert('이의신청이 처리되었습니다.');
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center bg-white p-5 rounded-xl shadow-sm border border-gray-100">
@@ -105,9 +127,6 @@ export default function EvaluationPage() {
               <div className="text-xs text-gray-500 mb-1">최종 품질 점수</div>
               <div className="text-3xl font-black text-blue-700">{myResult.qualityScore}점</div>
             </div>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <button className="text-sm text-blue-700 font-semibold underline hover:text-blue-800">이의 신청하기</button>
           </div>
         </div>
       )}
@@ -168,6 +187,49 @@ export default function EvaluationPage() {
                 {filteredResults.length === 0 && (
                   <tr>
                     <td colSpan={8} className="p-8 text-center text-gray-400">결과가 없습니다.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {(currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'DEPARTMENT_MANAGER') && (
+        <div className="bg-white rounded-xl shadow-sm border border-orange-200 overflow-hidden mt-6">
+          <div className="p-5 border-b border-orange-100 bg-orange-50 flex justify-between items-center">
+            <h2 className="font-bold text-orange-800">대기 중인 이의신청 건 ({pendingAppeals.length})</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-orange-50/50 text-gray-600 font-semibold border-b">
+                <tr>
+                  <th className="p-4">신청자</th>
+                  <th className="p-4">관련 오류(대상)</th>
+                  <th className="p-4">이의신청 사유</th>
+                  <th className="p-4 text-center">작업</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {pendingAppeals.map(appeal => {
+                  const issue = qcIssues.find(i => i.id === appeal.targetIssueId);
+                  return (
+                    <tr key={appeal.id} className="hover:bg-orange-50/30 transition-colors">
+                      <td className="p-4 font-medium text-gray-800">{appeal.requestedBy}</td>
+                      <td className="p-4 text-gray-600">
+                        {issue ? `[${issue.issueStage}] ${issue.title} (기존 가중치: ${issue.weightPercent}%)` : '알 수 없음'}
+                      </td>
+                      <td className="p-4 text-gray-800 max-w-sm truncate" title={appeal.reason}>{appeal.reason}</td>
+                      <td className="p-4 text-center space-x-2">
+                        <button onClick={() => handleReviewAppeal(appeal.id, true)} className="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700">수용</button>
+                        <button onClick={() => handleReviewAppeal(appeal.id, false)} className="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-700">기각</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {pendingAppeals.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center text-gray-400">대기 중인 이의신청이 없습니다.</td>
                   </tr>
                 )}
               </tbody>
