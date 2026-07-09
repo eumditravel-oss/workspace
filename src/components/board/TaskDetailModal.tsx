@@ -258,18 +258,25 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
               <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${healthColor}`}>
                 ♥ Health: {healthScore}
               </span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
-                담당자: {assignee ? assignee.name : '미배정'}
-              </span>
             </div>
             <h2 className="text-xl font-bold text-[var(--color-text-main)]">{primaryTitle}</h2>
             {secondaryTitle && (
               <h3 className="text-sm font-medium text-[var(--color-text-sub)] mt-1 opacity-80">{secondaryTitle}</h3>
             )}
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-[var(--color-text-sub)]">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-sm bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
+              <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
+                {assignee ? assignee.name.charAt(0) : '?'}
+              </div>
+              <span className="font-medium text-[var(--color-text-main)]">
+                {assignee ? assignee.name : '담당자 미배정'}
+              </span>
+            </div>
+            <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-[var(--color-text-sub)]">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -301,10 +308,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
               </div>
               
               <div className="bg-[var(--color-surface)] p-5 rounded-xl border border-[var(--color-border)] shadow-sm flex gap-12">
-                <div>
-                  <div className="text-xs text-[var(--color-text-sub)] mb-1">담당자</div>
-                  <div className="font-medium text-sm">{task.assigneeId || '미배정'}</div>
-                </div>
                 <div>
                   <div className="text-xs text-[var(--color-text-sub)] mb-1">마감일</div>
                   <div className="font-medium text-sm text-red-600">{task.dueDate || '-'}</div>
