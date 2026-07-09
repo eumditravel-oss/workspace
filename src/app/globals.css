@@ -52,7 +52,6 @@ body {
 }
 
 .page-shell {
-  max-width: var(--page-max-width);
   margin: 0 auto;
   padding: 32px var(--page-padding-x) var(--section-gap);
   display: flex;
