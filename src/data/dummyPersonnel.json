@@ -2,6 +2,30 @@
   "schemaVersion": "1.0.0",
   "personnel": [
     {
+      "name": "현동명",
+      "displayName": "현동명",
+      "companyId": "CON_COST",
+      "departmentId": "DEVELOP",
+      "role": "SUPER_ADMIN",
+      "systemRole": "SUPER_ADMIN",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "organizationRank": "CEO",
+      "id": "u-ceo-hdm"
+    },
+    {
+      "name": "이원희",
+      "displayName": "이원희",
+      "companyId": "CON_COST",
+      "departmentId": "DEVELOP",
+      "role": "SUPER_ADMIN",
+      "systemRole": "SUPER_ADMIN",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "organizationRank": "COO",
+      "id": "u-coo-lwh"
+    },
+    {
       "name": "",
       "displayName": "Thanh Phuong(탄 프엉)",
       "companyId": "VIET_QS",
