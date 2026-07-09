@@ -2,7 +2,7 @@ export type Role = 'SUPER_ADMIN' | 'DEPARTMENT_MANAGER' | 'PM' | 'WORKER' | 'EVA
 
 export type CompanyId = 'CON_COST' | 'VIET_QS';
 export type DepartmentKey = 'FINISH' | 'STRUCTURE' | 'CIVIL' | 'DEVELOP';
-export type OrganizationRank = 'CEO' | 'VICE_PRESIDENT' | 'MANAGER' | 'PM' | 'TEAM_LEADER' | 'DEPUTY_TEAM_LEADER' | 'STAFF' | 'TRAINEE';
+export type OrganizationRank = 'CEO' | 'COO' | 'VICE_PRESIDENT' | 'MANAGER' | 'PM' | 'TEAM_LEADER' | 'DEPUTY_TEAM_LEADER' | 'STAFF' | 'TRAINEE';
 export type EmploymentStatus = 'ACTIVE' | 'INACTIVE' | 'ON_LEAVE' | 'RESIGNED';
 
 export interface User {

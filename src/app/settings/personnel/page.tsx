@@ -216,6 +216,7 @@ export default function PersonnelManagementPage() {
                 >
                   <option value="">선택 안함</option>
                   <option value="CEO">CEO</option>
+                  <option value="COO">COO</option>
                   <option value="VICE_PRESIDENT">Vice President</option>
                   <option value="MANAGER">Manager (부서장)</option>
                   <option value="PM">PM (Project Manager)</option>
