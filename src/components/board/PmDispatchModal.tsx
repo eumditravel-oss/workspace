@@ -4,6 +4,8 @@ import { useAuthStore } from '@/store/authStore';
 import { useTaskStore } from '@/store/taskStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useNotificationStore } from '@/store/notificationStore';
+import { useApprovalStore } from '@/store/approvalStore';
+import { useAuditStore } from '@/store/auditStore';
 import { X, Plus, Trash2, AlertCircle, Languages, RefreshCw } from 'lucide-react';
 import { detectLanguage } from '@/lib/translation/detector';
 import { executeTranslation } from '@/lib/translation/providers';
@@ -20,6 +22,8 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
   const { addTask } = useTaskStore();
   const { updateProjectStatus } = useProjectStore();
   const { addNotification } = useNotificationStore();
+  const { addRequest } = useApprovalStore();
+  const { addLog } = useAuditStore();
 
   const pmUser = users.find(u => u.id === project.pmId);
   const activeUsers = users.filter(u => u.employmentStatus === 'ACTIVE');
@@ -149,26 +153,43 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
         startDate: t.startDate,
         dueDate: t.dueDate,
         orderIndex: i,
-        approvalStatus: 'APPROVED',
+        approvalStatus: 'PENDING',
         sourceType: project.projectSourceType === 'INTERNAL_DEVELOPMENT' ? 'INTERNAL_DEVELOPMENT_DISPATCH' : 'PM_DISPATCH',
         titleI18n: t.titleI18n
       });
-
-      // 알림 생성
-      addNotification({
-        userId: t.assigneeId!,
-        type: 'TASK_ASSIGNED',
-        title: '신규 업무 배정',
-        message: `[${project.title}] 프로젝트의 신규 업무가 배정되었습니다: ${t.title}`,
-        priority: 'HIGH',
-        relatedProjectId: project.id,
-      });
     });
 
-    updateProjectStatus(project.id, 'IN_PROGRESS');
-    
-    // Create AuditLog mock
-    console.log(`[AuditLog] PM Dispatch completed for project ${project.id} by user ${currentUser?.id}`);
+    updateProjectStatus(project.id, 'SCHEDULE_PENDING_APPROVAL');
+
+    const reqTitle = `[${project.title}] PM 업무 배정 승인 요청`;
+    addRequest({
+      type: 'SCHEDULE_APPROVAL',
+      projectId: project.id,
+      requestedBy: currentUser?.id || '',
+      pmId: project.pmId,
+      managerId: project.managerId,
+      title: reqTitle,
+      reason: '업무 하달에 따른 소요일정 승인 요청',
+    });
+
+    if (project.managerId) {
+      addNotification({
+        userId: project.managerId,
+        type: 'APPROVAL_REQUESTED',
+        title: '신규 일정 승인 요청',
+        message: reqTitle,
+        priority: 'HIGH',
+        relatedProjectId: project.id
+      });
+    }
+
+    addLog({
+      entityType: 'PROJECT',
+      entityId: project.id,
+      action: 'SCHEDULE_DRAFTED',
+      userId: currentUser?.id || '',
+      description: 'PM 업무 배정 완료 및 중간관리자 승인 요청'
+    });
 
     onSuccess();
   };

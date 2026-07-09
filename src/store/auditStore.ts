@@ -5,6 +5,7 @@ import { AuditLog } from '@/types/models';
 interface AuditState {
   logs: AuditLog[];
   addLog: (log: Omit<AuditLog, 'id' | 'createdAt'>) => void;
+  replaceLogs: (logs: AuditLog[]) => void;
   resetLogs: () => void;
 }
 
@@ -22,6 +23,7 @@ export const useAuditStore = create<AuditState>()(
           ...state.logs
         ]
       })),
+      replaceLogs: (logs) => set({ logs }),
       resetLogs: () => set({ logs: [] })
     }),
     {

@@ -6,8 +6,9 @@ import { useApprovalStore } from '@/store/approvalStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useScheduleStore } from '@/store/scheduleStore';
 import { useTranslationStore } from '@/store/translationStore';
+import { useAuditStore } from '@/store/auditStore';
 
-import { Project, TaskCard, PersonnelCard, WorkspaceSetting, TaskWorkSegment, ApprovalRequest, RevisionRequest, PostDeliveryWorkRequest, Notification, PersonalSchedule, WorkspaceLanguage, TranslationProviderHealth, TranslationCacheItem } from '@/types/models';
+import { Project, TaskCard, PersonnelCard, WorkspaceSetting, TaskWorkSegment, ApprovalRequest, RevisionRequest, PostDeliveryWorkRequest, Notification, PersonalSchedule, WorkspaceLanguage, TranslationProviderHealth, TranslationCacheItem, AuditLog } from '@/types/models';
 import { TranslationSettings } from '@/store/translationStore';
 
 export interface WorkspaceExportData {
@@ -29,6 +30,7 @@ export interface WorkspaceExportData {
     translationSettings?: TranslationSettings;
     translationProviderHealths?: Record<string, TranslationProviderHealth>;
     translationCache?: TranslationCacheItem[];
+    auditLogs: AuditLog[];
   };
 }
 
@@ -41,6 +43,7 @@ export const exportWorkspaceData = (): WorkspaceExportData => {
   const { notifications } = useNotificationStore.getState();
   const { schedules: personalSchedules } = useScheduleStore.getState();
   const { settings: translationSettings, providerHealths, translationCache } = useTranslationStore.getState();
+  const { logs: auditLogs } = useAuditStore.getState();
 
   // Sanitize secrets before export
   const sanitizedTranslationSettings = { ...translationSettings };
@@ -65,7 +68,8 @@ export const exportWorkspaceData = (): WorkspaceExportData => {
       workspaceLanguage: translationSettings.uiLanguage,
       translationSettings: sanitizedTranslationSettings,
       translationProviderHealths: providerHealths,
-      translationCache
+      translationCache,
+      auditLogs
     }
   };
 };
@@ -159,6 +163,10 @@ export const applyImportData = (data: WorkspaceExportData) => {
 
   if (data.data.personalSchedules) {
     useScheduleStore.getState().replaceSchedules(data.data.personalSchedules);
+  }
+  
+  if (data.data.auditLogs) {
+    useAuditStore.getState().replaceLogs(data.data.auditLogs);
   }
   
   if (data.data.personnel && data.data.personnel.length > 0) {

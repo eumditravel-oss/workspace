@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "1.0.0",
+  "personnel": [
+    {
+      "name": "",
+      "displayName": "Thanh Phuong(탄 프엉)",
+      "companyId": "VIET_QS",
+      "departmentId": "DEVELOP",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "subDepartmentId": "DEVELOP_SUB",
+      "organizationRank": "TEAM_LEADER",
+      "id": "user-1783597410384",
+      "deputyApproverId": "user-1783597439014"
+    },
+    {
+      "name": "",
+      "displayName": "Manh Cuong(끄엉)",
+      "companyId": "VIET_QS",
+      "departmentId": "DEVELOP",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "subDepartmentId": "DEVELOP_SUB",
+      "organizationRank": "STAFF",
+      "id": "user-1783597439014",
+      "deputyApproverId": "user-1783597410384"
+    },
+    {
+      "name": "",
+      "displayName": "Quoc Nhut(꾸옹 느엿)",
+      "companyId": "VIET_QS",
+      "departmentId": "DEVELOP",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "subDepartmentId": "DEVELOP_SUB",
+      "organizationRank": "STAFF",
+      "id": "user-1783597503896",
+      "deputyApproverId": "user-1783597410384"
+    },
+    {
+      "name": "",
+      "displayName": "Long Vu(롱 부)",
+      "companyId": "VIET_QS",
+      "departmentId": "DEVELOP",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "subDepartmentId": "DEVELOP_SUB",
+      "organizationRank": "STAFF",
+      "id": "user-1783597530555",
+      "deputyApproverId": "user-1783597410384"
+    },
+    {
+      "name": "",
+      "displayName": "유종욱",
+      "companyId": "CON_COST",
+      "departmentId": "DEVELOP",
+      "role": "DEPARTMENT_MANAGER",
+      "systemRole": "DEPARTMENT_MANAGER",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "organizationRank": "MANAGER",
+      "id": "user-1783597561693",
+      "status": "INACTIVE",
+      "deputyApproverId": "user-1783597582250"
+    },
+    {
+      "name": "",
+      "displayName": "박용진",
+      "companyId": "CON_COST",
+      "departmentId": "DEVELOP",
+      "role": "DEPARTMENT_MANAGER",
+      "systemRole": "DEPARTMENT_MANAGER",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "organizationRank": "MANAGER",
+      "id": "user-1783597582250",
+      "deputyApproverId": "user-1783597561693"
+    }
+  ]
+}

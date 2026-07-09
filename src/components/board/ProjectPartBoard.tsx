@@ -5,7 +5,10 @@ import { TaskDetailModal } from './TaskDetailModal';
 import { useAuthStore } from '@/store/authStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useTaskStore } from '@/store/taskStore';
-import { CheckCircle } from 'lucide-react';
+import { useApprovalStore } from '@/store/approvalStore';
+import { useNotificationStore } from '@/store/notificationStore';
+import { useAuditStore } from '@/store/auditStore';
+import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 interface ProjectPartBoardProps {
   projectId: string;
@@ -21,6 +24,9 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
   const project = useProjectStore(state => state.projects.find(p => p.id === projectId));
   const updateTaskStatus = useTaskStore(state => state.updateTaskStatus);
   const updateProjectStatus = useProjectStore(state => state.updateProjectStatus);
+  const { requests, updateApprovalStatus } = useApprovalStore();
+  const { addNotification } = useNotificationStore();
+  const { addLog } = useAuditStore();
   
   const parts = getProjectWorkParts(projectId, tasks, users);
   
@@ -44,6 +50,77 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
 
   const allTasksDone = tasks.length > 0 && tasks.every(t => t.status === 'DONE');
   const isPM = currentUser?.role === 'PM' && project?.pmId === currentUser?.id;
+  const isManager = currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'DEPARTMENT_MANAGER' || (project?.managerId && currentUser?.id === project.managerId);
+
+  const handleApproveSchedule = () => {
+    if (!window.confirm('작성된 일정 계획을 승인하고 공식 일정으로 반영하시겠습니까?')) return;
+    
+    // Update project
+    updateProjectStatus(projectId, 'IN_PROGRESS');
+    
+    // Update tasks
+    useTaskStore.setState(state => ({
+      tasks: state.tasks.map(t => t.projectId === projectId && t.approvalStatus === 'PENDING' ? { ...t, approvalStatus: 'APPROVED' } : t)
+    }));
+
+    // Resolve ApprovalRequest
+    const req = requests.find(r => r.projectId === projectId && r.type === 'SCHEDULE_APPROVAL' && r.status === 'PENDING');
+    if (req) {
+      updateApprovalStatus(req.id, 'APPROVED', currentUser?.id || '');
+    }
+
+    // Notifications
+    if (project?.pmId) {
+      addNotification({
+        userId: project.pmId,
+        type: 'SYSTEM',
+        title: '일정 승인 완료',
+        message: `[${project?.title}] 일정 계획이 승인되어 공식 반영되었습니다.`,
+        priority: 'NORMAL',
+        relatedProjectId: projectId
+      });
+    }
+
+    // AuditLog
+    addLog({
+      entityType: 'PROJECT',
+      entityId: projectId,
+      action: 'SCHEDULE_APPROVED',
+      userId: currentUser?.id || '',
+      description: '중간관리자에 의해 소요일정이 승인됨'
+    });
+  };
+
+  const handleRejectSchedule = () => {
+    const reason = window.prompt('반려 사유를 입력해주세요:');
+    if (reason === null) return;
+    
+    updateProjectStatus(projectId, 'SCHEDULE_REJECTED');
+
+    const req = requests.find(r => r.projectId === projectId && r.type === 'SCHEDULE_APPROVAL' && r.status === 'PENDING');
+    if (req) {
+      updateApprovalStatus(req.id, 'REJECTED', currentUser?.id || '', reason);
+    }
+
+    if (project?.pmId) {
+      addNotification({
+        userId: project.pmId,
+        type: 'SYSTEM',
+        title: '일정 승인 반려',
+        message: `[${project?.title}] 일정 계획이 반려되었습니다.\n사유: ${reason || '없음'}`,
+        priority: 'HIGH',
+        relatedProjectId: projectId
+      });
+    }
+
+    addLog({
+      entityType: 'PROJECT',
+      entityId: projectId,
+      action: 'SCHEDULE_REJECTED',
+      userId: currentUser?.id || '',
+      description: `중간관리자에 의해 소요일정이 반려됨 (사유: ${reason || '없음'})`
+    });
+  };
 
   return (
     <>
@@ -58,6 +135,47 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
           </button>
         </div>
       )}
+      
+      {project?.status === 'SCHEDULE_PENDING_APPROVAL' && isManager && (
+        <div className="mb-4 flex justify-between items-center bg-blue-50 p-4 rounded-lg border border-blue-100">
+          <div className="flex items-center gap-2 text-blue-800 font-bold">
+            <AlertCircle className="w-5 h-5" />
+            PM이 작성한 세부 소요일정 승인 대기 중입니다.
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleRejectSchedule}
+              className="flex items-center gap-2 px-4 py-2 bg-white text-red-600 font-bold rounded-md hover:bg-red-50 border border-red-200 transition-colors shadow-sm"
+            >
+              <XCircle className="w-4 h-4" />
+              일정 반려
+            </button>
+            <button
+              onClick={handleApproveSchedule}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition-colors shadow-sm animate-pulse"
+            >
+              <CheckCircle className="w-4 h-4" />
+              일정 승인 및 반영
+            </button>
+          </div>
+        </div>
+      )}
+
+      {project?.status === 'SCHEDULE_REJECTED' && isPM && (
+        <div className="mb-4 flex justify-between items-center bg-red-50 p-4 rounded-lg border border-red-100">
+          <div className="flex items-center gap-2 text-red-800 font-bold">
+            <AlertCircle className="w-5 h-5" />
+            작성하신 일정이 관리자에 의해 반려되었습니다. 수정 후 재요청이 필요합니다.
+          </div>
+          <button
+            onClick={onDispatchClick}
+            className="px-4 py-2 bg-red-600 text-white font-bold rounded-md hover:bg-red-700 transition-colors shadow-sm"
+          >
+            일정 수정 및 재요청
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col space-y-6 overflow-y-auto pb-6 p-2 custom-scrollbar max-h-[calc(100vh-150px)]">
         {parts.map(part => {
           const partTasks = getPartTaskCards(part.id, parts, tasks);
@@ -111,12 +229,13 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
                             {task.scopeName || 'General'}
                           </span>
                           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            task.approvalStatus === 'PENDING' ? 'bg-orange-100 text-orange-700' :
                             task.status === 'DONE' ? 'bg-green-100 text-green-700' :
                             task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
                             task.status === 'REVIEW' ? 'bg-purple-100 text-purple-700' :
                             'bg-gray-100 text-[var(--color-text-sub)]'
                           }`}>
-                            {task.status}
+                            {task.approvalStatus === 'PENDING' ? '승인대기' : task.status}
                           </span>
                         </div>
                         
@@ -132,7 +251,7 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
                         </div>
                         
                         <div className="flex items-center gap-1 font-medium">
-                          {isMyTask && task.status !== 'DONE' ? (
+                          {isMyTask && task.status !== 'DONE' && task.approvalStatus === 'APPROVED' ? (
                             <button 
                               onClick={(e) => { e.stopPropagation(); updateTaskStatus(task.id, 'DONE'); }}
                               className="text-[10px] px-2 py-1 bg-green-100 text-green-700 border border-green-200 rounded hover:bg-green-200 transition-colors font-bold shadow-sm"
