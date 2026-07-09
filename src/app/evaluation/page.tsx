@@ -87,7 +87,7 @@ export default function EvaluationPage() {
   };
 
   return (
-    <div className="max-w-7xl w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+    <div className="max-w-[1600px] w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-center bg-[var(--color-surface)] p-5 rounded-xl shadow-sm border border-[var(--color-border)]">
         <div>
           <h1 className="text-2xl font-bold text-[var(--color-text-main)] flex items-center gap-2">

@@ -31,7 +31,7 @@ export default function PersonnelManagementPage() {
   };
 
   return (
-    <div className="max-w-7xl w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+    <div className="max-w-[1600px] w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-center bg-[var(--color-surface)] p-6 rounded-xl shadow-sm border">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">

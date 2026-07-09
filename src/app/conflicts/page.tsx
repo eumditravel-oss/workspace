@@ -29,7 +29,7 @@ export default function ConflictsPage() {
   };
 
   return (
-    <div className="max-w-5xl w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+    <div className="max-w-[1600px] w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <div>
         <h1 className="text-2xl font-bold text-[var(--color-text-main)] mb-4">일정 충돌 관리</h1>
         <p className="text-sm text-[var(--color-text-sub)] mb-6">신규 프로젝트 배정이나 일정 변경으로 발생한 충돌 내역을 확인하고 해결합니다.</p>

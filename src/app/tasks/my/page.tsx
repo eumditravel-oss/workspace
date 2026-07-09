@@ -40,7 +40,7 @@ export default function MyTasksPage() {
   };
 
   return (
-    <div className="max-w-5xl w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+    <div className="max-w-[1600px] w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <div>
         <h1 className="text-2xl font-bold text-[var(--color-text-main)] mb-4">내 할 일 목록</h1>
         <div className="bg-[var(--color-surface)] rounded-[var(--radius-card)] shadow-sm border border-[var(--color-border)] overflow-hidden p-6">

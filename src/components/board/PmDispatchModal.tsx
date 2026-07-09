@@ -175,7 +175,7 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-xl w-full max-w-[95vw] max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
         <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center bg-[var(--color-bg)] rounded-t-xl">
           <h2 className="text-lg font-bold text-[var(--color-text-main)]">PM 업무 하달 (Task Dispatch)</h2>
           <button onClick={onClose} className="text-[var(--color-text-sub)] hover:text-[var(--color-text-main)]">

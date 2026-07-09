@@ -9,8 +9,8 @@ import { DataLoader } from "@/components/layout/DataLoader";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "EUMDI OS - Project Management",
-  description: "Task and Schedule Management System",
+  title: "CON-COST&Viet_QS OS - Project Management",
+  description: "Internal Project Management and Operations System",
 };
 
 export default function RootLayout({

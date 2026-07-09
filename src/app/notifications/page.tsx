@@ -13,7 +13,7 @@ export default function NotificationsPage() {
   const myNotifications = notifications.filter(n => n.userId === currentUser.id).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
-    <div className="max-w-4xl w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+    <div className="max-w-[1600px] w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-center bg-[var(--color-surface)] p-4 rounded-xl shadow-sm border">
         <h1 className="text-xl font-bold text-[var(--color-text-main)] flex items-center">
           <Bell className="w-6 h-6 mr-2 text-indigo-600" />

@@ -10,7 +10,7 @@ export default function SettingsPage() {
   if (!currentUser) return <div className="py-10 text-center text-[var(--color-text-sub)]">로그인이 필요합니다.</div>;
 
   return (
-    <div className="max-w-4xl w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+    <div className="max-w-[1600px] w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <h1 className="text-2xl font-bold text-[var(--color-text-main)]">설정 및 내 정보</h1>
       
       <div className="bg-[var(--color-surface)] p-6 rounded-xl shadow-sm border space-y-6">

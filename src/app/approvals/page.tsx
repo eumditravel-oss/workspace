@@ -58,7 +58,7 @@ export default function ApprovalsPage() {
   };
 
   return (
-    <div className="max-w-5xl w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+    <div className="max-w-[1600px] w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <div>
         <h1 className="text-2xl font-bold text-[var(--color-text-main)] mb-4">대기 중인 결재</h1>
         <div className="bg-[var(--color-surface)] rounded-xl shadow-sm border overflow-hidden">

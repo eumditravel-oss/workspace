@@ -11,7 +11,7 @@ import { LayoutDashboard, Briefcase, Calendar, CheckSquare, Bell, Settings, Clip
 export const Sidebar = () => {
   const pathname = usePathname();
   const { currentUser, appMode } = useAuthStore();
-  const { sidebarMode, cycleSidebarMode } = useUiStore();
+  const [isHovered, setIsHovered] = React.useState(false);
   const { settings } = useTranslationStore();
   const t = useTranslation(settings.uiLanguage);
 
@@ -41,16 +41,22 @@ export const Sidebar = () => {
 
   const visibleMenus = menuItems.filter(item => currentUser && item.roles.includes(currentUser.role));
 
-  const isCompact = sidebarMode === 'COMPACT';
-  const isExpanded = sidebarMode === 'EXPANDED';
+  const isExpanded = isHovered;
+  const isCompact = !isExpanded;
 
-  const widthClass = isExpanded ? 'w-[220px]' : isCompact ? 'w-16' : 'w-12';
+  const widthClass = isExpanded ? 'w-[240px]' : 'w-16';
 
   return (
-    <div className={`${widthClass} bg-slate-50 border-r border-[var(--color-border)] text-[var(--color-text-main)] min-h-screen flex flex-col transition-all duration-300 relative z-50`}>
+    <div 
+      className={`${widthClass} bg-slate-50 border-r border-[var(--color-border)] text-[var(--color-text-main)] min-h-screen flex flex-col transition-all duration-300 relative z-50`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onFocus={() => setIsHovered(true)}
+      onBlur={() => setIsHovered(false)}
+    >
       <div className={`p-4 ${!isExpanded ? 'text-center flex justify-center' : ''} h-14 flex items-center border-b border-[var(--color-border)] bg-slate-50`}>
-        <h1 className={`font-bold text-[var(--color-primary)] transition-all ${isExpanded ? 'text-xl tracking-tight' : isCompact ? 'text-lg' : 'text-xs truncate'}`}>
-          {isExpanded ? 'EUMDI OS' : isCompact ? 'E' : 'E'}
+        <h1 className={`font-bold text-[var(--color-primary)] transition-all ${isExpanded ? 'text-lg tracking-tight' : 'text-sm truncate'}`}>
+          {isExpanded ? 'CON-COST&Viet_QS OS' : 'C&V'}
         </h1>
       </div>
       {isExpanded && <div className="px-5 pt-4 pb-2"><p className="text-[11px] font-semibold text-[var(--color-text-sub)] uppercase tracking-wider">Workspace</p></div>}
@@ -73,14 +79,6 @@ export const Sidebar = () => {
           );
         })}
       </nav>
-
-      <button 
-        onClick={cycleSidebarMode}
-        className="p-3 m-3 flex items-center justify-center text-[var(--color-text-sub)] hover:text-[var(--color-text-main)] hover:bg-gray-100 rounded-md border border-[var(--color-border)] transition-colors"
-        title="Toggle sidebar mode"
-      >
-        {!isExpanded ? <Menu className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-      </button>
     </div>
   );
 };
