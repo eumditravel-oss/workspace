@@ -4,33 +4,36 @@ import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { Users, Save, Download, Plus, Edit2, Trash2 } from 'lucide-react';
 import { PersonnelCard } from '@/types/models';
-import { PersonnelModal } from './PersonnelModal';
+
 
 export default function PersonnelManagementPage() {
   const { currentUser, users, addUser, updateUser, deactivateUser } = useAuthStore();
   const personnel = users;
   
-  const [editingUser, setEditingUser] = useState<PersonnelCard | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<Partial<PersonnelCard> | null>(null);
+  
+  const handleAddUser = () => {
+    setEditingUser({
+      name: '',
+      displayName: '',
+      companyId: 'CON_COST',
+      departmentId: '',
+      role: 'WORKER',
+      systemRole: 'WORKER',
+      employmentStatus: 'ACTIVE',
+      isActive: true,
+    });
+  };
   
   if (!currentUser) return <div className="py-10 text-center text-[var(--color-text-sub)]">로그인이 필요합니다.</div>;
   if (!['SUPER_ADMIN', 'SYSTEM_ADMIN', 'DEPARTMENT_MANAGER'].includes(currentUser.role)) {
     return <div className="py-10 text-center text-[var(--color-danger)] font-bold">접근 권한이 없습니다.</div>;
   }
 
-  const handleSaveUser = (user: Partial<PersonnelCard>) => {
-    if (editingUser) {
-      updateUser(editingUser.id, user);
-    } else {
-      addUser(user as Omit<PersonnelCard, 'id'>);
-    }
-    setIsModalOpen(false);
-    setEditingUser(null);
-  };
+
 
   const handleEdit = (u: PersonnelCard) => {
     setEditingUser(u);
-    setIsModalOpen(true);
   };
 
   const handleExport = () => {
@@ -60,7 +63,7 @@ export default function PersonnelManagementPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
+          <button onClick={handleAddUser} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
             <Plus className="w-4 h-4" />
             사원 추가
           </button>
@@ -137,7 +140,7 @@ export default function PersonnelManagementPage() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[150] p-4">
           <div className="bg-[var(--color-surface)] rounded-[20px] shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg)]/50">
-              <h2 className="text-lg font-bold">인사카드 수정</h2>
+              <h2 className="text-lg font-bold">{editingUser.id ? "인사카드 수정" : "사원 추가"}</h2>
             </div>
             <div className="px-6 py-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
               <div>
@@ -275,7 +278,11 @@ export default function PersonnelManagementPage() {
                     alert("SUPER_ADMIN 권한은 SUPER_ADMIN 만이 부여할 수 있습니다.");
                     return;
                   }
-                  updateUser(updatedUser.id, updatedUser);
+                  if (updatedUser.id) {
+                    updateUser(updatedUser.id, updatedUser as PersonnelCard);
+                  } else {
+                    addUser(updatedUser as Omit<PersonnelCard, 'id'>);
+                  }
                   setEditingUser(null);
                 }} 
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 flex items-center gap-1 shadow-sm transition-colors"
