@@ -42,10 +42,7 @@ interface TaskState {
 export const useTaskStore = create<TaskState>()(persist((set) => ({
   tasks: [],
   progressUpdates: [],
-  checklists: [
-    { id: 'chk1', taskId: '1', content: 'UI 디자인 시안 확인', isCompleted: true, completedAt: new Date().toISOString() },
-    { id: 'chk2', taskId: '1', content: '퍼블리싱 적용', isCompleted: false },
-  ],
+  checklists: [],
   artifacts: [],
   blockers: [],
   workSegments: [],

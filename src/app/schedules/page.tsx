@@ -20,13 +20,39 @@ export default function SchedulesPage() {
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showAllUsers, setShowAllUsers] = useState(false);
 
   if (!currentUser) return <div className="py-10 text-center text-[var(--color-text-sub)]">로그인이 필요합니다.</div>;
 
-  const visibleUsers = users.filter(u => 
-    (u.employmentStatus === 'ACTIVE' || u.isActive) && 
-    canViewEmployeeSchedule(currentUser, u)
-  );
+  const visibleUsers = users.filter(u => {
+    if (!(u.employmentStatus === 'ACTIVE' || u.isActive)) return false;
+    if (!canViewEmployeeSchedule(currentUser, u)) return false;
+    
+    if (!showAllUsers) {
+      if (u.id === 'u-ceo-hdm' || u.id === 'u-coo-lwh') return false;
+      
+      const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).setHours(0,0,0,0);
+      const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).setHours(23,59,59,999);
+      
+      const hasSchedules = schedules.some(s => {
+        if (s.userId !== u.id) return false;
+        const sStart = new Date(s.startDateTime).getTime();
+        const sEnd = new Date(s.endDateTime).getTime();
+        return (sStart <= monthEnd && sEnd >= monthStart);
+      });
+
+      const hasTasks = tasks.some(t => {
+        if (t.assigneeId !== u.id || t.isDeleted) return false;
+        if (!t.startDate || !t.dueDate) return false;
+        const tStart = new Date(t.startDate).getTime();
+        const tEnd = new Date(t.dueDate).setHours(23,59,59,999);
+        return (tStart <= monthEnd && tEnd >= monthStart);
+      });
+
+      if (!hasSchedules && !hasTasks) return false;
+    }
+    return true;
+  });
 
   // Filter based on role and rules
   const visibleSchedules = schedules.filter(s => {
@@ -171,7 +197,18 @@ export default function SchedulesPage() {
             </select>
             <button onClick={nextMonth} className="p-2 bg-gray-100 rounded hover:bg-gray-200 text-sm font-medium transition-colors">다음 달 &gt;</button>
           </div>
-          <h2 className="text-xl font-extrabold text-[var(--color-text-main)]">{year}년 {month + 1}월</h2>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-sm text-[var(--color-text-sub)] font-medium cursor-pointer bg-gray-50 px-3 py-1.5 rounded-md border">
+              <input 
+                type="checkbox" 
+                checked={showAllUsers} 
+                onChange={(e) => setShowAllUsers(e.target.checked)} 
+                className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
+              />
+              일정 없는 직원 및 임원 포함하여 보기
+            </label>
+            <h2 className="text-xl font-extrabold text-[var(--color-text-main)]">{year}년 {month + 1}월</h2>
+          </div>
         </div>
 
         {activeTab === 'MONTHLY_MATRIX' && (
