@@ -5,6 +5,7 @@ import { AlertCircle, Clock, CheckCircle, User } from 'lucide-react';
 import { useProjectStore } from '@/store/projectStore';
 import { useAuthStore } from '@/store/authStore';
 import { Badge } from '@/components/ui/Badge';
+import { getUserDisplayName } from '@/lib/localization';
 
 interface Props {
   project: Project;
@@ -15,7 +16,7 @@ interface Props {
 }
 
 export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick, draggable, onDragStart }) => {
-  const { users } = useAuthStore();
+  const { users, currentUser } = useAuthStore();
   const { postDeliveryWorkRequests, revisionRequests } = useProjectStore();
 
   const progress = getProjectOverallProgress(project, tasks);
@@ -65,7 +66,7 @@ export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick, d
           <div className="w-5 h-5 bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800/50 rounded-full flex items-center justify-center border">
             <User className="w-3 h-3" />
           </div>
-          <span className="font-medium">{pmUser?.name || '담당자 미정'}</span>
+          <span className="font-medium">{pmUser ? getUserDisplayName(pmUser) : '담당자 미정'}</span>
         </div>
         <div className="flex items-center gap-1 font-semibold">
           <Clock className="w-3 h-3" />
@@ -104,6 +105,20 @@ export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick, d
           </div>
         )}
       </div>
+
+      {project.status === 'MANAGER_REVIEW' && currentUser?.role === 'DEPARTMENT_MANAGER' && (
+        <div className="pt-2 border-t border-[var(--color-border)] flex justify-end">
+          <button 
+            className="text-[11px] px-3 py-1.5 bg-green-600 text-white font-bold rounded-md hover:bg-green-700 transition-colors shadow-sm"
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              useProjectStore.getState().updateProjectStatus(project.id, 'COMPLETED'); 
+            }}
+          >
+            최종 완료 승인
+          </button>
+        </div>
+      )}
     </div>
   );
 };

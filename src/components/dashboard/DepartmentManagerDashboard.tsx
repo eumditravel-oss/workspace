@@ -96,7 +96,7 @@ export const DepartmentManagerDashboard = ({ selectedMonth }: { selectedMonth: s
                   <th className="px-5 py-3 font-semibold text-[var(--color-text-sub)]">구분</th>
                   <th className="px-5 py-3 font-semibold text-[var(--color-text-sub)]">상태</th>
                   <th className="px-5 py-3 font-semibold text-[var(--color-text-sub)]">공정률</th>
-                  <th className="px-5 py-3 font-semibold text-[var(--color-text-sub)]">납품 예정일</th>
+                  <th className="px-5 py-3 font-semibold text-[var(--color-text-sub)]">{projectTypeFilter === 'CLIENT_ORDER' ? '납품 예정일' : '목표 예정일'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-border)]">

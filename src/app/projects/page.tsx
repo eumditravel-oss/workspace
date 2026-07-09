@@ -281,6 +281,9 @@ export default function ProjectBoardPage() {
             projectId={selectedProjectId}
             tasks={projectTasks}
             users={users}
+            onDispatchClick={() => {
+              if (selectedProject) setDispatchProject(selectedProject);
+            }}
           />
         ) : viewType === 'HISTORY' ? (
           <div className="bg-[var(--color-surface)] rounded-xl shadow-sm border p-6 min-h-[400px]">

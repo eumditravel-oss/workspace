@@ -2,29 +2,62 @@ import React from 'react';
 import { TaskCard, PersonnelCard, ProjectWorkPart } from '@/types/models';
 import { getProjectWorkParts, getPartTaskCards, getPartProgress, getPartEmployees, calculateTaskProgress } from '@/lib/selectors';
 import { TaskDetailModal } from './TaskDetailModal';
+import { useAuthStore } from '@/store/authStore';
+import { useProjectStore } from '@/store/projectStore';
+import { useTaskStore } from '@/store/taskStore';
+import { CheckCircle } from 'lucide-react';
 
 interface ProjectPartBoardProps {
   projectId: string;
   tasks: TaskCard[];
   users: PersonnelCard[];
   onTaskClick?: (taskId: string) => void;
+  onDispatchClick?: () => void;
 }
 
-export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, tasks, users }) => {
+export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, tasks, users, onDispatchClick }) => {
   const [selectedTask, setSelectedTask] = React.useState<TaskCard | null>(null);
+  const { currentUser } = useAuthStore();
+  const project = useProjectStore(state => state.projects.find(p => p.id === projectId));
+  const updateTaskStatus = useTaskStore(state => state.updateTaskStatus);
+  const updateProjectStatus = useProjectStore(state => state.updateProjectStatus);
   
   const parts = getProjectWorkParts(projectId, tasks, users);
   
   if (parts.length === 0) {
+    const isAuthorized = currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'DEPARTMENT_MANAGER' || (currentUser?.role === 'PM' && project?.pmId === currentUser?.id);
+
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-[var(--color-text-sub)] bg-[var(--color-surface)] rounded-lg border border-dashed">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--color-text-sub)] bg-[var(--color-surface)] rounded-lg border border-dashed gap-4">
         <p>배정된 업무 파트가 없습니다.</p>
+        {isAuthorized && onDispatchClick && (
+          <button 
+            onClick={onDispatchClick}
+            className="px-4 py-2 bg-[var(--color-primary)] text-white font-bold rounded-md hover:bg-opacity-90 transition-colors shadow-sm"
+          >
+            세부 업무 및 파트 배정하기
+          </button>
+        )}
       </div>
     );
   }
 
+  const allTasksDone = tasks.length > 0 && tasks.every(t => t.status === 'DONE');
+  const isPM = currentUser?.role === 'PM' && project?.pmId === currentUser?.id;
+
   return (
     <>
+      {allTasksDone && isPM && project?.status !== 'MANAGER_REVIEW' && project?.status !== 'COMPLETED' && (
+        <div className="mb-4 flex justify-end">
+          <button
+            onClick={() => updateProjectStatus(projectId, 'MANAGER_REVIEW')}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition-colors shadow-sm animate-pulse"
+          >
+            <CheckCircle className="w-4 h-4" />
+            부서장(MANAGER) 검수 요청
+          </button>
+        </div>
+      )}
       <div className="flex flex-col space-y-6 overflow-y-auto pb-6 p-2 custom-scrollbar max-h-[calc(100vh-150px)]">
         {parts.map(part => {
           const partTasks = getPartTaskCards(part.id, parts, tasks);
@@ -64,6 +97,7 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
                 {partTasks.map(task => {
                   const assignee = users.find(u => u.id === task.assigneeId);
                   const progress = calculateTaskProgress(task);
+                  const isMyTask = currentUser?.id === task.assigneeId;
                   
                   return (
                     <div 
@@ -98,7 +132,16 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
                         </div>
                         
                         <div className="flex items-center gap-1 font-medium">
-                          <span>{progress}%</span>
+                          {isMyTask && task.status !== 'DONE' ? (
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); updateTaskStatus(task.id, 'DONE'); }}
+                              className="text-[10px] px-2 py-1 bg-green-100 text-green-700 border border-green-200 rounded hover:bg-green-200 transition-colors font-bold shadow-sm"
+                            >
+                              작업 완료
+                            </button>
+                          ) : (
+                            <span>{progress}%</span>
+                          )}
                         </div>
                       </div>
                     </div>
