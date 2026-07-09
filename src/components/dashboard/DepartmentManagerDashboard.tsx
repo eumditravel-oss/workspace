@@ -12,9 +12,12 @@ export const DepartmentManagerDashboard = ({ selectedMonth }: { selectedMonth: s
   const { currentUser } = useAuthStore();
   const { projects } = useProjectStore();
   const { tasks } = useTaskStore();
+  
+  const [projectTypeFilter, setProjectTypeFilter] = React.useState<'INTERNAL_DEVELOPMENT' | 'CLIENT_ORDER'>('INTERNAL_DEVELOPMENT');
 
   const deptProjects = projects.filter(p => {
     if (p.isDeleted || p.archiveStatus === 'ARCHIVED' || p.departmentId !== currentUser?.departmentId) return false;
+    if ((p.projectSourceType || 'CLIENT_ORDER') !== projectTypeFilter) return false;
     if (selectedMonth === 'ALL') return true;
     const dateStr = p.projectSourceType === 'INTERNAL_DEVELOPMENT' ? p.targetDate : p.deliveryDate;
     if (!dateStr) return false;
@@ -67,6 +70,14 @@ export const DepartmentManagerDashboard = ({ selectedMonth }: { selectedMonth: s
       <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-card)] overflow-hidden shadow-sm">
         <div className="px-5 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
           <h2 className="text-[15px] font-bold text-[var(--color-text-main)]">월별 프로젝트 요약</h2>
+          <select
+            className="border border-[var(--color-border)] rounded-md px-3 py-1.5 bg-[var(--color-surface)] text-sm font-medium text-[var(--color-text-main)] outline-none focus:border-[var(--color-primary)] transition-colors"
+            value={projectTypeFilter}
+            onChange={(e) => setProjectTypeFilter(e.target.value as 'INTERNAL_DEVELOPMENT' | 'CLIENT_ORDER')}
+          >
+            <option value="INTERNAL_DEVELOPMENT">개발팀 업무</option>
+            <option value="CLIENT_ORDER">수주 프로젝트</option>
+          </select>
         </div>
         
         {deptProjects.length === 0 ? (

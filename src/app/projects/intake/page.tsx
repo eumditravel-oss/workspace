@@ -10,7 +10,7 @@ import { useTranslationStore } from '@/store/translationStore';
 import { mockUsers } from '@/data/mockData';
 
 export default function IntakePage() {
-  const { currentUser } = useAuthStore();
+  const { currentUser, users } = useAuthStore();
   const { settings } = useTranslationStore();
   const t = useTranslation(settings.uiLanguage);
   const { projects, addProject, assignPM, updateProjectField } = useProjectStore();
@@ -33,7 +33,14 @@ export default function IntakePage() {
     return <div className="py-10 text-center text-[var(--color-danger)] font-bold">권한이 없습니다. (최고관리자 및 부서장만 접근 가능)</div>;
   }
 
-  const pms = mockUsers.filter(u => u.role === 'PM');
+  const isClient = activeTab === 'CLIENT_ORDER';
+  // Allow PMs or Managers for external projects, and any active user for internal tasks
+  const assignableUsers = users.filter(u => {
+    if (u.isActive === false) return false;
+    if (isClient) return ['PM', 'DEPARTMENT_MANAGER', 'SUPER_ADMIN'].includes(u.role) || u.organizationRank === 'PM';
+    return true; // Anyone can be a person in charge for internal development tasks
+  });
+
   const intakeProjects = projects.filter(p => (p.status === 'INTAKE_RECEIVED' || p.status === 'MANAGER_REVIEW') && (p.projectSourceType || 'CLIENT_ORDER') === activeTab);
 
   const handleCreate = (e: React.FormEvent) => {
@@ -82,8 +89,6 @@ export default function IntakePage() {
       relatedProjectId: projectId,
     });
   };
-
-  const isClient = activeTab === 'CLIENT_ORDER';
 
   return (
     <div className="w-full px-6 mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
@@ -243,7 +248,7 @@ export default function IntakePage() {
                       onChange={(e) => handleAssignPM(p.id, e.target.value)}
                     >
                       <option value="" disabled>{isClient ? 'PM 배정 필요' : '책임자 배정 필요'}</option>
-                      {pms.map(pm => (
+                      {assignableUsers.map(pm => (
                         <option key={pm.id} value={pm.id}>{getUserDisplayName(pm)}</option>
                       ))}
                     </select>
