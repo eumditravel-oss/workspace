@@ -327,7 +327,7 @@ export default function SchedulesPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-[var(--color-text-main)]">{getUserDisplayName(user)}</h3>
-                      <p className="text-xs text-[var(--color-text-sub)]">{user.teamName || user.departmentName} · {user.jobTitle}</p>
+                      <p className="text-xs text-[var(--color-text-sub)]">{user.teamName || user.departmentName} · {user.jobTitle || user.organizationRank || user.role}</p>
                     </div>
                   </div>
                   

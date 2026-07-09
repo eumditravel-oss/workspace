@@ -117,7 +117,7 @@ export const useTranslation = (lang: WorkspaceLanguage) => {
   };
 };
 
-export const getUserDisplayName = (user: { name: string; role?: string; departmentName?: string; isKorean?: boolean } | null | undefined) => {
+export const getUserDisplayName = (user: { name?: string; displayName?: string; role?: string; departmentName?: string; isKorean?: boolean } | null | undefined) => {
   if (!user) return 'Unknown';
-  return user.name;
+  return user.displayName || user.name || 'Unknown';
 };

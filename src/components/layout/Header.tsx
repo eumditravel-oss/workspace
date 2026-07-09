@@ -95,7 +95,7 @@ export const Header = () => {
         >
           {mockUsers.map(u => (
             <option key={u.id} value={u.id}>
-              {getUserDisplayName(u)} ({u.jobTitle})
+              {getUserDisplayName(u)} ({u.jobTitle || u.organizationRank || u.role})
             </option>
           ))}
         </select>
