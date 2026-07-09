@@ -58,7 +58,7 @@ export default function ApprovalsPage() {
   };
 
   return (
-    <div className="max-w-[1600px] w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+    <div className="w-full px-6 mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <div>
         <h1 className="text-2xl font-bold text-[var(--color-text-main)] mb-4">대기 중인 결재</h1>
         <div className="bg-[var(--color-surface)] rounded-xl shadow-sm border overflow-hidden">
@@ -81,20 +81,20 @@ export default function ApprovalsPage() {
                   <tr key={r.id} className="border-b hover:bg-[var(--color-bg)]">
                     <td className="p-4 font-medium text-[var(--color-text-main)]">{r.type}</td>
                     <td className="p-4 text-sm text-[var(--color-text-main)]">{r.title}</td>
-                    <td className="p-4 text-sm text-[var(--color-text-sub)] max-w-xs truncate">{r.reason}</td>
-                    <td className="p-4 space-x-2 flex flex-wrap gap-2">
-                      <button onClick={() => handleAction(r.id, 'APPROVED')} className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">승인</button>
-                      <button onClick={() => handleAction(r.id, 'REJECTED')} className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">반려</button>
+                    <td className="p-4 text-sm text-[var(--color-text-sub)] max-w-lg truncate" title={r.reason}>{r.reason}</td>
+                    <td className="p-4 space-x-2 flex flex-wrap gap-2 items-center">
+                      <button onClick={() => handleAction(r.id, 'APPROVED')} className="bg-indigo-600 text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-indigo-700 shadow-sm transition-colors">승인</button>
+                      <button onClick={() => handleAction(r.id, 'REJECTED')} className="bg-red-50 text-red-600 border border-red-200 px-4 py-1.5 rounded-md text-sm font-medium hover:bg-red-100 transition-colors">반려</button>
                       
                       {hasApprovalRights && (
                         <>
                           {r.type === 'OVERTIME_REQUEST' && (
-                            <button onClick={() => handleAction(r.id, 'APPROVED', 'DEADLINE_EXTENSION')} className="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700">
+                            <button onClick={() => handleAction(r.id, 'APPROVED', 'DEADLINE_EXTENSION')} className="bg-amber-100 text-amber-700 border border-amber-200 px-4 py-1.5 rounded-md text-sm font-medium hover:bg-amber-200 transition-colors">
                               일정 연장으로 대안 승인
                             </button>
                           )}
                           {r.type === 'DEADLINE_EXTENSION' && (
-                            <button onClick={() => handleAction(r.id, 'APPROVED', 'MANPOWER_SUPPORT')} className="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700">
+                            <button onClick={() => handleAction(r.id, 'APPROVED', 'MANPOWER_SUPPORT')} className="bg-amber-100 text-amber-700 border border-amber-200 px-4 py-1.5 rounded-md text-sm font-medium hover:bg-amber-200 transition-colors">
                               인력 지원으로 대안 승인
                             </button>
                           )}

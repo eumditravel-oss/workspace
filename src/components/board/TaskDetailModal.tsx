@@ -261,7 +261,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
             </div>
             <h2 className="text-xl font-bold text-[var(--color-text-main)]">{primaryTitle}</h2>
             {secondaryTitle && (
-              <h3 className="text-sm font-medium text-[var(--color-text-sub)] mt-1 opacity-80">{secondaryTitle}</h3>
+              <h3 className="text-sm font-semibold text-slate-500 mt-1">{secondaryTitle}</h3>
             )}
           </div>
           <div className="flex items-center gap-4">

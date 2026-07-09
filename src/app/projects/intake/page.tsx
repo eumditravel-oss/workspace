@@ -86,7 +86,7 @@ export default function IntakePage() {
   const isClient = activeTab === 'CLIENT_ORDER';
 
   return (
-    <div className="max-w-[1600px] w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+    <div className="w-full px-6 mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       
       {/* Tabs */}
       <div className="flex gap-4 mb-4 mt-8">

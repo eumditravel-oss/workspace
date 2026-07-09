@@ -81,7 +81,7 @@ export default function WorkspaceSettingsPage() {
   }
 
   return (
-    <div className="max-w-[1600px] w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+    <div className="w-full px-6 mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       {successMsg && <div className="bg-green-100 text-green-700 p-3 rounded text-sm">{successMsg}</div>}
       <div className="flex items-center gap-4 bg-[var(--color-surface)] p-6 rounded-xl shadow-sm border">
         <div className="w-12 h-12 bg-gray-100 text-[var(--color-text-sub)] rounded-xl flex items-center justify-center">

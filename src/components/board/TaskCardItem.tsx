@@ -144,7 +144,7 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
           {primaryTitle}
         </h4>
         {secondaryTitle && (
-          <p className="text-[10px] text-[var(--color-text-sub)] mt-1 truncate">
+          <p className="text-xs text-slate-500 font-medium mt-1 truncate">
             {secondaryTitle}
           </p>
         )}
