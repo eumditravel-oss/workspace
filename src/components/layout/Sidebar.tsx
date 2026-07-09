@@ -56,8 +56,8 @@ export const Sidebar = () => {
       onFocus={() => setIsHovered(true)}
       onBlur={() => setIsHovered(false)}
     >
-      <div className={`p-4 ${!isExpanded ? 'text-center flex justify-center' : ''} h-14 flex items-center border-b border-[var(--color-border)] bg-slate-50`}>
-        <h1 className={`font-bold text-[var(--color-primary)] transition-all ${isExpanded ? 'text-lg tracking-tight' : 'text-sm truncate'}`}>
+      <div className={`px-4 h-14 flex items-center border-b border-[var(--color-border)] bg-slate-50 ${!isExpanded ? 'justify-center' : ''}`}>
+        <h1 className={`font-bold text-[var(--color-primary)] transition-all whitespace-nowrap overflow-hidden ${isExpanded ? 'text-lg tracking-tight' : 'text-sm'}`}>
           {isExpanded ? 'CON-COST&Viet_QS OS' : 'C&V'}
         </h1>
       </div>

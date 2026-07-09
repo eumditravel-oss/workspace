@@ -30,7 +30,7 @@ export default function SettingsPage() {
           </div>
           <div>
             <label className="block text-sm text-[var(--color-text-sub)] mb-1 flex items-center"><Mail className="w-4 h-4 mr-1" />이메일 (Mock)</label>
-            <div className="font-medium text-[var(--color-text-main)]">{currentUser.id}@eumdi.com</div>
+            <div className="font-medium text-[var(--color-text-main)]">{currentUser.id}@con-cost.com</div>
           </div>
         </div>
       </div>
