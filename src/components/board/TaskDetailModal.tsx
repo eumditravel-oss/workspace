@@ -247,8 +247,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
   const assignee = users.find(u => u.id === task.assigneeId);
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onMouseDown={onClose}>
-      <div className="bg-[var(--color-surface)] rounded-[20px] shadow-xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200" onMouseDown={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={onClose}>
+      <div className="bg-[var(--color-surface)] rounded-[20px] shadow-xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
         
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg)]/50">
