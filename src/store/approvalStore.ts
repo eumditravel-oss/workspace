@@ -10,7 +10,7 @@ import { useConflictStore } from '@/store/conflictStore';
 interface ApprovalState {
   requests: ApprovalRequest[];
   templates: ApprovalWorkflowTemplate[];
-  addRequest: (request: Omit<ApprovalRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => void;
+  addRequest: (request: Omit<ApprovalRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'> & { id?: string }) => string;
   updateApprovalStatus: (id: string, status: 'APPROVED' | 'REJECTED' | 'PM_APPROVED' | 'MANAGER_REVIEWING', reviewerId: string, comment?: string, alternativeType?: ApprovalRequestType) => void;
   updateTemplate: (templateId: string, updates: Partial<ApprovalWorkflowTemplate>) => void;
   replaceRequests: (requests: ApprovalRequest[]) => void;
@@ -59,15 +59,19 @@ const initialTemplates: ApprovalWorkflowTemplate[] = [
 export const useApprovalStore = create<ApprovalState>()(persist((set) => ({
   requests: initialRequests,
   templates: initialTemplates,
-  addRequest: (requestData) => set((state) => ({
-    requests: [...state.requests, {
-      ...requestData,
-      id: `apr_${Date.now()}`,
-      status: 'PENDING',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }]
-  })),
+  addRequest: (requestData) => {
+    const newId = requestData.id || `apr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    set((state) => ({
+      requests: [...state.requests, {
+        ...requestData,
+        id: newId,
+        status: 'PENDING',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }]
+    }));
+    return newId;
+  },
   updateApprovalStatus: (id, status, reviewerId, comment, alternativeType) => set((state) => {
     const request = state.requests.find(r => r.id === id);
     

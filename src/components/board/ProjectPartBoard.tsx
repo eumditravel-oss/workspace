@@ -8,7 +8,8 @@ import { useTaskStore } from '@/store/taskStore';
 import { useApprovalStore } from '@/store/approvalStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useAuditStore } from '@/store/auditStore';
-import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { useScheduleStore } from '@/store/scheduleStore';
+import { CheckCircle, XCircle, AlertCircle, AlertTriangle, Info, Calendar } from 'lucide-react';
 
 interface ProjectPartBoardProps {
   projectId: string;
@@ -22,11 +23,12 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
   const [selectedTask, setSelectedTask] = React.useState<TaskCard | null>(null);
   const { currentUser } = useAuthStore();
   const project = useProjectStore(state => state.projects.find(p => p.id === projectId));
-  const updateTaskStatus = useTaskStore(state => state.updateTaskStatus);
+  const { tasks: allTasks, updateTaskStatus } = useTaskStore();
   const updateProjectStatus = useProjectStore(state => state.updateProjectStatus);
   const { requests, updateApprovalStatus } = useApprovalStore();
   const { addNotification } = useNotificationStore();
   const { addLog } = useAuditStore();
+  const { schedules } = useScheduleStore();
   
   const parts = getProjectWorkParts(projectId, tasks, users);
   
@@ -55,21 +57,17 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
   const handleApproveSchedule = () => {
     if (!window.confirm('작성된 일정 계획을 승인하고 공식 일정으로 반영하시겠습니까?')) return;
     
-    // Update project
     updateProjectStatus(projectId, 'IN_PROGRESS');
     
-    // Update tasks
     useTaskStore.setState(state => ({
       tasks: state.tasks.map(t => t.projectId === projectId && t.approvalStatus === 'PENDING' ? { ...t, approvalStatus: 'APPROVED' } : t)
     }));
 
-    // Resolve ApprovalRequest
     const req = requests.find(r => r.projectId === projectId && r.type === 'SCHEDULE_APPROVAL' && r.status === 'PENDING');
     if (req) {
       updateApprovalStatus(req.id, 'APPROVED', currentUser?.id || '');
     }
 
-    // Notifications
     if (project?.pmId) {
       addNotification({
         userId: project.pmId,
@@ -81,7 +79,6 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
       });
     }
 
-    // AuditLog
     addLog({
       entityType: 'PROJECT',
       entityId: projectId,
@@ -96,6 +93,10 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
     if (reason === null) return;
     
     updateProjectStatus(projectId, 'SCHEDULE_REJECTED');
+
+    useTaskStore.setState(state => ({
+      tasks: state.tasks.map(t => t.projectId === projectId && t.approvalStatus === 'PENDING' ? { ...t, approvalStatus: 'REJECTED' } : t)
+    }));
 
     const req = requests.find(r => r.projectId === projectId && r.type === 'SCHEDULE_APPROVAL' && r.status === 'PENDING');
     if (req) {
@@ -122,6 +123,35 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
     });
   };
 
+  const getWorkerConflicts = (task: TaskCard) => {
+    if (!task.assigneeId || !task.startDate || !task.dueDate) return null;
+    
+    const userSchedules = schedules.filter(s => s.userId === task.assigneeId && s.scheduleType === 'OFF');
+    const offDays = userSchedules.some(s => s.startDateTime.split('T')[0] <= task.dueDate! && s.endDateTime.split('T')[0] >= task.startDate!);
+    
+    const overlappingTasks = allTasks.filter(t => 
+      t.assigneeId === task.assigneeId && 
+      t.status !== 'DONE' && 
+      t.status !== 'REJECTED' &&
+      t.approvalStatus === 'APPROVED' &&
+      t.startDate && t.dueDate &&
+      t.startDate <= task.dueDate! && t.dueDate >= task.startDate!
+    );
+    
+    let existingHours = 0;
+    overlappingTasks.forEach(t => existingHours += (t.estimatedHours || 8));
+    
+    const days = Math.max(1, (new Date(task.dueDate).getTime() - new Date(task.startDate).getTime()) / (1000 * 3600 * 24) + 1);
+    const addedHours = task.estimatedHours || 8;
+    const avgDaily = (existingHours + addedHours) / days;
+
+    if (!offDays && avgDaily <= 8) return null;
+    return { offDays, avgDaily: avgDaily.toFixed(1) };
+  };
+
+  const pendingTasks = tasks.filter(t => t.approvalStatus === 'PENDING');
+  const conflictCount = pendingTasks.filter(t => getWorkerConflicts(t) !== null).length;
+
   return (
     <>
       {allTasksDone && isPM && project?.status !== 'MANAGER_REVIEW' && project?.status !== 'COMPLETED' && (
@@ -137,26 +167,80 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
       )}
       
       {project?.status === 'SCHEDULE_PENDING_APPROVAL' && isManager && (
-        <div className="mb-4 flex justify-between items-center bg-blue-50 p-4 rounded-lg border border-blue-100">
-          <div className="flex items-center gap-2 text-blue-800 font-bold">
-            <AlertCircle className="w-5 h-5" />
-            PM이 작성한 세부 소요일정 승인 대기 중입니다.
+        <div className="mb-4 flex flex-col gap-4 bg-blue-50/80 p-4 rounded-lg border border-blue-200">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2 text-blue-800 font-bold">
+              <AlertCircle className="w-5 h-5" />
+              PM이 작성한 세부 소요일정 승인 대기 중입니다.
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleRejectSchedule}
+                className="flex items-center gap-2 px-4 py-2 bg-white text-red-600 font-bold rounded-md hover:bg-red-50 border border-red-200 transition-colors shadow-sm"
+              >
+                <XCircle className="w-4 h-4" />
+                일정 반려
+              </button>
+              <button
+                onClick={handleApproveSchedule}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition-colors shadow-sm animate-pulse"
+              >
+                <CheckCircle className="w-4 h-4" />
+                일정 승인 및 반영
+              </button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleRejectSchedule}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-red-600 font-bold rounded-md hover:bg-red-50 border border-red-200 transition-colors shadow-sm"
-            >
-              <XCircle className="w-4 h-4" />
-              일정 반려
-            </button>
-            <button
-              onClick={handleApproveSchedule}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition-colors shadow-sm animate-pulse"
-            >
-              <CheckCircle className="w-4 h-4" />
-              일정 승인 및 반영
-            </button>
+
+          <div className="bg-white rounded-md p-4 border border-blue-100 shadow-sm">
+            <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-blue-600"/>
+              승인 대기 일정 Preview & 직원별 부하 분석
+            </h4>
+            
+            {conflictCount > 0 && (
+              <div className="mb-4 text-sm bg-orange-50 text-orange-800 p-2 rounded border border-orange-200 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="font-bold">{conflictCount}건</span>의 업무에서 일정 겹침(휴가 또는 과부하)이 발견되었습니다. 주의하여 승인해주세요.
+              </div>
+            )}
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="bg-gray-50 text-gray-900 border-b">
+                  <tr>
+                    <th className="px-3 py-2">업무명</th>
+                    <th className="px-3 py-2">담당자</th>
+                    <th className="px-3 py-2">기간</th>
+                    <th className="px-3 py-2 text-right">예상 소요</th>
+                    <th className="px-3 py-2">충돌 분석</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingTasks.map(task => {
+                    const assignee = users.find(u => u.id === task.assigneeId);
+                    const conflict = getWorkerConflicts(task);
+                    return (
+                      <tr key={task.id} className="border-b last:border-b-0 hover:bg-gray-50">
+                        <td className="px-3 py-2 font-medium">{task.title}</td>
+                        <td className="px-3 py-2">{assignee?.name || '미배정'}</td>
+                        <td className="px-3 py-2">{task.startDate} ~ {task.dueDate}</td>
+                        <td className="px-3 py-2 text-right">{task.estimatedHours}h</td>
+                        <td className="px-3 py-2">
+                          {conflict ? (
+                            <div className="flex flex-col gap-1 text-xs">
+                              {conflict.offDays && <span className="text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 inline-block w-fit">휴가 겹침</span>}
+                              {Number(conflict.avgDaily) > 8 && <span className="text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 inline-block w-fit">과부하 ({conflict.avgDaily}h/d)</span>}
+                            </div>
+                          ) : (
+                            <span className="text-green-600 text-xs">정상</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -184,7 +268,6 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
           
           return (
             <div key={part.id} className="w-full bg-[var(--color-bg)] rounded-xl flex flex-col border border-[var(--color-border)] shadow-sm">
-              {/* Row Header */}
               <div className="p-4 bg-[var(--color-surface)] rounded-t-xl border-b border-[var(--color-border)] flex justify-between items-center sticky top-0 z-10">
                 <div className="flex items-center gap-4">
                   <h3 className="font-bold text-[var(--color-text-main)] text-base">{part.partName}</h3>
@@ -200,7 +283,6 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
                     <span className="font-medium text-blue-600">진행률 {avgProgress}%</span>
                   </div>
                   
-                  {/* Progress bar */}
                   <div className="w-32 bg-gray-200 rounded-full h-2 overflow-hidden">
                     <div 
                       className="bg-blue-500 h-2 rounded-full transition-all duration-500" 
@@ -210,7 +292,6 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
                 </div>
               </div>
 
-              {/* Cards List (Horizontal) */}
               <div className="flex space-x-4 p-4 overflow-x-auto custom-scrollbar min-h-[160px]">
                 {partTasks.map(task => {
                   const assignee = users.find(u => u.id === task.assigneeId);
@@ -233,9 +314,12 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
                             task.status === 'DONE' ? 'bg-green-100 text-green-700' :
                             task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
                             task.status === 'REVIEW' ? 'bg-purple-100 text-purple-700' :
+                            task.status === 'REJECTED' || task.approvalStatus === 'REJECTED' ? 'bg-red-100 text-red-700' :
                             'bg-gray-100 text-[var(--color-text-sub)]'
                           }`}>
-                            {task.approvalStatus === 'PENDING' ? '승인대기' : task.status}
+                            {task.approvalStatus === 'PENDING' ? '승인대기' : 
+                             task.approvalStatus === 'REJECTED' ? '반려됨' : 
+                             task.status}
                           </span>
                         </div>
                         

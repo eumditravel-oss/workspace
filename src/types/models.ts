@@ -168,6 +168,8 @@ export interface TaskCard {
   parentTaskId?: string;
   isAdditionalTask?: boolean;
   approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  approvalRequestId?: string;
+  estimatedHours?: number;
   completionStatus?: CompletionStatus;
   isDeleted?: boolean;
   sourceType?: string;
