@@ -187,8 +187,8 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
       entityType: 'PROJECT',
       entityId: project.id,
       action: 'SCHEDULE_DRAFTED',
-      userId: currentUser?.id || '',
-      description: 'PM 업무 배정 완료 및 중간관리자 승인 요청'
+      actorId: currentUser?.id || '',
+      message: 'PM 업무 배정 완료 및 중간관리자 승인 요청'
     });
 
     onSuccess();

@@ -8,9 +8,9 @@ import {
 
 import dummyPersonnel from './dummyPersonnel.json';
 
-export const coreUsers: PersonnelCard[] = dummyPersonnel.personnel as any;
+export const coreUsers: PersonnelCard[] = dummyPersonnel.personnel as unknown as PersonnelCard[];
 
-export const mockUsers: PersonnelCard[] = dummyPersonnel.personnel as any;
+export const mockUsers: PersonnelCard[] = dummyPersonnel.personnel as unknown as PersonnelCard[];
 
 export const mockProjects: Project[] = [...sampleProjects];
 

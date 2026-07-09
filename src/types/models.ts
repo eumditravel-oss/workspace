@@ -548,13 +548,3 @@ export type TranslationCacheItem = {
   createdAt: string;
   expiresAt?: string;
 };
-
-export interface AuditLog {
-  id: string;
-  entityType: 'PROJECT' | 'TASK' | 'APPROVAL' | 'USER' | 'SYSTEM';
-  entityId: string;
-  action: string;
-  userId: string;
-  description: string;
-  createdAt: string;
-}

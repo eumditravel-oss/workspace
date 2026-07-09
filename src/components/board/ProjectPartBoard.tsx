@@ -86,8 +86,8 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
       entityType: 'PROJECT',
       entityId: projectId,
       action: 'SCHEDULE_APPROVED',
-      userId: currentUser?.id || '',
-      description: '중간관리자에 의해 소요일정이 승인됨'
+      actorId: currentUser?.id || '',
+      message: '중간관리자에 의해 소요일정이 승인됨'
     });
   };
 
@@ -117,8 +117,8 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
       entityType: 'PROJECT',
       entityId: projectId,
       action: 'SCHEDULE_REJECTED',
-      userId: currentUser?.id || '',
-      description: `중간관리자에 의해 소요일정이 반려됨 (사유: ${reason || '없음'})`
+      actorId: currentUser?.id || '',
+      message: `중간관리자에 의해 소요일정이 반려됨 (사유: ${reason || '없음'})`
     });
   };
 
