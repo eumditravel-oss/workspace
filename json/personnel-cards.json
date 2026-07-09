@@ -11,7 +11,8 @@
       "employmentStatus": "ACTIVE",
       "isActive": true,
       "organizationRank": "CEO",
-      "id": "u-ceo-hdm"
+      "id": "u-ceo-hdm",
+      "deputyApproverId": "u-coo-lwh"
     },
     {
       "name": "이원희",
@@ -23,15 +24,16 @@
       "employmentStatus": "ACTIVE",
       "isActive": true,
       "organizationRank": "COO",
-      "id": "u-coo-lwh"
+      "id": "u-coo-lwh",
+      "deputyApproverId": "u-ceo-hdm"
     },
     {
       "name": "",
       "displayName": "Thanh Phuong(탄 프엉)",
       "companyId": "VIET_QS",
       "departmentId": "DEVELOP",
-      "role": "WORKER",
-      "systemRole": "WORKER",
+      "role": "DEPARTMENT_MANAGER",
+      "systemRole": "DEPARTMENT_MANAGER",
       "employmentStatus": "ACTIVE",
       "isActive": true,
       "subDepartmentId": "DEVELOP_SUB",
@@ -44,8 +46,8 @@
       "displayName": "Manh Cuong(끄엉)",
       "companyId": "VIET_QS",
       "departmentId": "DEVELOP",
-      "role": "WORKER",
-      "systemRole": "WORKER",
+      "role": "DEPARTMENT_MANAGER",
+      "systemRole": "DEPARTMENT_MANAGER",
       "employmentStatus": "ACTIVE",
       "isActive": true,
       "subDepartmentId": "DEVELOP_SUB",
@@ -58,8 +60,8 @@
       "displayName": "Quoc Nhut(꾸옹 느엿)",
       "companyId": "VIET_QS",
       "departmentId": "DEVELOP",
-      "role": "WORKER",
-      "systemRole": "WORKER",
+      "role": "DEPARTMENT_MANAGER",
+      "systemRole": "DEPARTMENT_MANAGER",
       "employmentStatus": "ACTIVE",
       "isActive": true,
       "subDepartmentId": "DEVELOP_SUB",
@@ -72,8 +74,8 @@
       "displayName": "Long Vu(롱 부)",
       "companyId": "VIET_QS",
       "departmentId": "DEVELOP",
-      "role": "WORKER",
-      "systemRole": "WORKER",
+      "role": "DEPARTMENT_MANAGER",
+      "systemRole": "DEPARTMENT_MANAGER",
       "employmentStatus": "ACTIVE",
       "isActive": true,
       "subDepartmentId": "DEVELOP_SUB",
@@ -92,7 +94,6 @@
       "isActive": true,
       "organizationRank": "MANAGER",
       "id": "user-1783597561693",
-      "status": "INACTIVE",
       "deputyApproverId": "user-1783597582250"
     },
     {
