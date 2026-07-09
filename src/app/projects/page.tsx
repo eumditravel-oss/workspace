@@ -11,7 +11,10 @@ import { ProjectEvaluationModal } from '@/components/evaluation/ProjectEvaluatio
 import { PostDeliveryWorkModal } from '@/components/delivery/PostDeliveryWorkModal';
 import { PmDispatchModal } from '@/components/board/PmDispatchModal';
 import { RevisionRequestModal } from '@/components/board/RevisionRequestModal';
-import { TaskStatus, ProjectSourceType, Project } from '@/types/models';
+import { ApprovalReviewModal } from '@/components/board/ApprovalReviewModal';
+import { useApprovalStore } from '@/store/approvalStore';
+import { useAuditStore } from '@/store/auditStore';
+import { TaskStatus, ProjectSourceType, Project, ApprovalRequest } from '@/types/models';
 import { DetailedLineStage, getProjectBoardColumn } from '@/lib/selectors';
 import { canViewProject, canViewTask, canEditProject } from '@/lib/permissions';
 import { FileText, ArrowLeft, ChevronRight, History, Wrench, Code2, Briefcase } from 'lucide-react';
@@ -26,6 +29,8 @@ export default function ProjectBoardPage() {
   const revisionRequests = useProjectStore(state => state.revisionRequests);
   const postDeliveryWorkRequests = useProjectStore(state => state.postDeliveryWorkRequests);
   const { tasks, updateTaskStatus, updateDetailedLineStage, updateTaskAssignee, updateTaskPriority } = useTaskStore();
+  const requests = useApprovalStore(state => state.requests);
+  const auditLogs = useAuditStore(state => state.logs);
   const { currentUser, users } = useAuthStore();
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [groupBy, setGroupBy] = useState<GroupByOption>('STATUS');
@@ -35,8 +40,10 @@ export default function ProjectBoardPage() {
   const [showPostDeliveryModal, setShowPostDeliveryModal] = useState(false);
   const [showRevisionModal, setShowRevisionModal] = useState(false);
   const [dispatchProject, setDispatchProject] = useState<Project | null>(null);
+  const [selectedApprovalRequest, setSelectedApprovalRequest] = useState<ApprovalRequest | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number | 'ALL'>('ALL');
   const [activeTab, setActiveTab] = useState<ProjectSourceType>('INTERNAL_DEVELOPMENT');
+  const [historyFilter, setHistoryFilter] = useState<'ALL' | 'APPROVAL' | 'COMPLETED' | 'AUDIT'>('ALL');
   
   const { settings } = useTranslationStore();
   const t = useTranslation(settings.uiLanguage);
@@ -277,24 +284,86 @@ export default function ProjectBoardPage() {
           />
         ) : viewType === 'HISTORY' ? (
           <div className="bg-[var(--color-surface)] rounded-xl shadow-sm border p-6 min-h-[400px]">
-            <h2 className="text-lg font-bold text-[var(--color-text-main)] mb-4">프로젝트 상세 이력</h2>
-            <p className="text-sm text-[var(--color-text-sub)] mb-6">납품일 변경 이력, 추가업무 요청 이력 및 결재 AuditLog가 여기에 표시됩니다.</p>
-            <div className="space-y-4">
-              <div className="border border-[var(--color-border)] rounded-lg p-4 bg-[var(--color-bg)]">
-                <h3 className="font-bold text-sm text-[var(--color-text-main)] mb-2">수정(Revision) 요청 이력</h3>
-                {revisionRequests.filter(r => r.projectId === selectedProjectId).length === 0 ? (
-                  <div className="text-xs text-[var(--color-text-sub)]">조회된 수정 내역이 없습니다.</div>
-                ) : (
-                  <ul className="space-y-2">
-                    {revisionRequests.filter(r => r.projectId === selectedProjectId).map(req => (
-                      <li key={req.id} className="bg-[var(--color-surface)] p-3 border rounded shadow-sm flex flex-col gap-1">
-                        <div className="flex justify-between items-center">
-                          <span className="font-bold text-sm text-[var(--color-text-main)]">{req.title}</span>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={req.status === 'RESOLVED' ? 'SUCCESS' : req.status === 'PENDING' ? 'WARNING' : 'DEFAULT'}>
-                              {req.status}
-                            </Badge>
-                            {(req.status === 'PENDING' || req.status === 'ACCEPTED') && (
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-[var(--color-border)] pb-4 gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-[var(--color-text-main)] mb-1">프로젝트 상세 이력</h2>
+                <p className="text-sm text-[var(--color-text-sub)]">프로젝트와 관련된 변경, 결재, 감사(Audit) 로그를 조회합니다.</p>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {(['ALL', 'APPROVAL', 'COMPLETED', 'AUDIT'] as const).map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setHistoryFilter(f)}
+                    className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
+                      historyFilter === f ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-text-sub)] hover:bg-gray-100'
+                    }`}
+                  >
+                    {f === 'ALL' ? '전체 내역' : f === 'APPROVAL' ? '결재 대기/진행' : f === 'COMPLETED' ? '완료된 요청' : '글로벌 Audit Log'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="space-y-6">
+              {/* Completed / Resolved items */}
+              {(historyFilter === 'ALL' || historyFilter === 'COMPLETED') && (
+                <div className="border border-[var(--color-border)] rounded-lg p-4 bg-[var(--color-bg)]">
+                  <h3 className="font-bold text-sm text-[var(--color-text-main)] mb-3 flex items-center gap-2">
+                    <History className="w-4 h-4 text-green-600" /> 완료된 요청 내역
+                  </h3>
+                  {revisionRequests.filter(r => r.projectId === selectedProjectId && r.status === 'RESOLVED').length === 0 && postDeliveryWorkRequests.filter(r => r.projectId === selectedProjectId && r.status === 'APPROVED').length === 0 && requests.filter(r => r.projectId === selectedProjectId && r.status === 'APPROVED').length === 0 ? (
+                    <div className="text-xs text-[var(--color-text-sub)] bg-[var(--color-surface)] p-4 rounded-md text-center border border-dashed border-[var(--color-border-strong)]">완료 내역이 없습니다.</div>
+                  ) : (
+                    <ul className="space-y-2">
+                      {revisionRequests.filter(r => r.projectId === selectedProjectId && r.status === 'RESOLVED').map(req => (
+                        <li key={req.id} className="bg-[var(--color-surface)] p-3 border rounded shadow-sm flex flex-col gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-sm text-[var(--color-text-main)]">[수정 완료] {req.title}</span>
+                            <Badge variant="SUCCESS">완료됨</Badge>
+                          </div>
+                          <p className="text-xs text-[var(--color-text-sub)]">{req.description}</p>
+                          <div className="text-[10px] text-gray-400 mt-1">요청자: {req.requestedByClient} | {new Date(req.createdAt).toLocaleString()}</div>
+                        </li>
+                      ))}
+                      {postDeliveryWorkRequests.filter(r => r.projectId === selectedProjectId && r.status === 'APPROVED').map(req => (
+                        <li key={req.id} className="bg-[var(--color-surface)] p-3 border rounded shadow-sm flex flex-col gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-sm text-[var(--color-text-main)]">[추가업무 완료] {req.title}</span>
+                            <Badge variant="SUCCESS">승인/완료됨</Badge>
+                          </div>
+                          <div className="text-[10px] text-gray-400 mt-1">{new Date(req.createdAt).toLocaleString()}</div>
+                        </li>
+                      ))}
+                      {requests.filter(r => r.projectId === selectedProjectId && r.status === 'APPROVED').map(req => (
+                        <li key={req.id} className="bg-[var(--color-surface)] p-3 border rounded shadow-sm flex flex-col gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-sm text-[var(--color-text-main)]">[결재 승인] {req.title}</span>
+                            <Badge variant="SUCCESS">승인됨</Badge>
+                          </div>
+                          <div className="text-[10px] text-gray-400 mt-1">{new Date(req.createdAt).toLocaleString()}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+              {/* Pending Approvals */}
+              {(historyFilter === 'ALL' || historyFilter === 'APPROVAL') && (
+                <div className="border border-[var(--color-border)] rounded-lg p-4 bg-[var(--color-bg)]">
+                  <h3 className="font-bold text-sm text-[var(--color-text-main)] mb-3 flex items-center gap-2">
+                    <History className="w-4 h-4 text-orange-500" /> 결재 대기/진행 내역
+                  </h3>
+                  {requests.filter(r => r.projectId === selectedProjectId && r.status === 'PENDING').length === 0 && revisionRequests.filter(r => r.projectId === selectedProjectId && (r.status === 'PENDING' || r.status === 'ACCEPTED')).length === 0 ? (
+                    <div className="text-xs text-[var(--color-text-sub)] bg-[var(--color-surface)] p-4 rounded-md text-center border border-dashed border-[var(--color-border-strong)]">대기 중인 결재/요청 항목이 없습니다.</div>
+                  ) : (
+                    <ul className="space-y-2">
+                      {revisionRequests.filter(r => r.projectId === selectedProjectId && (r.status === 'PENDING' || r.status === 'ACCEPTED')).map(req => (
+                        <li key={req.id} className="bg-[var(--color-surface)] p-3 border border-orange-200 rounded-md shadow-sm flex flex-col gap-1 border-l-4 border-l-orange-400">
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-sm text-orange-900">[수정 요청] {req.title}</span>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="WARNING">{req.status}</Badge>
                               <button 
                                 onClick={() => {
                                   useProjectStore.getState().updateRevisionRequestStatus(req.id, 'RESOLVED');
@@ -304,41 +373,53 @@ export default function ProjectBoardPage() {
                               >
                                 완료 처리
                               </button>
-                            )}
+                            </div>
                           </div>
-                        </div>
-                        <p className="text-xs text-[var(--color-text-sub)]">{req.description}</p>
-                        <div className="text-xs text-gray-400 mt-1">요청자: {req.requestedByClient} | {new Date(req.createdAt).toLocaleString()}</div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+                          <p className="text-xs text-[var(--color-text-sub)]">{req.description}</p>
+                          <div className="text-[10px] text-gray-400 mt-1">요청자: {req.requestedByClient} | {new Date(req.createdAt).toLocaleString()}</div>
+                        </li>
+                      ))}
+                      {requests.filter(r => r.projectId === selectedProjectId && r.status === 'PENDING').map(req => (
+                        <li key={req.id} className="bg-[var(--color-surface)] p-3 border border-blue-200 rounded-md shadow-sm flex flex-col gap-1 cursor-pointer hover:bg-blue-50 transition-colors border-l-4 border-l-blue-400" onClick={() => setSelectedApprovalRequest(req)}>
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-sm text-blue-900">[결재 대기] {req.title}</span>
+                            <Badge variant="WARNING">{req.status}</Badge>
+                          </div>
+                          <div className="text-xs text-[var(--color-text-sub)] truncate">{req.reason}</div>
+                          <div className="text-[10px] text-gray-400 mt-1">{new Date(req.createdAt).toLocaleString()} (클릭하여 리뷰)</div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
 
-              <div className="border border-[var(--color-border)] rounded-lg p-4 bg-[var(--color-bg)]">
-                <h3 className="font-bold text-sm text-[var(--color-text-main)] mb-2">추가업무 요청 이력</h3>
-                {postDeliveryWorkRequests.filter(r => r.projectId === selectedProjectId).length === 0 ? (
-                  <div className="text-xs text-[var(--color-text-sub)]">조회된 이력이 없습니다.</div>
-                ) : (
-                  <ul className="space-y-2">
-                    {postDeliveryWorkRequests.filter(r => r.projectId === selectedProjectId).map(req => (
-                      <li key={req.id} className="bg-[var(--color-surface)] p-3 border rounded shadow-sm flex flex-col gap-1">
-                        <div className="flex justify-between items-center">
-                          <span className="font-bold text-sm text-[var(--color-text-main)]">{req.title}</span>
-                          <Badge variant={req.status === 'APPROVED' ? 'SUCCESS' : req.status === 'REJECTED' ? 'ERROR' : 'DEFAULT'}>
-                            {req.status}
-                          </Badge>
-                        </div>
-                        <div className="text-xs text-[var(--color-text-sub)]">{req.reason} | {new Date(req.createdAt).toLocaleString()}</div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div className="border border-[var(--color-border)] rounded-lg p-4 bg-[var(--color-bg)]">
-                <h3 className="font-bold text-sm text-[var(--color-text-main)] mb-2">납품일 변경 및 결재 이력</h3>
-                <div className="text-xs text-[var(--color-text-sub)]">조회된 이력이 없습니다.</div>
-              </div>
+              {/* Audit Logs */}
+              {(historyFilter === 'ALL' || historyFilter === 'AUDIT') && (
+                <div className="border border-[var(--color-border)] rounded-lg p-4 bg-[var(--color-bg)]">
+                  <h3 className="font-bold text-sm text-[var(--color-text-main)] mb-3 flex items-center gap-2">
+                    <History className="w-4 h-4 text-purple-600" /> Audit Log (시스템 로그)
+                  </h3>
+                  {auditLogs.filter(a => a.entityId === selectedProjectId || a.entityType === 'PROJECT').length === 0 ? (
+                    <div className="text-xs text-[var(--color-text-sub)] bg-[var(--color-surface)] p-4 rounded-md text-center border border-dashed border-[var(--color-border-strong)]">
+                      기록된 Audit Log가 없습니다.
+                    </div>
+                  ) : (
+                    <ul className="space-y-2">
+                      {auditLogs.filter(a => a.entityId === selectedProjectId || a.entityType === 'PROJECT').map(log => (
+                        <li key={log.id} className="bg-[var(--color-surface)] p-3 border border-purple-100 rounded-md shadow-sm flex flex-col gap-1 border-l-4 border-l-purple-400">
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-sm text-[var(--color-text-main)]">{log.action}</span>
+                            <span className="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">{log.actorId}</span>
+                          </div>
+                          <div className="text-xs text-[var(--color-text-sub)] break-words">{log.message}</div>
+                          <div className="text-[10px] text-gray-400 font-mono mt-1">{new Date(log.createdAt).toLocaleString()}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -387,6 +468,19 @@ export default function ProjectBoardPage() {
         <RevisionRequestModal
           project={projects.find(p => p.id === selectedProjectId)!}
           onClose={() => setShowRevisionModal(false)}
+        />
+      )}
+      {selectedApprovalRequest && (
+        <ApprovalReviewModal
+          request={selectedApprovalRequest}
+          onClose={() => setSelectedApprovalRequest(null)}
+        />
+      )}
+
+      {selectedApprovalRequest && (
+        <ApprovalReviewModal
+          request={selectedApprovalRequest}
+          onClose={() => setSelectedApprovalRequest(null)}
         />
       )}
     </div>

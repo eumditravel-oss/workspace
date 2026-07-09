@@ -45,8 +45,8 @@ export const QcIssueModal: React.FC<QcIssueModalProps> = ({ task, onClose }) => 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[150] p-4">
-      <div className="bg-[var(--color-surface)] rounded-[20px] shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[150] p-4" onMouseDown={onClose}>
+      <div className="bg-[var(--color-surface)] rounded-[20px] shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center px-6 py-4 border-b border-[var(--color-border)] bg-red-50">
           <div className="flex items-center gap-2 text-red-700 font-bold">
             <AlertTriangle className="w-5 h-5" />

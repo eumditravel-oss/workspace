@@ -122,6 +122,11 @@ export const TaskCardItem: React.FC<TaskCardItemProps> = ({ task, onClick }) => 
               승인번역
             </span>
           )}
+          {task.isOutsourced && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded border font-bold bg-teal-50 text-teal-700 border-teal-200">
+              외주 {task.billingAmount ? `(₩${task.billingAmount.toLocaleString()})` : ''}
+            </span>
+          )}
         </div>
         {task.sourceSheet && (
           <span className="text-[9px] text-[var(--color-text-sub)] bg-[var(--color-bg)] px-1.5 py-0.5 rounded border border-[var(--color-border)] flex items-center whitespace-nowrap">

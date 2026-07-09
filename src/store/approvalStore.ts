@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { ApprovalRequest, ApprovalWorkflowTemplate, ApprovalRequestType } from '@/types/models';
 import { mockApprovalRequests } from '@/data/mockData';
 import { useNotificationStore } from '@/store/notificationStore';
@@ -55,7 +56,7 @@ const initialTemplates: ApprovalWorkflowTemplate[] = [
   }
 ];
 
-export const useApprovalStore = create<ApprovalState>((set) => ({
+export const useApprovalStore = create<ApprovalState>()(persist((set) => ({
   requests: initialRequests,
   templates: initialTemplates,
   addRequest: (requestData) => set((state) => ({
@@ -198,4 +199,4 @@ export const useApprovalStore = create<ApprovalState>((set) => ({
   resetRequests: () => set({ requests: [] }),
   replaceTemplates: (templates) => set({ templates }),
   resetTemplates: () => set({ templates: [] })
-}));
+}), { name: 'approval-storage' }));

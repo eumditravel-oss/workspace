@@ -84,6 +84,27 @@ export const Board: React.FC<BoardProps> = ({ tasks, onMoveTask, currentUser, vi
       }
     }
 
+    // Workflow transition validation (prevent skipping stages)
+    if (groupBy === 'STATUS' && viewType === 'DETAILED') {
+      const currentStage = getDetailedLineStage(task);
+      const stageOrder: Record<string, number> = {
+        WAITING: 0,
+        QC_PM_START: 1,
+        IN_PROGRESS: 2,
+        PM_REVIEW: 3,
+        QC_REVIEW: 4,
+        DONE: 5
+      };
+
+      const currentIdx = stageOrder[currentStage];
+      const newIdx = stageOrder[targetId];
+
+      if (newIdx !== undefined && currentIdx !== undefined && newIdx > currentIdx + 1) {
+        alert('공정 단계를 건너뛰어 이동할 수 없습니다.');
+        return;
+      }
+    }
+
     onMoveTask(taskId, targetId, groupBy);
   };
 

@@ -4,13 +4,14 @@ import { useTaskStore } from '@/store/taskStore';
 import { useEvaluationStore } from '@/store/evaluationStore';
 import { useAuthStore } from '@/store/authStore';
 import { useApprovalStore } from '@/store/approvalStore';
-import { X, CheckSquare, Clock, FileText, History, ListTodo, AlertCircle, CheckCircle2, ShieldAlert, Plus, CalendarClock, Zap, CalendarDays } from 'lucide-react';
+import { X, CheckSquare, Clock, FileText, History, ListTodo, AlertCircle, CheckCircle2, ShieldAlert, Plus, CalendarClock, Zap, CalendarDays, DollarSign } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { QcIssueModal } from '@/components/evaluation/QcIssueModal';
 import { ScheduleRequestModal } from '@/components/board/ScheduleRequestModal';
 import { calculateTaskHealthScore } from '@/lib/selectors';
 import { useTranslationStore } from '@/store/translationStore';
 import { useTranslation } from '@/lib/localization';
+import { canEditTask } from '@/lib/permissions';
 
 interface TaskDetailModalProps {
   task: TaskCard;
@@ -28,11 +29,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
   const [isDragging, setIsDragging] = useState(false);
   
   const currentUser = useAuthStore(state => state.currentUser);
-  const { updateTaskProgress, progressUpdates, checklists, artifacts, blockers, addBlocker, resolveBlocker, workSegments, addWorkSegment, deleteWorkSegment } = useTaskStore();
+  const users = useAuthStore(state => state.users);
+  const { updateTaskProgress, progressUpdates, checklists, artifacts, blockers, addBlocker, resolveBlocker, workSegments, addWorkSegment, deleteWorkSegment, updateTaskBilling } = useTaskStore();
   const { qcIssues, appeals, addAppeal } = useEvaluationStore();
   const { settings } = useTranslationStore();
   const t = useTranslation(settings.uiLanguage);
   const { addRequest } = useApprovalStore();
+
+  const isEditable = currentUser ? canEditTask(currentUser, task) : false;
 
   const taskUpdates = progressUpdates.filter(u => u.taskId === task.id);
   const taskChecklists = checklists.filter(c => c.taskId === task.id);
@@ -50,18 +54,51 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                     : healthScore >= 50 ? 'text-yellow-600 bg-yellow-50' 
                     : 'text-red-600 bg-red-50';
 
-  const handleUpdateProgress = () => {
+  const handleUpdateProgress = async () => {
     const currentProgress = task.progress || 0;
     const diff = Math.abs(newProgress - currentProgress);
     
     if (diff >= 20 && memo.trim().length < 5) {
-      setError('진행률이 크게 변경되었습니다. 진행 내용을 자세히 메모해주세요 (5자 이상).');
+      setError('진행률이 크게 변경되었습니다. 진행 내용에 상세한 메모를 남겨주세요 (5자 이상).');
       return;
     }
 
     if (!currentUser) return;
 
-    updateTaskProgress(task.id, newProgress, currentUser.id, memo);
+    let memoI18n = undefined;
+    const sourceLang = settings.uiLanguage;
+    const targetLang = sourceLang === 'ko' ? 'vi' : 'ko';
+    
+    if (settings.autoTranslateEnabled && memo.trim()) {
+      try {
+        const { executeTranslation, generateSourceHash } = await import('@/lib/translation/providers');
+        const result = await executeTranslation({
+          text: memo,
+          sourceLang,
+          targetLang
+        });
+        
+        if (result.status === 'AUTO_TRANSLATED') {
+          memoI18n = {
+            originalLanguage: sourceLang,
+            originalText: memo,
+            translations: {
+              [targetLang]: {
+                text: result.text,
+                status: result.status,
+                provider: result.provider,
+                translatedAt: new Date().toISOString(),
+                sourceHash: generateSourceHash(memo, sourceLang, targetLang)
+              }
+            }
+          };
+        }
+      } catch (err) {
+        console.error('Translation failed', err);
+      }
+    }
+
+    updateTaskProgress(task.id, newProgress, currentUser.id, memo, undefined, memoI18n);
     setMemo('');
     setError('');
     alert('진행 내용이 기록되었습니다.');
@@ -184,6 +221,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
     { id: 'APPROVALS', label: '승인/신청', icon: <CalendarClock className="w-4 h-4" /> },
     { id: 'ARTIFACTS', label: '산출물', icon: <FileText className="w-4 h-4" /> },
     { id: 'EVALUATION', label: 'QC/평가', icon: <ShieldAlert className="w-4 h-4" /> },
+    { id: 'BILLING', label: '정산', icon: <DollarSign className="w-4 h-4" /> },
     { id: 'HISTORY', label: '이력', icon: <History className="w-4 h-4" /> },
   ];
 
@@ -206,9 +244,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
     }
   }
 
+  const assignee = users.find(u => u.id === task.assigneeId);
+
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-      <div className="bg-[var(--color-surface)] rounded-[20px] shadow-xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onMouseDown={onClose}>
+      <div className="bg-[var(--color-surface)] rounded-[20px] shadow-xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200" onMouseDown={(e) => e.stopPropagation()}>
         
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg)]/50">
@@ -217,6 +257,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
               <span className="text-xs text-[var(--color-text-sub)] font-medium">Project {task.projectId} · {task.status}</span>
               <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${healthColor}`}>
                 ♥ Health: {healthScore}
+              </span>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                담당자: {assignee ? assignee.name : '미배정'}
               </span>
             </div>
             <h2 className="text-xl font-bold text-[var(--color-text-main)]">{primaryTitle}</h2>
@@ -290,6 +333,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                     min="0" max="100" step="5"
                     value={newProgress}
                     onChange={(e) => setNewProgress(Number(e.target.value))}
+                    disabled={!isEditable}
                     className="w-full accent-blue-600"
                   />
                 </div>
@@ -299,9 +343,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                   <textarea 
                     value={memo}
                     onChange={(e) => setMemo(e.target.value)}
-                    className={`w-full p-3 text-sm border rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-colors ${error ? 'border-red-400' : 'border-[var(--color-border)]'}`}
+                    disabled={!isEditable}
+                    className={`w-full p-3 text-sm border rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-colors ${error ? 'border-red-400' : 'border-[var(--color-border)]'} ${!isEditable ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                     rows={3}
-                    placeholder="오늘 진행한 작업 내용이나 막힌 부분을 작성해주세요."
+                    placeholder={isEditable ? "오늘 진행한 작업 내용이나 막힌 부분을 작성해주세요." : "수정 권한이 없습니다."}
                   />
                   {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
                 </div>
@@ -309,7 +354,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                 <div className="flex justify-end">
                   <button 
                     onClick={handleUpdateProgress}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+                    disabled={!isEditable}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${isEditable ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
                   >
                     기록 저장
                   </button>
@@ -328,12 +374,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                     type="text" 
                     value={newBlocker}
                     onChange={(e) => setNewBlocker(e.target.value)}
-                    placeholder="작업 진행을 막고 있는 장애물을 입력하세요"
-                    className="flex-1 p-2 text-sm border border-[var(--color-border)] rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-400 outline-none"
+                    disabled={!isEditable}
+                    placeholder={isEditable ? "작업 진행을 막고 있는 장애물을 입력하세요" : "수정 권한이 없습니다."}
+                    className={`flex-1 p-2 text-sm border border-[var(--color-border)] rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-400 outline-none ${!isEditable ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   />
                   <button 
                     onClick={handleAddBlocker}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors"
+                    disabled={!isEditable}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${isEditable ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
                   >
                     추가
                   </button>
@@ -353,7 +401,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                             {blocker.reporterId} · {new Date(blocker.createdAt).toLocaleDateString()}
                           </div>
                         </div>
-                        {blocker.status === 'OPEN' && (
+                        {blocker.status === 'OPEN' && isEditable && (
                           <button 
                             onClick={() => currentUser && resolveBlocker(blocker.id, currentUser.id)}
                             className="text-xs bg-[var(--color-surface)] text-green-600 px-2 py-1 border border-green-200 rounded font-medium hover:bg-green-50"
@@ -407,24 +455,31 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                   <input 
                     type="date" 
                     value={newSegmentStart} 
-                    onChange={e => setNewSegmentStart(e.target.value)} 
-                    className="border rounded p-2 text-sm w-32" 
+                    onChange={e => setNewSegmentStart(e.target.value)}
+                    disabled={!isEditable}
+                    className="border rounded p-2 text-sm w-32 disabled:bg-gray-100 disabled:cursor-not-allowed" 
                   />
                   <span className="self-center">~</span>
                   <input 
                     type="date" 
                     value={newSegmentEnd} 
-                    onChange={e => setNewSegmentEnd(e.target.value)} 
-                    className="border rounded p-2 text-sm w-32" 
+                    onChange={e => setNewSegmentEnd(e.target.value)}
+                    disabled={!isEditable}
+                    className="border rounded p-2 text-sm w-32 disabled:bg-gray-100 disabled:cursor-not-allowed" 
                   />
                   <input 
                     type="text" 
                     value={newSegmentDesc} 
                     onChange={e => setNewSegmentDesc(e.target.value)} 
-                    placeholder="세부 작업 내용" 
-                    className="flex-1 border rounded p-2 text-sm" 
+                    disabled={!isEditable}
+                    placeholder={isEditable ? "세부 작업 내용" : "권한 없음"} 
+                    className="flex-1 border rounded p-2 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed" 
                   />
-                  <button onClick={handleAddSegment} className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold">
+                  <button 
+                    onClick={handleAddSegment} 
+                    disabled={!isEditable}
+                    className={`px-4 py-2 rounded text-sm font-bold ${isEditable ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                  >
                     추가
                   </button>
                 </div>
@@ -439,9 +494,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                         <div className="text-sm font-semibold">{seg.description}</div>
                         <div className="text-xs text-[var(--color-text-sub)]">{seg.startDate} ~ {seg.endDate}</div>
                       </div>
-                      <button onClick={() => deleteWorkSegment(seg.id)} className="text-red-500 text-xs hover:underline">
-                        삭제
-                      </button>
+                      {isEditable && (
+                        <button onClick={() => deleteWorkSegment(seg.id)} className="text-red-500 text-xs hover:underline">
+                          삭제
+                        </button>
+                      )}
                     </div>
                   ))
                 )}
@@ -620,6 +677,64 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
               AuditLog 통합 이력 뷰 준비 중
             </div>
           )}
+
+          {activeTab === 'BILLING' && (
+            <div className="space-y-6">
+              <div className="bg-[var(--color-surface)] p-5 rounded-xl border border-[var(--color-border)] shadow-sm">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-bold text-[var(--color-text-main)] flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-teal-600" /> 외주 정산 (Billing)
+                  </h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="checkbox" 
+                      id="isOutsourced" 
+                      checked={task.isOutsourced || false}
+                      onChange={(e) => updateTaskBilling(task.id, task.billingAmount || 0, task.billingStatus || 'PENDING', e.target.checked)}
+                      disabled={!isEditable}
+                      className="w-4 h-4 accent-teal-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <label htmlFor="isOutsourced" className="text-sm font-bold text-[var(--color-text-main)] cursor-pointer">
+                      외주 진행 업무 (체크 시 비용 정산 대상)
+                    </label>
+                  </div>
+                  
+                  {task.isOutsourced && (
+                    <div className="grid grid-cols-2 gap-4 mt-4 p-4 bg-teal-50/50 rounded-lg border border-teal-100">
+                      <div>
+                        <label className="block text-xs font-bold text-[var(--color-text-sub)] mb-1">정산 금액 (₩)</label>
+                        <input 
+                          type="number" 
+                          value={task.billingAmount || 0}
+                          onChange={(e) => updateTaskBilling(task.id, Number(e.target.value), task.billingStatus || 'PENDING', task.isOutsourced || false)}
+                          disabled={!isEditable}
+                          className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-teal-100 outline-none disabled:bg-teal-100/50 disabled:cursor-not-allowed"
+                          placeholder="금액 입력"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-[var(--color-text-sub)] mb-1">정산 상태</label>
+                        <select
+                          value={task.billingStatus || 'PENDING'}
+                          onChange={(e) => updateTaskBilling(task.id, task.billingAmount || 0, e.target.value as 'PENDING' | 'INVOICED' | 'PAID', task.isOutsourced || false)}
+                          disabled={!isEditable}
+                          className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-teal-100 outline-none disabled:bg-teal-100/50 disabled:cursor-not-allowed"
+                        >
+                          <option value="PENDING">대기중</option>
+                          <option value="INVOICED">청구됨 (인보이스 발행)</option>
+                          <option value="PAID">지급 완료</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
 
         </div>
       </div>

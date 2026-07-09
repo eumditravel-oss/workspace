@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { Project, ProjectStatus, PostDeliveryWorkRequest, RevisionRequest } from '@/types/models';
 import { fullProjects } from '@/data/fullScheduleSeed';
 import { useAuthStore } from '@/store/authStore';
@@ -35,7 +36,7 @@ const initialRevisionRequests: RevisionRequest[] = [
   }
 ];
 
-export const useProjectStore = create<ProjectState>((set, get) => ({
+export const useProjectStore = create<ProjectState>()(persist((set, get) => ({
   projects: [],
   postDeliveryWorkRequests: [],
   revisionRequests: initialRevisionRequests,
@@ -236,4 +237,4 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   replaceProjects: (projects) => set({ projects }),
   resetProjects: () => set({ projects: [], postDeliveryWorkRequests: [], revisionRequests: [] })
-}));
+}), { name: 'project-storage' }));

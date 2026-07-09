@@ -180,6 +180,9 @@ export interface TaskCard {
   completedAt?: string;
   titleI18n?: MultiLangText;
   descriptionI18n?: MultiLangText;
+  isOutsourced?: boolean;
+  billingAmount?: number;
+  billingStatus?: 'PENDING' | 'INVOICED' | 'PAID';
   workScopeI18n?: MultiLangText;
   memoI18n?: MultiLangText;
   translationReviewStatus?: TranslationStatus;
@@ -207,6 +210,7 @@ export interface ProgressUpdate {
   progressBefore: number;
   progressAfter: number;
   workSummary: string;
+  workSummaryI18n?: MultiLangText;
   blocker?: string;
   createdAt: string;
 }
