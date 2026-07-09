@@ -16,7 +16,7 @@ export default function IntakePage() {
   const { projects, addProject, assignPM, updateProjectField } = useProjectStore();
   const { addNotification } = useNotificationStore();
   
-  const [activeTab, setActiveTab] = useState<ProjectSourceType>('CLIENT_ORDER');
+  const [activeTab, setActiveTab] = useState<ProjectSourceType>('INTERNAL_DEVELOPMENT');
   const [showForm, setShowForm] = useState(false);
   
   const [newTitle, setNewTitle] = useState('');

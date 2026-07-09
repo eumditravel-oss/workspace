@@ -44,11 +44,13 @@ export const Sidebar = () => {
   const isExpanded = isHovered;
   const isCompact = !isExpanded;
 
-  const widthClass = isExpanded ? 'w-[240px]' : 'w-16';
+  const innerWidthClass = isExpanded ? 'w-[240px]' : 'w-16';
 
   return (
+    <>
+    <div className="w-16 flex-shrink-0" />
     <div 
-      className={`${widthClass} bg-slate-50 border-r border-[var(--color-border)] text-[var(--color-text-main)] min-h-screen flex flex-col transition-all duration-300 relative z-50`}
+      className={`${innerWidthClass} fixed left-0 top-0 bg-slate-50 border-r border-[var(--color-border)] text-[var(--color-text-main)] min-h-screen flex flex-col transition-all duration-300 z-[100] shadow-lg`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onFocus={() => setIsHovered(true)}
@@ -80,5 +82,6 @@ export const Sidebar = () => {
         })}
       </nav>
     </div>
+    </>
   );
 };

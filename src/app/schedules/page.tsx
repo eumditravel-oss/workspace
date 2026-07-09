@@ -123,7 +123,7 @@ export default function SchedulesPage() {
   };
 
   return (
-    <div className="max-w-[1600px] w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+    <div className="w-full px-6 space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-center bg-[var(--color-surface)] p-4 rounded-xl shadow-sm border">
         <h1 className="text-xl font-bold text-[var(--color-text-main)]">통합 일정표</h1>
         

@@ -14,7 +14,9 @@ interface AuthState {
   updateLastActivity: () => void;
   loginAs: (userId: string) => void;
   logout: () => void;
+  addUser: (user: Omit<PersonnelCard, 'id'>) => void;
   updateUser: (userId: string, updates: Partial<PersonnelCard>) => void;
+  deactivateUser: (userId: string) => void;
   replaceUsers: (users: PersonnelCard[]) => void;
   resetUsers: () => void;
 }
@@ -53,13 +55,19 @@ export const useAuthStore = create<AuthState>()(
       }
     }
   },
-  logout: () => set({ currentUser: null, appMode: 'DAILY_WORK' }),
+  logout: () => set({ currentUser: null, appMode: 'DAILY_WORK', lastActivity: Date.now() }),
+  addUser: (user) => set((state) => ({
+    users: [...state.users, { ...user, id: `user-${Date.now()}` }]
+  })),
   updateUser: (userId, updates) => set((state) => ({
     users: state.users.map(u => u.id === userId ? { ...u, ...updates } : u),
     currentUser: state.currentUser?.id === userId ? { ...state.currentUser, ...updates } : state.currentUser
   })),
-      replaceUsers: (users) => set({ users }),
-      resetUsers: () => set({ users: [], currentUser: null })
+  deactivateUser: (userId) => set((state) => ({
+    users: state.users.map(u => u.id === userId ? { ...u, status: 'INACTIVE' } : u)
+  })),
+  replaceUsers: (users) => set({ users }),
+  resetUsers: () => set({ users: mockUsers })
     }),
     {
       name: 'auth-storage',

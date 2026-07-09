@@ -2,19 +2,36 @@
 
 import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
-import { Users, Save, Download } from 'lucide-react';
+import { Users, Save, Download, Plus, Edit2, Trash2 } from 'lucide-react';
 import { PersonnelCard } from '@/types/models';
+import { PersonnelModal } from './PersonnelModal';
 
 export default function PersonnelManagementPage() {
-  const { currentUser, users, updateUser } = useAuthStore();
+  const { currentUser, users, addUser, updateUser, deactivateUser } = useAuthStore();
   const personnel = users;
   
   const [editingUser, setEditingUser] = useState<PersonnelCard | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   if (!currentUser) return <div className="py-10 text-center text-[var(--color-text-sub)]">로그인이 필요합니다.</div>;
   if (!['SUPER_ADMIN', 'SYSTEM_ADMIN', 'DEPARTMENT_MANAGER'].includes(currentUser.role)) {
     return <div className="py-10 text-center text-[var(--color-danger)] font-bold">접근 권한이 없습니다.</div>;
   }
+
+  const handleSaveUser = (user: Partial<PersonnelCard>) => {
+    if (editingUser) {
+      updateUser(editingUser.id, user);
+    } else {
+      addUser(user as Omit<PersonnelCard, 'id'>);
+    }
+    setIsModalOpen(false);
+    setEditingUser(null);
+  };
+
+  const handleEdit = (u: PersonnelCard) => {
+    setEditingUser(u);
+    setIsModalOpen(true);
+  };
 
   const handleExport = () => {
     const data = {
@@ -39,10 +56,14 @@ export default function PersonnelManagementPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-[var(--color-text-main)]">인사카드 관리</h1>
-            <p className="text-sm text-[var(--color-text-sub)] mt-1">조직도 및 직원 상세 정보를 관리합니다.</p>
+            <p className="text-sm text-[var(--color-text-sub)] mt-1">조직의 임직원 상세 정보를 관리합니다.</p>
           </div>
         </div>
         <div className="flex gap-2">
+          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
+            <Plus className="w-4 h-4" />
+            사원 추가
+          </button>
           <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 border border-[var(--color-border-strong)] rounded text-sm hover:bg-[var(--color-bg)]">
             <Download className="w-4 h-4" />
             JSON 내보내기
@@ -98,8 +119,13 @@ export default function PersonnelManagementPage() {
                     {user.employmentStatus || (user.isActive ? 'ACTIVE' : 'INACTIVE')}
                   </span>
                 </td>
-                <td className="p-3">
-                  <button onClick={() => setEditingUser(user)} className="text-indigo-600 hover:underline text-xs font-bold">수정</button>
+                <td className="p-3 text-right">
+                  <button onClick={() => handleEdit(user)} className="p-1 text-gray-500 hover:text-indigo-600" title="수정">
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => deactivateUser(user.id)} className="p-1 text-gray-500 hover:text-red-600 ml-2" title="비활성화">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </td>
               </tr>
             ))}
