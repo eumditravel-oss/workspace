@@ -64,7 +64,7 @@ export default function AdminUserInvite() {
             type="email" 
             placeholder="user@company.com" 
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e: any) => setEmail(e.target.value)}
           />
         </div>
 
