@@ -61,7 +61,7 @@ export const Sidebar = () => {
           {isExpanded ? 'CON-COST&Viet_QS OS' : 'C&V'}
         </h1>
       </div>
-      {isExpanded && <div className="px-5 pt-4 pb-2"><p className="text-[11px] font-semibold text-[var(--color-text-sub)] uppercase tracking-wider">Workspace</p></div>}
+
       
       <nav className="flex-1 px-3 space-y-1 mt-2 overflow-y-auto custom-scrollbar overflow-x-hidden">
         {visibleMenus.map((item) => {
