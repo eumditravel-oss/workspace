@@ -11,6 +11,8 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { operationData } from '@/data/operationData';
 import { mockUsers } from '@/data/mockData';
 import { fullProjects, fullTasks, fullSchedules } from '@/data/fullScheduleSeed';
+import { defaultProcessTemplates, defaultProcessStages, defaultProcessTasks } from '@/data/processTemplateSeed';
+import { useProcessTemplateStore } from '@/store/processTemplateStore';
 
 export function DataLoader() {
   const dataSourceMode = useAuthStore(state => state.dataSourceMode);
@@ -35,6 +37,8 @@ export function DataLoader() {
   
   const replaceNotifications = useNotificationStore(state => state.replaceNotifications);
   const resetNotifications = useNotificationStore(state => state.resetNotifications);
+
+  const processTemplateStore = useProcessTemplateStore();
 
   // We only run the loader when dataSourceMode changes.
   // To avoid infinite loops or overwriting user interactions constantly, we load once per mode change.
@@ -72,6 +76,10 @@ export function DataLoader() {
         replaceTasks(fullTasks);
         replaceUsers(mockUsers);
         replaceSchedules(fullSchedules);
+        
+        if (processTemplateStore.templates.length === 0) {
+          processTemplateStore.loadInitialData(defaultProcessTemplates, defaultProcessStages, defaultProcessTasks);
+        }
         // Do not reset settings to empty, let's keep current or load defaults, for now just skip settings/approvals
         break;
 

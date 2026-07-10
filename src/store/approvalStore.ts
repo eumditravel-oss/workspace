@@ -7,6 +7,7 @@ import { useTaskStore } from '@/store/taskStore';
 import { useScheduleStore } from '@/store/scheduleStore';
 import { useConflictStore } from '@/store/conflictStore';
 import { useProcessTemplateStore } from '@/store/processTemplateStore';
+import { useAuditStore } from '@/store/auditStore';
 
 interface ApprovalState {
   requests: ApprovalRequest[];
@@ -58,13 +59,39 @@ export const useApprovalStore = create<ApprovalState>()(persist((set) => ({
         updatedAt: new Date().toISOString()
       }]
     }));
+
+    useAuditStore.getState().addLog({
+      userId: requestData.requestedBy,
+      action: 'CREATE',
+      targetType: 'APPROVAL',
+      targetId: newId,
+      details: `Approval Request [${requestData.title}] created.`
+    });
+
+    if (requestData.managerId) {
+      useNotificationStore.getState().addNotification({
+        userId: requestData.managerId,
+        type: 'SYSTEM',
+        title: '새 결재 요청 알림',
+        message: `[${requestData.title}] 결재가 요청되었습니다.`,
+        priority: 'NORMAL',
+        relatedApprovalId: newId
+      });
+    }
+
     return newId;
   },
   updateApprovalStatus: (id, status, reviewerId, comment, alternativeType) => set((state) => {
     const request = state.requests.find(r => r.id === id);
     
-    // Audit Log (Console)
-    console.log(`[AUDIT] Approval Request ${id} status changed to ${status} by User ${reviewerId}. Comment: ${comment || 'N/A'}`);
+    // Audit Log
+    useAuditStore.getState().addLog({
+      userId: reviewerId,
+      action: 'UPDATE',
+      targetType: 'APPROVAL',
+      targetId: id,
+      details: `Approval Request ${id} status changed to ${status} by User ${reviewerId}. Comment: ${comment || 'N/A'}`
+    });
 
     if (request && (status === 'APPROVED' || status === 'REJECTED')) {
       // Send Notification to requester

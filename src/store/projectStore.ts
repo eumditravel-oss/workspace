@@ -3,6 +3,9 @@ import { persist } from 'zustand/middleware';
 import { Project, ProjectStatus, PostDeliveryWorkRequest, RevisionRequest } from '@/types/models';
 import { fullProjects } from '@/data/fullScheduleSeed';
 import { useAuthStore } from '@/store/authStore';
+import { useNotificationStore } from '@/store/notificationStore';
+import { useAuditStore } from '@/store/auditStore';
+import { canEditProject } from '@/lib/permissions';
 
 interface ProjectState {
   projects: Project[];
@@ -73,12 +76,41 @@ export const useProjectStore = create<ProjectState>()(persist((set, get) => ({
   }),
 
   assignPM: (projectId, pmId) => set((state) => {
-    const { users } = useAuthStore.getState();
+    const { currentUser, users } = useAuthStore.getState();
+    const project = state.projects.find(p => p.id === projectId);
+    if (!project) return state;
+
+    if (currentUser && !canEditProject(currentUser, project)) {
+      console.warn('Permission denied: cannot assign PM');
+      return state;
+    }
+
     const pm = users.find(u => u.id === pmId);
     if (!pm) {
       console.warn(`Cannot assign PM: User ${pmId} does not exist.`);
       return state;
     }
+
+    if (currentUser) {
+      useAuditStore.getState().addLog({
+        userId: currentUser.id,
+        action: 'UPDATE',
+        targetType: 'PROJECT',
+        targetId: projectId,
+        details: `PM assigned from ${project.pmId || 'none'} to ${pmId}`
+      });
+      
+      if (pmId !== currentUser.id) {
+        useNotificationStore.getState().addNotification({
+          userId: pmId,
+          type: 'ASSIGNMENT',
+          title: '프로젝트 PM 배정 알림',
+          message: `새로운 프로젝트 "${project.name}"의 PM으로 배정되었습니다.`,
+          isRead: false
+        });
+      }
+    }
+
     return {
       projects: state.projects.map(p => 
         p.id === projectId 
@@ -88,13 +120,34 @@ export const useProjectStore = create<ProjectState>()(persist((set, get) => ({
     };
   }),
 
-  updateProjectStatus: (projectId, status) => set((state) => ({
-    projects: state.projects.map(p =>
-      p.id === projectId
-        ? { ...p, status, updatedAt: new Date().toISOString() }
-        : p
-    )
-  })),
+  updateProjectStatus: (projectId, status) => set((state) => {
+    const { currentUser } = useAuthStore.getState();
+    const project = state.projects.find(p => p.id === projectId);
+    if (!project) return state;
+
+    if (currentUser && !canEditProject(currentUser, project)) {
+      console.warn('Permission denied: cannot update project status');
+      return state;
+    }
+
+    if (currentUser) {
+      useAuditStore.getState().addLog({
+        userId: currentUser.id,
+        action: 'UPDATE',
+        targetType: 'PROJECT',
+        targetId: projectId,
+        details: `Project status changed from ${project.status} to ${status}`
+      });
+    }
+
+    return {
+      projects: state.projects.map(p =>
+        p.id === projectId
+          ? { ...p, status, updatedAt: new Date().toISOString() }
+          : p
+      )
+    };
+  }),
 
   updateProjectField: (projectId, field, value) => set((state) => ({
     projects: state.projects.map(p =>

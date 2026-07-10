@@ -122,12 +122,14 @@ export const validateImportData = (data: unknown): data is WorkspaceExportData =
   if (!data || typeof data !== 'object') return false;
   const d = data as Record<string, unknown>;
   if (d.schemaVersion !== "1.0.0") return false;
-  if (!d.data || typeof d.data !== 'object' || !Array.isArray((d.data as Record<string, unknown>).projects)) return false;
   
   const typedData = d.data as WorkspaceExportData['data'];
+  if (!typedData || typeof typedData !== 'object') return false;
+  if (!Array.isArray(typedData.projects)) return false;
   
   // Validation: projectSourceType and dates
   const isValidProjects = typedData.projects.every(p => {
+    if (!p || typeof p !== 'object' || !p.id) return false;
     if (p.projectSourceType === 'INTERNAL_DEVELOPMENT' && !p.targetDate) return false;
     if (p.projectSourceType === 'CLIENT_ORDER' && !p.deliveryDate) return false;
     return true;
@@ -136,10 +138,11 @@ export const validateImportData = (data: unknown): data is WorkspaceExportData =
 
   // Validation: Task References
   const projectIds = new Set(typedData.projects.map(p => p.id));
-  const userIds = new Set((typedData.personnel || []).map(u => u.id));
+  const userIds = new Set((typedData.personnel || []).map(u => u?.id).filter(Boolean));
   
-  if (typedData.tasks) {
+  if (typedData.tasks && Array.isArray(typedData.tasks)) {
     const isValidTasks = typedData.tasks.every(t => {
+      if (!t || typeof t !== 'object' || !t.id) return false;
       if (!projectIds.has(t.projectId)) return false;
       if (t.assigneeId && !userIds.has(t.assigneeId)) return false;
       return true;
@@ -156,50 +159,49 @@ export const applyImportData = (data: WorkspaceExportData) => {
   }
   
   useProjectStore.getState().replaceProjects(data.data.projects || []);
-  if (data.data.revisionRequests) useProjectStore.setState({ revisionRequests: data.data.revisionRequests });
-  if (data.data.postDeliveryWorkRequests) useProjectStore.setState({ postDeliveryWorkRequests: data.data.postDeliveryWorkRequests });
+  if (Array.isArray(data.data.revisionRequests)) useProjectStore.setState({ revisionRequests: data.data.revisionRequests });
+  if (Array.isArray(data.data.postDeliveryWorkRequests)) useProjectStore.setState({ postDeliveryWorkRequests: data.data.postDeliveryWorkRequests });
   
   useTaskStore.getState().replaceTasks(data.data.tasks || []);
-  if (data.data.taskWorkSegments) {
-    // Custom replace function would go here, fallback to internal reset/replace if available
+  if (Array.isArray(data.data.taskWorkSegments)) {
     useTaskStore.setState({ workSegments: data.data.taskWorkSegments });
   }
 
-  if (data.data.approvalRequests) {
+  if (Array.isArray(data.data.approvalRequests)) {
     useApprovalStore.getState().replaceRequests(data.data.approvalRequests);
   }
 
-  if (data.data.notifications) {
+  if (Array.isArray(data.data.notifications)) {
     useNotificationStore.setState({ notifications: data.data.notifications });
   }
 
-  if (data.data.personalSchedules) {
+  if (Array.isArray(data.data.personalSchedules)) {
     useScheduleStore.getState().replaceSchedules(data.data.personalSchedules);
   }
   
-  if (data.data.auditLogs) {
+  if (Array.isArray(data.data.auditLogs)) {
     useAuditStore.getState().replaceLogs(data.data.auditLogs);
   }
 
-  if (data.data.processTemplates) {
+  if (Array.isArray(data.data.processTemplates)) {
     useProcessTemplateStore.getState().loadInitialData(
       data.data.processTemplates,
-      data.data.processStages || [],
-      data.data.processTasks || []
+      Array.isArray(data.data.processStages) ? data.data.processStages : [],
+      Array.isArray(data.data.processTasks) ? data.data.processTasks : []
     );
-    if (data.data.processAssignments) {
+    if (Array.isArray(data.data.processAssignments)) {
       useProcessTemplateStore.getState().replaceAssignments(data.data.processAssignments);
     }
-    if (data.data.processSchedules) {
+    if (Array.isArray(data.data.processSchedules)) {
       useProcessTemplateStore.getState().replaceSchedules(data.data.processSchedules);
     }
   }
   
-  if (data.data.personnel && data.data.personnel.length > 0) {
+  if (Array.isArray(data.data.personnel) && data.data.personnel.length > 0) {
     useAuthStore.getState().replaceUsers(data.data.personnel);
   }
   
-  if (data.data.settings && data.data.settings.length > 0) {
+  if (Array.isArray(data.data.settings) && data.data.settings.length > 0) {
     useSettingStore.getState().replaceSettings(data.data.settings);
   }
   

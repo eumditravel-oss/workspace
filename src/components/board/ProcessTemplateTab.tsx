@@ -3,7 +3,7 @@ import { TaskCard } from '@/types/models';
 import { useProcessTemplateStore } from '@/store/processTemplateStore';
 import { useApprovalStore } from '@/store/approvalStore';
 import { useAuthStore } from '@/store/authStore';
-import { CalendarClock, Plus, Send } from 'lucide-react';
+import { CalendarClock, Plus, Send, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface ProcessTemplateTabProps {
   task: TaskCard;
@@ -13,17 +13,22 @@ interface ProcessTemplateTabProps {
 export const ProcessTemplateTab: React.FC<ProcessTemplateTabProps> = ({ task, isEditable }) => {
   const { currentUser } = useAuthStore();
   const { templates, stages, tasks, assignments, schedules, addAssignment, addSchedule, updateSchedule } = useProcessTemplateStore();
-  const { addRequest } = useApprovalStore();
+  const { addRequest, requests } = useApprovalStore();
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
 
-  const activeAssignment = assignments.find(a => a.taskId === task.id && a.status !== 'REJECTED');
+  const taskAssignments = assignments.filter(a => a.taskId === task.id);
+  const activeAssignment = taskAssignments.length > 0 ? taskAssignments[taskAssignments.length - 1] : undefined;
   const assignmentSchedules = activeAssignment ? schedules.filter(s => s.assignmentId === activeAssignment.id) : [];
+
+  const rejectionRequest = requests
+    .filter(r => r.taskId === task.id && r.status === 'REJECTED' && r.type === 'PROCESS_SCHEDULE_APPROVAL')
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+  const rejectionComment = rejectionRequest?.reviewComment || '사유가 기재되지 않았습니다.';
 
   const handleApplyTemplate = () => {
     if (!selectedTemplateId || !currentUser) return;
     
-    // Create Assignment
     const assignmentId = addAssignment({
       taskId: task.id,
       templateId: selectedTemplateId,
@@ -31,7 +36,6 @@ export const ProcessTemplateTab: React.FC<ProcessTemplateTabProps> = ({ task, is
       pmId: currentUser.id
     });
 
-    // Create Schedules based on Template Tasks
     const templateTasks = tasks.filter(t => {
       const stage = stages.find(s => s.id === t.stageId);
       return stage?.templateId === selectedTemplateId;
@@ -53,9 +57,6 @@ export const ProcessTemplateTab: React.FC<ProcessTemplateTabProps> = ({ task, is
   const handleRequestApproval = () => {
     if (!activeAssignment || !currentUser) return;
 
-    // Check if schedules have valid dates before approval if required
-    // (Omitted strict validation for Phase 331 UI prototype)
-
     useProcessTemplateStore.getState().updateAssignmentStatus(activeAssignment.id, 'PENDING_APPROVAL');
 
     addRequest({
@@ -68,6 +69,11 @@ export const ProcessTemplateTab: React.FC<ProcessTemplateTabProps> = ({ task, is
     });
 
     alert('중간관리자에게 승인을 요청했습니다.');
+  };
+
+  const handleReDraft = () => {
+    if (!activeAssignment) return;
+    useProcessTemplateStore.getState().updateAssignmentStatus(activeAssignment.id, 'DRAFT');
   };
 
   if (!activeAssignment) {
@@ -85,7 +91,7 @@ export const ProcessTemplateTab: React.FC<ProcessTemplateTabProps> = ({ task, is
               value={selectedTemplateId} 
               onChange={e => setSelectedTemplateId(e.target.value)}
               disabled={!isEditable}
-              className="flex-1 border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-100 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="flex-1 border border-[var(--color-border)] bg-[var(--color-bg)] rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-100 outline-none disabled:opacity-50"
             >
               <option value="">템플릿 선택...</option>
               {templates.map(t => (
@@ -107,9 +113,32 @@ export const ProcessTemplateTab: React.FC<ProcessTemplateTabProps> = ({ task, is
     );
   }
 
-  // Display Applied Template
+  // Group schedules by stage for Card UI
+  const stagesInSchedule = Array.from(new Set(assignmentSchedules.map(s => s.processStageId)));
+  const sortedStages = stagesInSchedule
+    .map(stageId => stages.find(s => s.id === stageId))
+    .filter(Boolean)
+    .sort((a, b) => (a!.orderIndex - b!.orderIndex));
+
   return (
     <div className="space-y-4">
+      {activeAssignment.status === 'REJECTED' && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+          <h4 className="text-red-800 font-bold flex items-center gap-2 mb-2">
+            <AlertCircle className="w-4 h-4" /> 승인 반려됨
+          </h4>
+          <p className="text-sm text-red-700 mb-4 whitespace-pre-wrap">{rejectionComment}</p>
+          {isEditable && (
+            <button 
+              onClick={handleReDraft}
+              className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg text-sm font-bold hover:bg-red-50 transition flex items-center gap-1"
+            >
+              <RefreshCw className="w-4 h-4" /> 일정을 다시 수정하기 (Draft)
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="flex justify-between items-center bg-[var(--color-surface)] p-4 rounded-xl border border-[var(--color-border)] shadow-sm">
         <div>
           <h3 className="text-sm font-bold text-[var(--color-text-main)] flex items-center gap-2">
@@ -117,7 +146,7 @@ export const ProcessTemplateTab: React.FC<ProcessTemplateTabProps> = ({ task, is
           </h3>
           <p className="text-xs text-[var(--color-text-sub)] mt-1">상태: <span className="font-bold">{activeAssignment.status}</span></p>
         </div>
-        {activeAssignment.status === 'DRAFT' && isEditable && (
+        {(activeAssignment.status === 'DRAFT' || activeAssignment.status === 'REJECTED') && isEditable && (
           <button 
             onClick={handleRequestApproval}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition flex items-center gap-1"
@@ -127,49 +156,60 @@ export const ProcessTemplateTab: React.FC<ProcessTemplateTabProps> = ({ task, is
         )}
       </div>
 
-      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-[var(--color-bg)] border-b">
-            <tr>
-              <th className="p-3 font-semibold text-[var(--color-text-main)] w-1/4">공정 단계</th>
-              <th className="p-3 font-semibold text-[var(--color-text-main)] w-1/3">세부 업무명</th>
-              <th className="p-3 font-semibold text-[var(--color-text-main)] w-1/6">시작일</th>
-              <th className="p-3 font-semibold text-[var(--color-text-main)] w-1/6">종료일</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {assignmentSchedules.map(schedule => {
-              const taskObj = tasks.find(t => t.id === schedule.processTaskId);
-              const stageObj = stages.find(s => s.id === schedule.processStageId);
-              const isReadOnly = !isEditable || activeAssignment.status !== 'DRAFT';
+      <div className="space-y-4">
+        {sortedStages.map(stageObj => {
+          if (!stageObj) return null;
+          const stageSchedules = assignmentSchedules.filter(s => s.processStageId === stageObj.id);
+          const isReadOnly = !isEditable || activeAssignment.status !== 'DRAFT';
 
-              return (
-                <tr key={schedule.id} className="hover:bg-[var(--color-bg)]/50 transition-colors">
-                  <td className="p-3 font-medium text-[var(--color-text-main)]">{stageObj?.name}</td>
-                  <td className="p-3 text-[var(--color-text-sub)]">{taskObj?.name}</td>
-                  <td className="p-3">
-                    <input 
-                      type="date" 
-                      value={schedule.startDate || ''} 
-                      onChange={e => updateSchedule(schedule.id, { startDate: e.target.value })}
-                      disabled={isReadOnly}
-                      className="border rounded p-1.5 text-xs w-full disabled:bg-transparent disabled:border-transparent"
-                    />
-                  </td>
-                  <td className="p-3">
-                    <input 
-                      type="date" 
-                      value={schedule.endDate || ''} 
-                      onChange={e => updateSchedule(schedule.id, { endDate: e.target.value })}
-                      disabled={isReadOnly}
-                      className="border rounded p-1.5 text-xs w-full disabled:bg-transparent disabled:border-transparent"
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+          return (
+            <div key={stageObj.id} className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
+              <div className="bg-[var(--color-bg)] border-b border-[var(--color-border)] p-3">
+                <h4 className="font-bold text-[var(--color-text-main)] text-sm">{stageObj.name}</h4>
+              </div>
+              <div className="p-3 space-y-3">
+                {stageSchedules.map(schedule => {
+                  const taskObj = tasks.find(t => t.id === schedule.processTaskId);
+                  return (
+                    <div key={schedule.id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-3 bg-[var(--color-bg)]/50 rounded-lg border border-[var(--color-border)]">
+                      <div className="flex-1">
+                        <span className="font-medium text-sm text-[var(--color-text-main)]">{taskObj?.name}</span>
+                        {taskObj?.defaultAssigneeRole && (
+                          <span className="ml-2 text-[10px] bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
+                            기본 할당: {taskObj.defaultAssigneeRole}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex flex-col">
+                          <label className="text-[10px] text-[var(--color-text-sub)] mb-0.5">시작일</label>
+                          <input 
+                            type="date" 
+                            value={schedule.startDate || ''} 
+                            onChange={e => updateSchedule(schedule.id, { startDate: e.target.value })}
+                            disabled={isReadOnly}
+                            className="border border-[var(--color-border)] bg-[var(--color-surface)] rounded p-1.5 text-xs focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                          />
+                        </div>
+                        <span className="text-gray-400 self-end mb-1.5">~</span>
+                        <div className="flex flex-col">
+                          <label className="text-[10px] text-[var(--color-text-sub)] mb-0.5">종료일</label>
+                          <input 
+                            type="date" 
+                            value={schedule.endDate || ''} 
+                            onChange={e => updateSchedule(schedule.id, { endDate: e.target.value })}
+                            disabled={isReadOnly}
+                            className="border border-[var(--color-border)] bg-[var(--color-surface)] rounded p-1.5 text-xs focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

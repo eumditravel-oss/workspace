@@ -5,6 +5,7 @@ import { DetailedLineStage, getDetailedLineStage } from '@/lib/selectors';
 import { fullTasks } from '@/data/fullScheduleSeed';
 import { useAuthStore } from '@/store/authStore';
 import { useNotificationStore } from '@/store/notificationStore';
+import { useAuditStore } from '@/store/auditStore';
 import { MultiLangText } from '@/types/models';
 import { canEditTask, canMoveTask } from '@/lib/permissions';
 
@@ -63,13 +64,43 @@ export const useTaskStore = create<TaskState>()(persist((set) => ({
         : t
     )
   })),
-  updateTaskStatus: (taskId, newStatus) => set((state) => ({
-    tasks: state.tasks.map(t => 
-      t.id === taskId 
-        ? { ...t, status: newStatus, updatedAt: new Date().toISOString() } 
-        : t
-    )
-  })),
+  updateTaskStatus: (taskId, newStatus) => set((state) => {
+    const { currentUser } = useAuthStore.getState();
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task) return state;
+
+    if (currentUser && !canEditTask(currentUser, task)) {
+      console.warn('Permission denied: cannot edit task status');
+      return state;
+    }
+
+    if (currentUser) {
+      useAuditStore.getState().addLog({
+        userId: currentUser.id,
+        action: 'UPDATE',
+        targetType: 'TASK',
+        targetId: taskId,
+        details: `Task status changed from ${task.status} to ${newStatus}`
+      });
+      if (task.assigneeId && task.assigneeId !== currentUser.id) {
+        useNotificationStore.getState().addNotification({
+          userId: task.assigneeId,
+          type: 'SYSTEM',
+          title: '상태 변경 알림',
+          message: `담당하신 업무 "${task.title}"의 상태가 ${newStatus}로 변경되었습니다.`,
+          isRead: false
+        });
+      }
+    }
+
+    return {
+      tasks: state.tasks.map(t => 
+        t.id === taskId 
+          ? { ...t, status: newStatus, updatedAt: new Date().toISOString() } 
+          : t
+      )
+    };
+  }),
   updateDetailedLineStage: (taskId, stage) => set((state) => {
     return {
       tasks: state.tasks.map(t => {
@@ -141,14 +172,43 @@ export const useTaskStore = create<TaskState>()(persist((set) => ({
     };
   }),
   updateTaskAssignee: (taskId, newAssigneeId) => set((state) => {
+    const { currentUser, users } = useAuthStore.getState();
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task) return state;
+
+    if (currentUser && !canEditTask(currentUser, task)) {
+      console.warn('Permission denied: cannot assign task');
+      return state;
+    }
+
     if (newAssigneeId) {
-      const { users } = useAuthStore.getState();
       const assignee = users.find(u => u.id === newAssigneeId);
       if (!assignee) {
         console.warn(`Cannot assign task: User ${newAssigneeId} does not exist.`);
         return state;
       }
     }
+
+    if (currentUser) {
+      useAuditStore.getState().addLog({
+        userId: currentUser.id,
+        action: 'UPDATE',
+        targetType: 'TASK',
+        targetId: taskId,
+        details: `Task assignee changed from ${task.assigneeId || 'none'} to ${newAssigneeId || 'none'}`
+      });
+      
+      if (newAssigneeId && newAssigneeId !== currentUser.id) {
+        useNotificationStore.getState().addNotification({
+          userId: newAssigneeId,
+          type: 'ASSIGNMENT',
+          title: '업무 배정 알림',
+          message: `새로운 업무 "${task.title}"에 배정되었습니다.`,
+          isRead: false
+        });
+      }
+    }
+
     return {
       tasks: state.tasks.map(t => 
         t.id === taskId 
