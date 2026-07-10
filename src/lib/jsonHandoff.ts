@@ -52,6 +52,14 @@ export const exportWorkspaceData = (): WorkspaceExportData => {
   const { logs: auditLogs } = useAuditStore.getState();
   const { templates: processTemplates, stages: processStages, tasks: processTasks, assignments: processAssignments, schedules: processSchedules } = useProcessTemplateStore.getState();
 
+  useAuditStore.getState().addLog({
+    action: 'SYSTEM_JSON_EXPORT',
+    entityType: 'SYSTEM',
+    message: 'Workspace data exported to JSON',
+    actorId: currentUser?.id || 'SYSTEM',
+    entityId: 'workspace_export'
+  });
+
   // Sanitize secrets before export
   const sanitizedTranslationSettings = { ...translationSettings };
   delete sanitizedTranslationSettings.myMemoryContactEmail;
@@ -150,6 +158,16 @@ export const validateImportData = (data: unknown): data is WorkspaceExportData =
     if (!isValidTasks) return false;
   }
   
+  if (typedData.processAssignments && Array.isArray(typedData.processAssignments)) {
+    const isValidAssignments = typedData.processAssignments.every(a => {
+      if (!a || typeof a !== 'object' || !a.id) return false;
+      if (a.revisionNo !== undefined && typeof a.revisionNo !== 'number') return false;
+      if (a.historySnapshot !== undefined && !Array.isArray(a.historySnapshot)) return false;
+      return true;
+    });
+    if (!isValidAssignments) return false;
+  }
+  
   return true;
 };
 export const applyImportData = (data: WorkspaceExportData) => {
@@ -205,6 +223,14 @@ export const applyImportData = (data: WorkspaceExportData) => {
     useSettingStore.getState().replaceSettings(data.data.settings);
   }
   
+  useAuditStore.getState().addLog({
+    action: 'SYSTEM_JSON_IMPORT',
+    entityType: 'SYSTEM',
+    message: 'Workspace data imported from JSON',
+    actorId: useAuthStore.getState().currentUser?.id || 'SYSTEM',
+    entityId: 'workspace_import'
+  });
+
   useAuthStore.getState().setDataSourceMode('EXCEL_IMPORT_DATA');
   alert("데이터가 성공적으로 반영되었습니다.");
   return true;

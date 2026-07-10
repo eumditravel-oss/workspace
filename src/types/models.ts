@@ -271,12 +271,37 @@ export interface ProcessTask {
   orderIndex: number;
 }
 
+export interface ProcessScheduleSnapshot {
+  id: string;
+  processStageId: string;
+  processTaskId: string;
+  startDate?: string;
+  endDate?: string;
+  executionDate?: string;
+  status: string;
+  progress: number;
+  category: string;
+  assigneeId?: UserId;
+  isOfficial: boolean;
+  estimatedHours?: number;
+  description?: string;
+}
+
 export interface ProcessTemplateAssignment {
   id: string;
   taskId: string;
   templateId: string;
   status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
   pmId: UserId;
+  managerId?: UserId;
+  rejectionReason?: string;
+  reviewedBy?: UserId;
+  reviewedAt?: string;
+  revisionNo?: number;
+  previousAssignmentId?: string;
+  parentAssignmentId?: string;
+  approvalRequestId?: string;
+  historySnapshot?: ProcessScheduleSnapshot[];
   createdAt: string;
   updatedAt: string;
 }
@@ -294,6 +319,8 @@ export interface ProcessSchedule {
   category: string;
   assigneeId?: UserId;
   isOfficial: boolean;
+  estimatedHours?: number;
+  description?: string;
 }
 
 export type ApprovalRequestType = 'SCHEDULE_APPROVAL' | 'SCHEDULE_REJECTION' | 'ADDITIONAL_TASK' | 'OVERTIME_REQUEST' | 'DEADLINE_EXTENSION' | 'TASK_REORDER' | 'PM_ASSIGNMENT' | 'MANPOWER_SUPPORT' | 'PRIORITY_CHANGE' | 'SCHEDULE_REPLAN' | 'PROCESS_SCHEDULE_APPROVAL';
