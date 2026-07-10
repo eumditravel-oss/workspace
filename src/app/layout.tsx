@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { SessionManager } from "@/components/auth/SessionManager";
 import { DataLoader } from "@/components/layout/DataLoader";
+import { ThemeProvider } from "@/components/layout/ThemeProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className={`${inter.className} bg-[var(--color-bg)] text-[var(--color-text-main)]`}>
+        <ThemeProvider />
         <SessionManager />
         <DataLoader />
         <div className="flex min-h-screen">

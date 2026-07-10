@@ -1,11 +1,13 @@
 'use client';
 import React from 'react';
 import { useAuthStore } from '@/store/authStore';
+import { useUiStore } from '@/store/uiStore';
 import { User, Shield, Briefcase, Mail } from 'lucide-react';
 import { getUserDisplayName } from '@/lib/localization';
 
 export default function SettingsPage() {
   const { currentUser } = useAuthStore();
+  const { isDarkMode, toggleDarkMode } = useUiStore();
 
   if (!currentUser) return <div className="py-10 text-center text-[var(--color-text-sub)]">로그인이 필요합니다.</div>;
 
@@ -40,7 +42,12 @@ export default function SettingsPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-[var(--color-text-main)]">다크 모드</span>
-            <input type="checkbox" className="w-5 h-5" disabled />
+            <input 
+              type="checkbox" 
+              className="w-5 h-5 cursor-pointer accent-blue-600" 
+              checked={isDarkMode}
+              onChange={toggleDarkMode}
+            />
           </div>
           <div className="flex items-center justify-between">
             <span className="text-[var(--color-text-main)]">이메일 알림 수신</span>

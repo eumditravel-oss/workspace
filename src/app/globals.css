@@ -33,7 +33,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light) {
     --background: #0F172A;
     --foreground: #F8FAFC;
     --color-bg: #0F172A;
@@ -43,6 +43,17 @@
     --color-text-main: #F8FAFC;
     --color-text-sub: #94A3B8;
   }
+}
+
+:root.dark {
+  --background: #0F172A;
+  --foreground: #F8FAFC;
+  --color-bg: #0F172A;
+  --color-surface: #1E293B;
+  --color-border: #334155;
+  --color-border-strong: #475569;
+  --color-text-main: #F8FAFC;
+  --color-text-sub: #94A3B8;
 }
 
 body {
