@@ -6,6 +6,8 @@ export const defaultProcessTemplates: ProcessTemplate[] = [
     name: '표준 ESC 공정 템플릿',
     description: '일반적인 ESC 설계 및 도서산출 공정',
     isDefault: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   }
 ];
 

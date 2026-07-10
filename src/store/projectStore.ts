@@ -93,11 +93,11 @@ export const useProjectStore = create<ProjectState>()(persist((set, get) => ({
 
     if (currentUser) {
       useAuditStore.getState().addLog({
-        userId: currentUser.id,
+        actorId: currentUser.id,
         action: 'UPDATE',
-        targetType: 'PROJECT',
-        targetId: projectId,
-        details: `PM assigned from ${project.pmId || 'none'} to ${pmId}`
+        entityType: 'PROJECT',
+        entityId: projectId,
+        message: `PM assigned from ${project.pmId || 'none'} to ${pmId}`
       });
       
       if (pmId !== currentUser.id) {
@@ -105,8 +105,8 @@ export const useProjectStore = create<ProjectState>()(persist((set, get) => ({
           userId: pmId,
           type: 'ASSIGNMENT',
           title: '프로젝트 PM 배정 알림',
-          message: `새로운 프로젝트 "${project.name}"의 PM으로 배정되었습니다.`,
-          isRead: false
+          message: `새로운 프로젝트 "${project.title}"의 PM으로 배정되었습니다.`,
+          priority: 'NORMAL'
         });
       }
     }
@@ -132,11 +132,11 @@ export const useProjectStore = create<ProjectState>()(persist((set, get) => ({
 
     if (currentUser) {
       useAuditStore.getState().addLog({
-        userId: currentUser.id,
+        actorId: currentUser.id,
         action: 'UPDATE',
-        targetType: 'PROJECT',
-        targetId: projectId,
-        details: `Project status changed from ${project.status} to ${status}`
+        entityType: 'PROJECT',
+        entityId: projectId,
+        message: `Project status changed from ${project.status} to ${status}`
       });
     }
 

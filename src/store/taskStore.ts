@@ -76,11 +76,11 @@ export const useTaskStore = create<TaskState>()(persist((set) => ({
 
     if (currentUser) {
       useAuditStore.getState().addLog({
-        userId: currentUser.id,
+        actorId: currentUser.id,
         action: 'UPDATE',
-        targetType: 'TASK',
-        targetId: taskId,
-        details: `Task status changed from ${task.status} to ${newStatus}`
+        entityType: 'TASK',
+        entityId: taskId,
+        message: `Task status changed from ${task.status} to ${newStatus}`
       });
       if (task.assigneeId && task.assigneeId !== currentUser.id) {
         useNotificationStore.getState().addNotification({
@@ -88,7 +88,7 @@ export const useTaskStore = create<TaskState>()(persist((set) => ({
           type: 'SYSTEM',
           title: '상태 변경 알림',
           message: `담당하신 업무 "${task.title}"의 상태가 ${newStatus}로 변경되었습니다.`,
-          isRead: false
+          priority: 'NORMAL'
         });
       }
     }
@@ -191,11 +191,11 @@ export const useTaskStore = create<TaskState>()(persist((set) => ({
 
     if (currentUser) {
       useAuditStore.getState().addLog({
-        userId: currentUser.id,
+        actorId: currentUser.id,
         action: 'UPDATE',
-        targetType: 'TASK',
-        targetId: taskId,
-        details: `Task assignee changed from ${task.assigneeId || 'none'} to ${newAssigneeId || 'none'}`
+        entityType: 'TASK',
+        entityId: taskId,
+        message: `Task assignee changed from ${task.assigneeId || 'none'} to ${newAssigneeId || 'none'}`
       });
       
       if (newAssigneeId && newAssigneeId !== currentUser.id) {
@@ -204,7 +204,7 @@ export const useTaskStore = create<TaskState>()(persist((set) => ({
           type: 'ASSIGNMENT',
           title: '업무 배정 알림',
           message: `새로운 업무 "${task.title}"에 배정되었습니다.`,
-          isRead: false
+          priority: 'NORMAL'
         });
       }
     }

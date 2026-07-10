@@ -61,11 +61,11 @@ export const useApprovalStore = create<ApprovalState>()(persist((set) => ({
     }));
 
     useAuditStore.getState().addLog({
-      userId: requestData.requestedBy,
+      actorId: requestData.requestedBy,
       action: 'CREATE',
-      targetType: 'APPROVAL',
-      targetId: newId,
-      details: `Approval Request [${requestData.title}] created.`
+      entityType: 'APPROVAL',
+      entityId: newId,
+      message: `Approval Request [${requestData.title}] created.`
     });
 
     if (requestData.managerId) {
@@ -86,11 +86,11 @@ export const useApprovalStore = create<ApprovalState>()(persist((set) => ({
     
     // Audit Log
     useAuditStore.getState().addLog({
-      userId: reviewerId,
+      actorId: reviewerId,
       action: 'UPDATE',
-      targetType: 'APPROVAL',
-      targetId: id,
-      details: `Approval Request ${id} status changed to ${status} by User ${reviewerId}. Comment: ${comment || 'N/A'}`
+      entityType: 'APPROVAL',
+      entityId: id,
+      message: `Approval Request ${id} status changed to ${status} by User ${reviewerId}. Comment: ${comment || 'N/A'}`
     });
 
     if (request && (status === 'APPROVED' || status === 'REJECTED')) {
