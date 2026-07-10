@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { ProcessTemplate, ProcessStage, ProcessTask, ProcessTemplateAssignment, ProcessSchedule } from '@/types/models';
 import { useAuditStore } from '@/store/auditStore';
 import { useNotificationStore } from '@/store/notificationStore';
+import { useAuthStore } from '@/store/authStore';
 
 interface ProcessTemplateState {
   templates: ProcessTemplate[];
@@ -17,10 +18,10 @@ interface ProcessTemplateState {
   // Assignment actions
   addAssignment: (assignment: Omit<ProcessTemplateAssignment, 'id' | 'createdAt' | 'updatedAt'>) => string;
   updateAssignmentStatus: (id: string, status: ProcessTemplateAssignment['status']) => void;
-  submitAssignment: (id: string, reviewerId: string, currentUserId: string) => void;
-  rejectAssignment: (id: string, reviewerId: string, reason: string) => void;
-  approveAssignment: (id: string, reviewerId: string) => void;
-  resubmitAssignment: (id: string, currentUserId: string) => void;
+  submitAssignment: (id: string, reviewerId: string) => void;
+  rejectAssignment: (id: string, reason: string) => void;
+  approveAssignment: (id: string) => void;
+  resubmitAssignment: (id: string) => void;
   
   // Schedule actions
   addSchedule: (schedule: Omit<ProcessSchedule, 'id'>) => string;
@@ -61,16 +62,22 @@ export const useProcessTemplateStore = create<ProcessTemplateState>()(persist((s
     )
   })),
 
-  submitAssignment: (id, reviewerId, currentUserId) => set((state) => {
+  submitAssignment: (id, reviewerId) => set((state) => {
+    const currentUser = useAuthStore.getState().currentUser;
+    if (!currentUser) return state;
+
     const assignment = state.assignments.find(a => a.id === id);
     if (!assignment) return state;
     if (assignment.status !== 'DRAFT' && assignment.status !== 'REJECTED') return state;
+
+    // Guard: Only PM or Admin can submit
+    if (assignment.pmId !== currentUser.id && currentUser.role !== 'SYSTEM_ADMIN') return state;
 
     useAuditStore.getState().addLog({
       action: 'PROCESS_TEMPLATE_SUBMIT',
       entityType: 'PROCESS',
       message: `공정 템플릿 상신 (Assignment ID: ${id})`,
-      actorId: currentUserId,
+      actorId: currentUser.id,
       entityId: id
     });
     
@@ -89,16 +96,22 @@ export const useProcessTemplateStore = create<ProcessTemplateState>()(persist((s
     };
   }),
 
-  rejectAssignment: (id, reviewerId, reason) => set((state) => {
+  rejectAssignment: (id, reason) => set((state) => {
+    const currentUser = useAuthStore.getState().currentUser;
+    if (!currentUser) return state;
+
     const assignment = state.assignments.find(a => a.id === id);
     if (!assignment) return state;
     if (assignment.status !== 'PENDING_APPROVAL') return state;
+
+    // Guard: Only Manager or Admin can reject
+    if (assignment.managerId !== currentUser.id && currentUser.role !== 'SYSTEM_ADMIN' && currentUser.role !== 'DEPARTMENT_MANAGER') return state;
 
     useAuditStore.getState().addLog({
       action: 'PROCESS_TEMPLATE_REJECT',
       entityType: 'PROCESS',
       message: `공정 템플릿 반려. 사유: ${reason}`,
-      actorId: reviewerId,
+      actorId: currentUser.id,
       entityId: id
     });
 
@@ -117,7 +130,7 @@ export const useProcessTemplateStore = create<ProcessTemplateState>()(persist((s
           ...a, 
           status: 'REJECTED', 
           rejectionReason: reason, 
-          reviewedBy: reviewerId,
+          reviewedBy: currentUser.id,
           reviewedAt: new Date().toISOString(),
           updatedAt: new Date().toISOString() 
         } : a
@@ -125,16 +138,22 @@ export const useProcessTemplateStore = create<ProcessTemplateState>()(persist((s
     };
   }),
 
-  approveAssignment: (id, reviewerId) => set((state) => {
+  approveAssignment: (id) => set((state) => {
+    const currentUser = useAuthStore.getState().currentUser;
+    if (!currentUser) return state;
+
     const assignment = state.assignments.find(a => a.id === id);
     if (!assignment) return state;
     if (assignment.status !== 'PENDING_APPROVAL') return state;
+
+    // Guard: Only Manager or Admin can approve
+    if (assignment.managerId !== currentUser.id && currentUser.role !== 'SYSTEM_ADMIN' && currentUser.role !== 'DEPARTMENT_MANAGER') return state;
 
     useAuditStore.getState().addLog({
       action: 'PROCESS_TEMPLATE_APPROVE',
       entityType: 'PROCESS',
       message: `공정 템플릿 승인 (Assignment ID: ${id})`,
-      actorId: reviewerId,
+      actorId: currentUser.id,
       entityId: id
     });
 
@@ -152,7 +171,7 @@ export const useProcessTemplateStore = create<ProcessTemplateState>()(persist((s
         a.id === id ? { 
           ...a, 
           status: 'APPROVED', 
-          reviewedBy: reviewerId,
+          reviewedBy: currentUser.id,
           reviewedAt: new Date().toISOString(),
           updatedAt: new Date().toISOString() 
         } : a
@@ -163,23 +182,33 @@ export const useProcessTemplateStore = create<ProcessTemplateState>()(persist((s
     };
   }),
 
-  resubmitAssignment: (id, currentUserId) => set((state) => {
+  resubmitAssignment: (id) => set((state) => {
+    const currentUser = useAuthStore.getState().currentUser;
+    if (!currentUser) return state;
+
     const assignment = state.assignments.find(a => a.id === id);
     if (!assignment) return state;
     if (assignment.status !== 'REJECTED') return state;
 
-    // Save current schedules to history snapshot
-    const currentSchedules = state.schedules.filter(s => s.assignmentId === id);
-    const snapshot = currentSchedules.map(s => ({ ...s }));
+    // Guard: Only PM or Admin can resubmit
+    if (assignment.pmId !== currentUser.id && currentUser.role !== 'SYSTEM_ADMIN') return state;
 
-    const historySnapshot = [...(assignment.historySnapshot || []), ...snapshot];
     const revisionNo = (assignment.revisionNo || 1) + 1;
+    const currentSchedules = state.schedules.filter(s => s.assignmentId === id);
+    const historySnapshot = [...(assignment.historySnapshot || []), {
+      revisionNo: assignment.revisionNo || 1,
+      rejectionReason: assignment.rejectionReason,
+      reviewedBy: assignment.reviewedBy,
+      reviewedAt: assignment.reviewedAt,
+      schedules: currentSchedules,
+      snapshottedAt: new Date().toISOString()
+    }];
 
     useAuditStore.getState().addLog({
       action: 'PROCESS_TEMPLATE_RESUBMIT',
       entityType: 'PROCESS',
       message: `공정 템플릿 재상신 준비 (Revision: ${revisionNo})`,
-      actorId: currentUserId,
+      actorId: currentUser.id,
       entityId: id
     });
 
@@ -217,6 +246,12 @@ export const useProcessTemplateStore = create<ProcessTemplateState>()(persist((s
           // Cannot mutate protected schedules
           return state;
        }
+       
+       const currentUser = useAuthStore.getState().currentUser;
+       if (currentUser && currentUser.role !== 'SYSTEM_ADMIN' && assignment?.pmId !== currentUser.id) {
+          // Guard: Only PM or Admin can edit schedules
+          return state;
+       }
     }
     return {
       schedules: state.schedules.map(s => 
@@ -234,6 +269,12 @@ export const useProcessTemplateStore = create<ProcessTemplateState>()(persist((s
           const assignment = state.assignments.find(a => a.id === s.assignmentId);
           if (assignment && (assignment.status === 'PENDING_APPROVAL' || assignment.status === 'APPROVED')) {
             return s; // Guard against modifying protected schedules
+          }
+          
+          const currentUser = useAuthStore.getState().currentUser;
+          if (currentUser && currentUser.role !== 'SYSTEM_ADMIN' && assignment?.pmId !== currentUser.id) {
+             // Guard: Only PM or Admin can edit schedules
+             return s;
           }
           return { ...s, ...u };
         }

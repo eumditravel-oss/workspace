@@ -158,6 +158,21 @@ export const validateImportData = (data: unknown): data is WorkspaceExportData =
     if (!isValidTasks) return false;
   }
   
+  if (typedData.processTemplates && Array.isArray(typedData.processTemplates)) {
+    const isValidTemplates = typedData.processTemplates.every(t => t && typeof t === 'object' && t.id);
+    if (!isValidTemplates) return false;
+  }
+
+  if (typedData.processStages && Array.isArray(typedData.processStages)) {
+    const isValidStages = typedData.processStages.every(s => s && typeof s === 'object' && s.id && s.templateId);
+    if (!isValidStages) return false;
+  }
+
+  if (typedData.processTasks && Array.isArray(typedData.processTasks)) {
+    const isValidTasks = typedData.processTasks.every(t => t && typeof t === 'object' && t.id && t.stageId);
+    if (!isValidTasks) return false;
+  }
+
   if (typedData.processAssignments && Array.isArray(typedData.processAssignments)) {
     const isValidAssignments = typedData.processAssignments.every(a => {
       if (!a || typeof a !== 'object' || !a.id) return false;
@@ -166,6 +181,15 @@ export const validateImportData = (data: unknown): data is WorkspaceExportData =
       return true;
     });
     if (!isValidAssignments) return false;
+  }
+
+  if (typedData.processSchedules && Array.isArray(typedData.processSchedules)) {
+    const isValidSchedules = typedData.processSchedules.every(s => {
+      if (!s || typeof s !== 'object' || !s.id) return false;
+      if (typeof s.processStageId !== 'string' || typeof s.processTaskId !== 'string') return false;
+      return true;
+    });
+    if (!isValidSchedules) return false;
   }
   
   return true;

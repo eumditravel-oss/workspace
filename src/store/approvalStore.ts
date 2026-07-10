@@ -200,23 +200,44 @@ export const useApprovalStore = create<ApprovalState>()(persist((set) => ({
             const processTemplateStore = useProcessTemplateStore.getState();
             const assignment = processTemplateStore.assignments.find(a => a.taskId === task.id && a.status === 'PENDING_APPROVAL');
             if (assignment) {
-              processTemplateStore.updateAssignmentStatus(assignment.id, 'APPROVED');
-              const schedules = processTemplateStore.schedules.filter(s => s.assignmentId === assignment.id);
-              processTemplateStore.batchUpdateSchedules(schedules.map(s => ({ id: s.id, updates: { isOfficial: true } })));
+              processTemplateStore.approveAssignment(assignment.id);
               
+              const schedules = processTemplateStore.schedules.filter(s => s.assignmentId === assignment.id);
+              const scheduleStore = useScheduleStore.getState();
+
               schedules.forEach(s => {
                 if (s.startDate && s.endDate && s.assigneeId) {
                   const pTask = processTemplateStore.tasks.find(pt => pt.id === s.processTaskId);
                   const stage = processTemplateStore.stages.find(st => st.id === s.processStageId);
+                  const description = `[공정: ${stage?.name || '미지정'}] ${pTask?.name || '미지정'}${s.description ? ` - ${s.description}` : ''}`;
+                  
+                  // 1. TaskStore에 WorkSegment 추가
                   taskStore.addWorkSegment({
                     taskId: task.id,
                     workerId: s.assigneeId,
-                    description: `[공정: ${stage?.name || '미지정'}] ${pTask?.name || '미지정'}`,
+                    description,
                     startDate: s.startDate,
                     endDate: s.endDate,
                     progress: s.progress,
                     status: 'APPROVED',
                     isOvertime: false
+                  });
+
+                  // 2. ScheduleStore에 PersonalSchedule (Official) 추가 (Handoff)
+                  scheduleStore.addSchedule({
+                    userId: s.assigneeId,
+                    ownerRole: 'WORKER',
+                    departmentId: task.departmentId,
+                    title: `[공정일정] ${task.title}`,
+                    description,
+                    scheduleType: 'PERSONAL_WORK',
+                    startDateTime: `${s.startDate}T09:00:00Z`,
+                    endDateTime: `${s.endDate}T18:00:00Z`,
+                    isAllDay: true,
+                    visibility: 'DEPARTMENT',
+                    createdBy: reviewerId,
+                    updatedBy: reviewerId,
+                    requiresApproval: false
                   });
                 }
               });
@@ -228,7 +249,7 @@ export const useApprovalStore = create<ApprovalState>()(persist((set) => ({
           const processTemplateStore = useProcessTemplateStore.getState();
           const assignment = processTemplateStore.assignments.find(a => a.taskId === request.taskId && (a.status === 'PENDING_APPROVAL' || a.status === 'DRAFT'));
           if (assignment) {
-            processTemplateStore.updateAssignmentStatus(assignment.id, 'REJECTED');
+            processTemplateStore.rejectAssignment(assignment.id, comment || '반려되었습니다.');
           }
         }
       }

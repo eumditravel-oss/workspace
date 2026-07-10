@@ -287,6 +287,15 @@ export interface ProcessScheduleSnapshot {
   description?: string;
 }
 
+export interface AssignmentRevisionSnapshot {
+  revisionNo: number;
+  rejectionReason?: string;
+  reviewedBy?: UserId;
+  reviewedAt?: string;
+  schedules: ProcessScheduleSnapshot[];
+  snapshottedAt: string;
+}
+
 export interface ProcessTemplateAssignment {
   id: string;
   taskId: string;
@@ -301,7 +310,7 @@ export interface ProcessTemplateAssignment {
   previousAssignmentId?: string;
   parentAssignmentId?: string;
   approvalRequestId?: string;
-  historySnapshot?: ProcessScheduleSnapshot[];
+  historySnapshot?: AssignmentRevisionSnapshot[];
   createdAt: string;
   updatedAt: string;
 }

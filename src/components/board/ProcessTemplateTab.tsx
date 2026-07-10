@@ -3,6 +3,7 @@ import { TaskCard } from '@/types/models';
 import { useProcessTemplateStore } from '@/store/processTemplateStore';
 import { useApprovalStore } from '@/store/approvalStore';
 import { useAuthStore } from '@/store/authStore';
+import { mockUsers } from '@/data/mockData';
 import { CalendarClock, Plus, Send, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface ProcessTemplateTabProps {
@@ -16,6 +17,10 @@ export const ProcessTemplateTab: React.FC<ProcessTemplateTabProps> = ({ task, is
   const { addRequest, requests } = useApprovalStore();
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [selectedManagerId, setSelectedManagerId] = useState<string>('');
+
+  const managers = mockUsers.filter(u => u.role === 'DEPARTMENT_MANAGER' || u.role === 'SYSTEM_ADMIN');
+  const workers = mockUsers.filter(u => u.role === 'WORKER' || u.role === 'PM');
 
   const taskAssignments = assignments.filter(a => a.taskId === task.id);
   const activeAssignment = taskAssignments.length > 0 ? taskAssignments[taskAssignments.length - 1] : undefined;
@@ -56,8 +61,12 @@ export const ProcessTemplateTab: React.FC<ProcessTemplateTabProps> = ({ task, is
 
   const handleRequestApproval = () => {
     if (!activeAssignment || !currentUser) return;
+    if (!selectedManagerId) {
+      alert('승인권자(매니저)를 선택해주세요.');
+      return;
+    }
 
-    useProcessTemplateStore.getState().updateAssignmentStatus(activeAssignment.id, 'PENDING_APPROVAL');
+    useProcessTemplateStore.getState().submitAssignment(activeAssignment.id, selectedManagerId);
 
     addRequest({
       type: 'PROCESS_SCHEDULE_APPROVAL',
@@ -147,12 +156,25 @@ export const ProcessTemplateTab: React.FC<ProcessTemplateTabProps> = ({ task, is
           <p className="text-xs text-[var(--color-text-sub)] mt-1">상태: <span className="font-bold">{activeAssignment.status}</span></p>
         </div>
         {(activeAssignment.status === 'DRAFT' || activeAssignment.status === 'REJECTED') && isEditable && (
-          <button 
-            onClick={handleRequestApproval}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition flex items-center gap-1"
-          >
-            <Send className="w-4 h-4" /> 승인 요청
-          </button>
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedManagerId}
+              onChange={e => setSelectedManagerId(e.target.value)}
+              className="border border-[var(--color-border)] bg-[var(--color-bg)] rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-100 outline-none"
+            >
+              <option value="">승인권자 선택...</option>
+              {managers.map(m => <option key={m.id} value={m.id}>{m.name} ({m.departmentId})</option>)}
+            </select>
+            <button 
+              onClick={handleRequestApproval}
+              disabled={!selectedManagerId}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-1 ${
+                selectedManagerId ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              <Send className="w-4 h-4" /> 승인 요청
+            </button>
+          </div>
         )}
       </div>
 
@@ -171,37 +193,71 @@ export const ProcessTemplateTab: React.FC<ProcessTemplateTabProps> = ({ task, is
                 {stageSchedules.map(schedule => {
                   const taskObj = tasks.find(t => t.id === schedule.processTaskId);
                   return (
-                    <div key={schedule.id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-3 bg-[var(--color-bg)]/50 rounded-lg border border-[var(--color-border)]">
-                      <div className="flex-1">
-                        <span className="font-medium text-sm text-[var(--color-text-main)]">{taskObj?.name}</span>
-                        {taskObj?.defaultAssigneeRole && (
-                          <span className="ml-2 text-[10px] bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
-                            기본 할당: {taskObj.defaultAssigneeRole}
-                          </span>
-                        )}
+                    <div key={schedule.id} className="flex flex-col gap-2 p-3 bg-[var(--color-bg)]/50 rounded-lg border border-[var(--color-border)]">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <span className="font-medium text-sm text-[var(--color-text-main)]">{taskObj?.name}</span>
+                          {taskObj?.defaultAssigneeRole && (
+                            <span className="ml-2 text-[10px] bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
+                              기본 할당: {taskObj.defaultAssigneeRole}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex flex-col">
+                            <label className="text-[10px] text-[var(--color-text-sub)] mb-0.5">담당자</label>
+                            <select
+                              value={schedule.assigneeId || ''}
+                              onChange={e => updateSchedule(schedule.id, { assigneeId: e.target.value })}
+                              disabled={isReadOnly}
+                              className="border border-[var(--color-border)] bg-[var(--color-surface)] rounded p-1.5 text-xs focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                            >
+                              <option value="">선택...</option>
+                              {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                            </select>
+                          </div>
+                          <div className="flex flex-col">
+                            <label className="text-[10px] text-[var(--color-text-sub)] mb-0.5">시작일</label>
+                            <input 
+                              type="date" 
+                              value={schedule.startDate || ''} 
+                              onChange={e => updateSchedule(schedule.id, { startDate: e.target.value })}
+                              disabled={isReadOnly}
+                              className="border border-[var(--color-border)] bg-[var(--color-surface)] rounded p-1.5 text-xs focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                            />
+                          </div>
+                          <span className="text-gray-400 self-end mb-1.5">~</span>
+                          <div className="flex flex-col">
+                            <label className="text-[10px] text-[var(--color-text-sub)] mb-0.5">종료일</label>
+                            <input 
+                              type="date" 
+                              value={schedule.endDate || ''} 
+                              onChange={e => updateSchedule(schedule.id, { endDate: e.target.value })}
+                              disabled={isReadOnly}
+                              className="border border-[var(--color-border)] bg-[var(--color-surface)] rounded p-1.5 text-xs focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                            />
+                          </div>
+                          <div className="flex flex-col w-16">
+                            <label className="text-[10px] text-[var(--color-text-sub)] mb-0.5">예상(h)</label>
+                            <input 
+                              type="number" min="0" step="0.5"
+                              value={schedule.estimatedHours || ''} 
+                              onChange={e => updateSchedule(schedule.id, { estimatedHours: Number(e.target.value) })}
+                              disabled={isReadOnly}
+                              className="border border-[var(--color-border)] bg-[var(--color-surface)] rounded p-1.5 text-xs focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex flex-col">
-                          <label className="text-[10px] text-[var(--color-text-sub)] mb-0.5">시작일</label>
-                          <input 
-                            type="date" 
-                            value={schedule.startDate || ''} 
-                            onChange={e => updateSchedule(schedule.id, { startDate: e.target.value })}
-                            disabled={isReadOnly}
-                            className="border border-[var(--color-border)] bg-[var(--color-surface)] rounded p-1.5 text-xs focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
-                          />
-                        </div>
-                        <span className="text-gray-400 self-end mb-1.5">~</span>
-                        <div className="flex flex-col">
-                          <label className="text-[10px] text-[var(--color-text-sub)] mb-0.5">종료일</label>
-                          <input 
-                            type="date" 
-                            value={schedule.endDate || ''} 
-                            onChange={e => updateSchedule(schedule.id, { endDate: e.target.value })}
-                            disabled={isReadOnly}
-                            className="border border-[var(--color-border)] bg-[var(--color-surface)] rounded p-1.5 text-xs focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
-                          />
-                        </div>
+                      <div className="w-full">
+                        <input 
+                          type="text" 
+                          placeholder="세부 지시사항..." 
+                          value={schedule.description || ''} 
+                          onChange={e => updateSchedule(schedule.id, { description: e.target.value })}
+                          disabled={isReadOnly}
+                          className="w-full border border-[var(--color-border)] bg-[var(--color-surface)] rounded p-1.5 text-xs focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                        />
                       </div>
                     </div>
                   );
