@@ -12,6 +12,7 @@ import { calculateTaskHealthScore } from '@/lib/selectors';
 import { useTranslationStore } from '@/store/translationStore';
 import { useTranslation } from '@/lib/localization';
 import { canEditTask } from '@/lib/permissions';
+import { ProcessTemplateTab } from '@/components/board/ProcessTemplateTab';
 
 interface TaskDetailModalProps {
   task: TaskCard;
@@ -215,6 +216,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
 
   const tabs = [
     { id: 'OVERVIEW', label: t('overview') || '개요', icon: <FileText className="w-4 h-4" /> },
+    { id: 'PROCESS_TEMPLATE', label: '공정 템플릿', icon: <ListTodo className="w-4 h-4 text-blue-600" /> },
     { id: 'WORK_SEGMENTS', label: '세부 작업내역', icon: <ListTodo className="w-4 h-4" /> },
     { id: 'PROGRESS', label: '진행 내용', icon: <Clock className="w-4 h-4" /> },
     { id: 'CHECKLIST', label: '체크리스트', icon: <CheckSquare className="w-4 h-4" /> },
@@ -448,6 +450,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                 )}
               </div>
             </div>
+          )}
+
+          {activeTab === 'PROCESS_TEMPLATE' && (
+            <ProcessTemplateTab task={task} isEditable={isEditable} />
           )}
 
           {activeTab === 'WORK_SEGMENTS' && (

@@ -247,7 +247,55 @@ export interface TaskBlocker {
   resolvedBy?: UserId;
 }
 
-export type ApprovalRequestType = 'SCHEDULE_APPROVAL' | 'SCHEDULE_REJECTION' | 'ADDITIONAL_TASK' | 'OVERTIME_REQUEST' | 'DEADLINE_EXTENSION' | 'TASK_REORDER' | 'PM_ASSIGNMENT' | 'MANPOWER_SUPPORT' | 'PRIORITY_CHANGE' | 'SCHEDULE_REPLAN';
+export interface ProcessTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProcessStage {
+  id: string;
+  templateId: string;
+  name: string;
+  orderIndex: number;
+}
+
+export interface ProcessTask {
+  id: string;
+  stageId: string;
+  name: string;
+  defaultAssigneeRole?: string;
+  orderIndex: number;
+}
+
+export interface ProcessTemplateAssignment {
+  id: string;
+  taskId: string;
+  templateId: string;
+  status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
+  pmId: UserId;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProcessSchedule {
+  id: string;
+  assignmentId: string;
+  processStageId: string;
+  processTaskId: string;
+  startDate?: string;
+  endDate?: string;
+  executionDate?: string;
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD';
+  progress: number;
+  category: string;
+  assigneeId?: UserId;
+  isOfficial: boolean;
+}
+
+export type ApprovalRequestType = 'SCHEDULE_APPROVAL' | 'SCHEDULE_REJECTION' | 'ADDITIONAL_TASK' | 'OVERTIME_REQUEST' | 'DEADLINE_EXTENSION' | 'TASK_REORDER' | 'PM_ASSIGNMENT' | 'MANPOWER_SUPPORT' | 'PRIORITY_CHANGE' | 'SCHEDULE_REPLAN' | 'PROCESS_SCHEDULE_APPROVAL';
 
 export interface ApprovalRequest {
   id: string;

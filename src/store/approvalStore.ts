@@ -6,6 +6,7 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { useTaskStore } from '@/store/taskStore';
 import { useScheduleStore } from '@/store/scheduleStore';
 import { useConflictStore } from '@/store/conflictStore';
+import { useProcessTemplateStore } from '@/store/processTemplateStore';
 
 interface ApprovalState {
   requests: ApprovalRequest[];
@@ -168,6 +169,39 @@ export const useApprovalStore = create<ApprovalState>()(persist((set) => ({
               orderIndex: task.orderIndex + 1,
               approvalStatus: 'APPROVED'
             });
+          } else if (request.type === 'PROCESS_SCHEDULE_APPROVAL') {
+            const processTemplateStore = useProcessTemplateStore.getState();
+            const assignment = processTemplateStore.assignments.find(a => a.taskId === task.id && a.status === 'PENDING_APPROVAL');
+            if (assignment) {
+              processTemplateStore.updateAssignmentStatus(assignment.id, 'APPROVED');
+              const schedules = processTemplateStore.schedules.filter(s => s.assignmentId === assignment.id);
+              processTemplateStore.batchUpdateSchedules(schedules.map(s => ({ id: s.id, updates: { isOfficial: true } })));
+              
+              schedules.forEach(s => {
+                if (s.startDate && s.endDate && s.assigneeId) {
+                  const pTask = processTemplateStore.tasks.find(pt => pt.id === s.processTaskId);
+                  const stage = processTemplateStore.stages.find(st => st.id === s.processStageId);
+                  taskStore.addWorkSegment({
+                    taskId: task.id,
+                    workerId: s.assigneeId,
+                    description: `[공정: ${stage?.name || '미지정'}] ${pTask?.name || '미지정'}`,
+                    startDate: s.startDate,
+                    endDate: s.endDate,
+                    progress: s.progress,
+                    status: 'APPROVED',
+                    isOvertime: false
+                  });
+                }
+              });
+            }
+          }
+        }
+      } else if (status === 'REJECTED' && request.taskId) {
+        if (request.type === 'PROCESS_SCHEDULE_APPROVAL') {
+          const processTemplateStore = useProcessTemplateStore.getState();
+          const assignment = processTemplateStore.assignments.find(a => a.taskId === request.taskId && (a.status === 'PENDING_APPROVAL' || a.status === 'DRAFT'));
+          if (assignment) {
+            processTemplateStore.updateAssignmentStatus(assignment.id, 'REJECTED');
           }
         }
       }

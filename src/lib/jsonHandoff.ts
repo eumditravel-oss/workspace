@@ -7,8 +7,9 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { useScheduleStore } from '@/store/scheduleStore';
 import { useTranslationStore } from '@/store/translationStore';
 import { useAuditStore } from '@/store/auditStore';
+import { useProcessTemplateStore } from '@/store/processTemplateStore';
 
-import { Project, TaskCard, PersonnelCard, WorkspaceSetting, TaskWorkSegment, ApprovalRequest, RevisionRequest, PostDeliveryWorkRequest, Notification, PersonalSchedule, WorkspaceLanguage, TranslationProviderHealth, TranslationCacheItem, AuditLog } from '@/types/models';
+import { Project, TaskCard, PersonnelCard, WorkspaceSetting, TaskWorkSegment, ApprovalRequest, RevisionRequest, PostDeliveryWorkRequest, Notification, PersonalSchedule, WorkspaceLanguage, TranslationProviderHealth, TranslationCacheItem, AuditLog, ProcessTemplate, ProcessStage, ProcessTask, ProcessTemplateAssignment, ProcessSchedule } from '@/types/models';
 import { TranslationSettings } from '@/store/translationStore';
 
 export interface WorkspaceExportData {
@@ -31,6 +32,11 @@ export interface WorkspaceExportData {
     translationProviderHealths?: Record<string, TranslationProviderHealth>;
     translationCache?: TranslationCacheItem[];
     auditLogs: AuditLog[];
+    processTemplates?: ProcessTemplate[];
+    processStages?: ProcessStage[];
+    processTasks?: ProcessTask[];
+    processAssignments?: ProcessTemplateAssignment[];
+    processSchedules?: ProcessSchedule[];
   };
 }
 
@@ -44,6 +50,7 @@ export const exportWorkspaceData = (): WorkspaceExportData => {
   const { schedules: personalSchedules } = useScheduleStore.getState();
   const { settings: translationSettings, providerHealths, translationCache } = useTranslationStore.getState();
   const { logs: auditLogs } = useAuditStore.getState();
+  const { templates: processTemplates, stages: processStages, tasks: processTasks, assignments: processAssignments, schedules: processSchedules } = useProcessTemplateStore.getState();
 
   // Sanitize secrets before export
   const sanitizedTranslationSettings = { ...translationSettings };
@@ -69,7 +76,12 @@ export const exportWorkspaceData = (): WorkspaceExportData => {
       translationSettings: sanitizedTranslationSettings,
       translationProviderHealths: providerHealths,
       translationCache,
-      auditLogs
+      auditLogs,
+      processTemplates,
+      processStages,
+      processTasks,
+      processAssignments,
+      processSchedules
     }
   };
 };
@@ -167,6 +179,20 @@ export const applyImportData = (data: WorkspaceExportData) => {
   
   if (data.data.auditLogs) {
     useAuditStore.getState().replaceLogs(data.data.auditLogs);
+  }
+
+  if (data.data.processTemplates) {
+    useProcessTemplateStore.getState().loadInitialData(
+      data.data.processTemplates,
+      data.data.processStages || [],
+      data.data.processTasks || []
+    );
+    if (data.data.processAssignments) {
+      useProcessTemplateStore.getState().replaceAssignments(data.data.processAssignments);
+    }
+    if (data.data.processSchedules) {
+      useProcessTemplateStore.getState().replaceSchedules(data.data.processSchedules);
+    }
   }
   
   if (data.data.personnel && data.data.personnel.length > 0) {
