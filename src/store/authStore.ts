@@ -22,7 +22,7 @@ interface AuthState {
   
   // Backend Integration (Phase 473+)
   fetchSession: () => Promise<void>;
-  serverUser: any | null;
+  serverUser: unknown | null;
 }
 
 export const useAuthStore = create<AuthState>()(

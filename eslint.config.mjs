@@ -15,7 +15,10 @@ const eslintConfig = defineConfig([
     // Custom ignores:
     "scratch/**",
     "scripts/**",
-    "analyze.js"
+    "analyze.js",
+    "server/dist/**",
+    "server/node_modules/**",
+    "qa/**"
   ]),
 ]);
 

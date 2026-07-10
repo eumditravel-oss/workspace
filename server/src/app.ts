@@ -50,10 +50,10 @@ app.use((req, res) => {
 });
 
 // Global Error Handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Unhandled Error:', err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal Server Error',
+  res.status((err as any).status || 500).json({
+    error: (err as any).message || 'Internal Server Error',
     requestId: req.headers['x-request-id']
   });
 });

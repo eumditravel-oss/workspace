@@ -34,8 +34,8 @@ export default function AdminUserInvite() {
       });
       
       setGeneratedToken(res.token);
-    } catch (err: any) {
-      setError(err.message || 'Failed to create invite token');
+    } catch (err: unknown) {
+      setError((err as any).message || 'Failed to create invite token');
     } finally {
       setLoading(false);
     }
