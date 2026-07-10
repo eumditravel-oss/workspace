@@ -19,6 +19,10 @@ interface AuthState {
   deactivateUser: (userId: string) => void;
   replaceUsers: (users: PersonnelCard[]) => void;
   resetUsers: () => void;
+  
+  // Backend Integration (Phase 473+)
+  fetchSession: () => Promise<void>;
+  serverUser: any | null;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -28,6 +32,7 @@ export const useAuthStore = create<AuthState>()(
   users: mockUsers,
   appMode: 'DAILY_WORK',
   dataSourceMode: 'JSON_OPERATION_DATA',
+  serverUser: null,
   lastActivity: Date.now(),
   setAppMode: (mode) => set((state) => {
     // If switching to DAILY_WORK, ensure DEMO_SEED_DATA is deactivated
@@ -67,7 +72,16 @@ export const useAuthStore = create<AuthState>()(
     users: state.users.map(u => u.id === userId ? { ...u, status: 'INACTIVE' } : u)
   })),
   replaceUsers: (users) => set({ users }),
-  resetUsers: () => set({ users: mockUsers })
+  resetUsers: () => set({ users: mockUsers }),
+  fetchSession: async () => {
+    try {
+      const { apiClient } = await import('@/lib/apiClient');
+      const data = await apiClient('/auth/session');
+      set({ serverUser: data.user });
+    } catch (e) {
+      set({ serverUser: null });
+    }
+  }
     }),
     {
       name: 'auth-storage',
